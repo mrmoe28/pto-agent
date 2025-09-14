@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, bigint, boolean, integer, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, boolean, integer, jsonb } from 'drizzle-orm/pg-core';
 
 // NextAuth required tables
 export const users = pgTable('users', {
@@ -19,7 +19,7 @@ export const accounts = pgTable('accounts', {
   providerAccountId: text('provider_account_id').notNull(),
   refresh_token: text('refresh_token'),
   access_token: text('access_token'),
-  expires_at: bigint('expires_at', { mode: 'number' }),
+  expires_at: integer('expires_at'),
   token_type: text('token_type'),
   scope: text('scope'),
   id_token: text('id_token'),
@@ -29,8 +29,7 @@ export const accounts = pgTable('accounts', {
 });
 
 export const sessions = pgTable('sessions', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  sessionToken: text('session_token').unique().notNull(),
+  sessionToken: text('session_token').primaryKey(),
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   expires: timestamp('expires', { mode: 'date' }).notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
