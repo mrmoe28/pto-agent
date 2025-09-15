@@ -204,7 +204,7 @@ export default function Profile() {
                       id="firstName"
                       value={formData.firstName}
                       onChange={handleInputChange}
-                      className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                      className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md text-black"
                     />
                   </div>
 
@@ -218,7 +218,7 @@ export default function Profile() {
                       id="lastName"
                       value={formData.lastName}
                       onChange={handleInputChange}
-                      className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                      className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md text-black"
                     />
                   </div>
 
@@ -247,7 +247,7 @@ export default function Profile() {
                       id="phone"
                       value={formData.phone}
                       onChange={handleInputChange}
-                      className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                      className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md text-black"
                     />
                   </div>
 
@@ -261,7 +261,7 @@ export default function Profile() {
                       id="address"
                       value={formData.address}
                       onChange={handleInputChange}
-                      className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                      className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md text-black"
                     />
                   </div>
 
@@ -275,7 +275,7 @@ export default function Profile() {
                       id="city"
                       value={formData.city}
                       onChange={handleInputChange}
-                      className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                      className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md text-black"
                     />
                   </div>
 
@@ -289,7 +289,7 @@ export default function Profile() {
                       id="state"
                       value={formData.state}
                       onChange={handleInputChange}
-                      className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                      className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md text-black"
                     />
                   </div>
 
@@ -303,7 +303,7 @@ export default function Profile() {
                       id="zipCode"
                       value={formData.zipCode}
                       onChange={handleInputChange}
-                      className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                      className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md text-black"
                     />
                   </div>
                 </div>
