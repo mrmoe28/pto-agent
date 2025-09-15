@@ -95,7 +95,7 @@ export default function Hero() {
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               placeholder="Enter your property address..."
-              className="flex-1 px-6 py-4 text-lg text-black border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+              className="flex-1 px-6 py-4 text-lg text-black !text-black border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
               required
             />
             <button
