@@ -49,13 +49,37 @@ A comprehensive web application that helps property owners, contractors, and hom
 
 ### 4. **User Experience Features**
 - **Instant Results**: Sub-second response times for searches
-- **No Registration Required**: Completely free and anonymous
+- **User Authentication**: Secure Clerk-based authentication system
+  - Optional user accounts for enhanced features
+  - Social sign-in support (Google, etc.)
+  - User dashboard and profile management
 - **Mobile-Responsive Design**: Works seamlessly on all devices
 - **Visual Permit Type Badges**: Color-coded indicators for available permit types
 - **Distance-Based Sorting**: Nearest offices shown first
 - **Error Handling**: Graceful fallbacks and user-friendly error messages
 
-### 5. **Data Management System**
+### 5. **User Account Features**
+- **User Dashboard**: Personalized control panel for registered users
+  - Welcome message with user name
+  - Quick action buttons for common tasks
+  - Recent activity tracking
+  - Profile management access
+- **User Profile Management**: Comprehensive profile customization
+  - Personal information (name, contact details, address)
+  - Location preferences (city, state, zip code)
+  - User preferences (notifications, theme, email updates)
+  - Bio and additional details
+- **Favorites System**: Save frequently accessed permit offices
+  - One-click favoriting of permit offices
+  - Organized favorites list with quick access
+  - Remove/manage saved offices
+- **Authentication Security**: Clerk-powered secure authentication
+  - Multi-factor authentication support
+  - Session management
+  - Password reset and account recovery
+  - Social login integration
+
+### 6. **Data Management System**
 - **Supabase Integration**:
   - Real-time database updates
   - Structured PostgreSQL storage
@@ -67,7 +91,7 @@ A comprehensive web application that helps property owners, contractors, and hom
   - Data source tracking (crawled/API/manual)
   - Crawl frequency settings
 
-### 6. **Technical Capabilities**
+### 7. **Technical Capabilities**
 - **Web Scraping Ready**: Cheerio and Playwright integration for data collection
 - **Rate Limiting**: Upstash Redis integration for API protection
 - **Robots.txt Compliance**: Respects website crawling policies
@@ -94,6 +118,28 @@ Convert addresses to coordinates with smart fallback:
 - **Body**: `{ "address": "string" }`
 - **Returns**: Latitude, longitude, formatted address, city, county, state
 
+### **`GET /api/user/profile`**
+Retrieve user profile information for authenticated users:
+- **Authentication**: Requires valid Clerk session
+- **Returns**: User profile data including personal info and preferences
+
+### **`PUT /api/user/profile`**
+Update user profile information:
+- **Authentication**: Requires valid Clerk session
+- **Body**: Profile data (firstName, lastName, bio, phone, address, preferences)
+- **Returns**: Updated profile information
+
+### **`GET /api/user/favorites`**
+Retrieve user's favorite permit offices:
+- **Authentication**: Requires valid Clerk session
+- **Returns**: List of favorited permit offices with full details
+
+### **`POST /api/user/favorites`**
+Add or remove permit offices from user favorites:
+- **Authentication**: Requires valid Clerk session
+- **Body**: `{ "action": "add|remove", "officeId": "string" }`
+- **Returns**: Updated favorites list
+
 ## 🎨 User Interface Components
 
 ### **Hero Section**
@@ -118,6 +164,33 @@ Convert addresses to coordinates with smart fallback:
   3. Contact & apply
 - Interactive step indicators
 - Call-to-action for immediate use
+
+### **User Dashboard**
+- Personalized welcome screen with user information
+- Quick action buttons for common tasks:
+  - Search permit offices
+  - View favorites
+  - Edit profile
+- Recent activity display
+- Profile card with user avatar and basic info
+
+### **User Profile Page**
+- Comprehensive profile editing form:
+  - Personal information fields
+  - Contact details management
+  - Address and location preferences
+  - User preference toggles (notifications, theme, email updates)
+- Form validation and error handling
+- Save/update functionality with success feedback
+
+### **Authentication Components**
+- Sign-in page with Clerk integration:
+  - Social login options (Google, etc.)
+  - Email/password authentication
+  - Password reset functionality
+- Sign-in/Sign-out buttons in navigation
+- User button with profile dropdown
+- Protected route handling
 
 ### **Contact & Support**
 - Multiple support channels:
@@ -153,15 +226,28 @@ Convert addresses to coordinates with smart fallback:
 6. **Solar/HVAC Installers**: Finding specialized permit departments
 
 ## 🛡️ Data Privacy & Security
-- No user data collection without consent
-- Secure API endpoints with rate limiting
-- Environment variable protection for API keys
-- HTTPS-only communication
-- No storage of user search history
+- **User Consent**: All user data collection with explicit consent
+- **Clerk Authentication**: Enterprise-grade security with Clerk
+  - Encrypted user sessions
+  - Secure password handling
+  - Multi-factor authentication support
+  - GDPR and CCPA compliant
+- **API Security**: Protected endpoints with rate limiting
+- **Environment Protection**: Secure API key management
+- **HTTPS-Only**: All communications encrypted
+- **Data Minimization**: Only collect necessary user information
+- **User Control**: Users can delete accounts and data at any time
 
 ## 📈 Success Metrics
 - Search response time < 1 second
 - Database uptime > 99.9%
 - Fallback activation < 0.1% of requests
 - Mobile responsiveness on all devices
-- Zero user registration friction
+- **User Authentication**:
+  - Sign-in success rate > 99%
+  - Account creation completion > 95%
+  - Session security with zero breaches
+- **User Engagement**:
+  - Dashboard load time < 2 seconds
+  - Profile update success rate > 98%
+  - User retention rate tracking
