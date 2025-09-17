@@ -1,0 +1,16 @@
+name: Trigger Vercel Deployment
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  notify-vercel:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Notify Vercel of deployment
+      run: |
+        echo "GitHub push detected - Vercel should auto-deploy"
+        echo "Commit: ${{ github.sha }}"
+        echo "Branch: ${{ github.ref_name }}"
+        echo "Author: ${{ github.actor }}"
