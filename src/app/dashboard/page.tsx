@@ -21,7 +21,8 @@ import {
   User,
   TrendingUp,
   FileText,
-  Phone
+  Phone,
+  CreditCard
 } from 'lucide-react';
 
 interface UserProfile {
@@ -211,7 +212,7 @@ export default function Dashboard() {
         )}
 
         {/* Quick Actions Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           {/* Search Permit Offices */}
           <Card className="group hover:shadow-xl transition-all duration-300 cursor-pointer border-0 shadow-lg bg-gradient-to-br from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100">
             <CardContent className="p-8">
@@ -268,6 +269,26 @@ export default function Dashboard() {
                 className="w-full bg-green-600 hover:bg-green-700 text-white"
               >
                 View Activity
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Upgrade Plan */}
+          <Card className="group hover:shadow-xl transition-all duration-300 cursor-pointer border-0 shadow-lg bg-gradient-to-br from-purple-50 to-violet-50 hover:from-purple-100 hover:to-violet-100">
+            <CardContent className="p-8">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-purple-600 rounded-xl group-hover:scale-110 transition-transform duration-300">
+                  <CreditCard className="h-8 w-8 text-white" />
+                </div>
+                <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-purple-600 transition-colors" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Upgrade Plan</h3>
+              <p className="text-gray-600 mb-4">Unlock premium features and unlimited searches</p>
+              <Button 
+                onClick={() => router.push('/pricing')} 
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                View Plans
               </Button>
             </CardContent>
           </Card>
