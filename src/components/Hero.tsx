@@ -66,7 +66,7 @@ export default function Hero() {
       setResults(officesData.offices || [])
 
       if (officesData.offices.length === 0) {
-        setError('No permit offices found for this location. Try a different address.')
+        setError('No permit offices found for this location. Try searching for a major city like Atlanta, Savannah, or Sandy Springs.')
       }
 
     } catch (err) {

@@ -59,14 +59,13 @@ export async function GET(request: NextRequest) {
       const stateFilter = state ? state.toUpperCase() : 'GA'
       whereConditions.push(eq(permitOffices.state, stateFilter))
 
-      // Search by city if provided
-      if (city) {
-        whereConditions.push(ilike(permitOffices.city, `%${city}%`))
-      }
-
-      // Search by county if provided
+      // If we have both city and county, prioritize county match
+      // This helps find offices in the same county even if city doesn't match exactly
       if (county) {
         whereConditions.push(ilike(permitOffices.county, `%${county}%`))
+      } else if (city) {
+        // Only search by city if no county is provided
+        whereConditions.push(ilike(permitOffices.city, `%${city}%`))
       }
 
       // Execute the query
@@ -256,15 +255,16 @@ export async function POST(request: NextRequest) {
 function getFallbackGeorgiaOffices(city?: string | null, county?: string | null) {
   let offices = georgiaPermitOffices
 
-  if (city) {
-    offices = offices.filter(office => 
-      office.city.toLowerCase().includes(city.toLowerCase())
-    )
-  }
-
+  // If we have both city and county, prioritize county match
+  // This helps find offices in the same county even if city doesn't match exactly
   if (county) {
     offices = offices.filter(office => 
       office.county.toLowerCase().includes(county.toLowerCase())
+    )
+  } else if (city) {
+    // Only search by city if no county is provided
+    offices = offices.filter(office => 
+      office.city.toLowerCase().includes(city.toLowerCase())
     )
   }
 
