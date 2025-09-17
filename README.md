@@ -37,3 +37,4 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 # Trigger redeploy Sun Sep 14 17:10:13 EDT 2025
 # Vercel Deployment Test
 # Test deployment - $(date)
+# Simple Vercel auto-deploy test
