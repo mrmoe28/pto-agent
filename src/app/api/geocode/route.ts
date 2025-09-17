@@ -85,47 +85,64 @@ async function geocodeWithLocationIQ(address: string) {
 }
 
 async function geocodeWithGoogle(address: string) {
-  const GOOGLE_MAPS_KEY = process.env.GOOGLE_MAPS_API_KEY
+  const GOOGLE_PLACES_KEY = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY
   
-  if (!GOOGLE_MAPS_KEY) {
-    console.warn('Google Maps API key not configured - skipping Google Maps geocoding')
+  if (!GOOGLE_PLACES_KEY) {
+    console.warn('Google Places API key not configured - skipping Google Places geocoding')
     return null
   }
 
   try {
-    const response = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${GOOGLE_MAPS_KEY}`
+    // First, get place predictions using Places Autocomplete API
+    const autocompleteResponse = await fetch(
+      `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(address)}&key=${GOOGLE_PLACES_KEY}&types=address&components=country:us`
     )
 
-    if (!response.ok) {
-      throw new Error(`Google Maps API error: ${response.status}`)
+    if (!autocompleteResponse.ok) {
+      throw new Error(`Google Places Autocomplete API error: ${autocompleteResponse.status}`)
     }
 
-    const data = await response.json()
+    const autocompleteData = await autocompleteResponse.json()
     
-    if (data.results && data.results.length > 0) {
-      const result = data.results[0]
-      const location = result.geometry.location
+    if (autocompleteData.predictions && autocompleteData.predictions.length > 0) {
+      const prediction = autocompleteData.predictions[0]
+      const placeId = prediction.place_id
       
-      // Extract city, county, state from address components
-      const components = result.address_components
-      const city = components.find((c: { types: string[] }) => c.types.includes('locality'))?.long_name || ''
-      const county = components.find((c: { types: string[] }) => c.types.includes('administrative_area_level_2'))?.long_name || ''
-      const state = components.find((c: { types: string[] }) => c.types.includes('administrative_area_level_1'))?.short_name || ''
+      // Now get detailed place information using Place Details API
+      const detailsResponse = await fetch(
+        `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&key=${GOOGLE_PLACES_KEY}&fields=geometry,formatted_address,address_components`
+      )
 
-      return {
-        latitude: location.lat,
-        longitude: location.lng,
-        formatted_address: result.formatted_address,
-        city: city,
-        county: county.replace(' County', ''), // Remove 'County' suffix
-        state: state
+      if (!detailsResponse.ok) {
+        throw new Error(`Google Places Details API error: ${detailsResponse.status}`)
+      }
+
+      const detailsData = await detailsResponse.json()
+      
+      if (detailsData.result) {
+        const result = detailsData.result
+        const location = result.geometry.location
+        
+        // Extract city, county, state from address components
+        const components = result.address_components || []
+        const city = components.find((c: { types: string[] }) => c.types.includes('locality'))?.long_name || ''
+        const county = components.find((c: { types: string[] }) => c.types.includes('administrative_area_level_2'))?.long_name || ''
+        const state = components.find((c: { types: string[] }) => c.types.includes('administrative_area_level_1'))?.short_name || ''
+
+        return {
+          latitude: location.lat,
+          longitude: location.lng,
+          formatted_address: result.formatted_address,
+          city: city,
+          county: county.replace(' County', ''), // Remove 'County' suffix
+          state: state
+        }
       }
     }
 
     return null
   } catch (error) {
-    console.error('Google Maps error:', error)
+    console.error('Google Places error:', error)
     return null
   }
 }

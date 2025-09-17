@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google Places API Debug</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAr5knif73PEUZK4nQjGg0-2Bbw6-aIHbo&libraries=places"></script>
+</head>
+<body>
+    <h1>Google Places API Debug</h1>
+    <input type="text" id="address" placeholder="Enter address..." style="width: 400px; padding: 10px;">
+    <div id="results" style="margin-top: 20px;"></div>
+
+    <script>
+        function initAutocomplete() {
+            const input = document.getElementById('address');
+            const results = document.getElementById('results');
+            
+            const autocomplete = new google.maps.places.Autocomplete(input, {
+                types: ['address'],
+                componentRestrictions: { country: 'us' },
+                fields: ['formatted_address', 'geometry', 'address_components', 'place_id']
+            });
+
+            autocomplete.addListener('place_changed', function() {
+                const place = autocomplete.getPlace();
+                console.log('Place selected:', place);
+                
+                if (place && place.formatted_address) {
+                    results.innerHTML = `
+                        <h3>Selected Place:</h3>
+                        <p><strong>Address:</strong> ${place.formatted_address}</p>
+                        <p><strong>Latitude:</strong> ${place.geometry?.location?.lat()}</p>
+                        <p><strong>Longitude:</strong> ${place.geometry?.location?.lng()}</p>
+                        <p><strong>Place ID:</strong> ${place.place_id}</p>
+                        <h4>Address Components:</h4>
+                        <ul>
+                            ${place.address_components?.map(component => 
+                                `<li>${component.long_name} (${component.types.join(', ')})</li>`
+                            ).join('') || '<li>No components</li>'}
+                        </ul>
+                    `;
+                } else {
+                    results.innerHTML = '<p style="color: red;">No place selected or invalid place data</p>';
+                }
+            });
+        }
+
+        // Initialize when page loads
+        google.maps.event.addDomListener(window, 'load', initAutocomplete);
+    </script>
+</body>
+</html>
