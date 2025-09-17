@@ -3,6 +3,7 @@
 import { useUser } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import GooglePlacesAutocomplete from '@/components/GooglePlacesAutocomplete';
 
 interface PermitOffice {
   id?: string;
@@ -28,6 +29,7 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<PermitOffice[]>([]);
   const [error, setError] = useState('');
+  const [selectedPlace, setSelectedPlace] = useState<google.maps.places.PlaceResult | null>(null);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -38,6 +40,11 @@ export default function SearchPage() {
     }
   }, [user, isLoaded, router]);
 
+  const handlePlaceSelect = (place: google.maps.places.PlaceResult) => {
+    setSelectedPlace(place);
+    setAddress(place.formatted_address || '');
+  };
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!address.trim()) return;
@@ -47,26 +54,56 @@ export default function SearchPage() {
     setResults([]);
 
     try {
-      // Step 1: Geocode the address
-      const geocodeResponse = await fetch('/api/geocode', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address })
-      });
+      let latitude: number;
+      let longitude: number;
+      let city = '';
+      let county = '';
+      let state = 'GA';
 
-      if (!geocodeResponse.ok) {
-        throw new Error('Could not find location for that address');
+      // Use Google Places data if available, otherwise fallback to geocoding
+      if (selectedPlace && selectedPlace.geometry?.location) {
+        latitude = selectedPlace.geometry.location.lat();
+        longitude = selectedPlace.geometry.location.lng();
+        
+        // Extract address components
+        if (selectedPlace.address_components) {
+          selectedPlace.address_components.forEach(component => {
+            if (component.types.includes('locality')) {
+              city = component.long_name;
+            } else if (component.types.includes('administrative_area_level_2')) {
+              county = component.long_name;
+            } else if (component.types.includes('administrative_area_level_1')) {
+              state = component.short_name;
+            }
+          });
+        }
+      } else {
+        // Fallback to geocoding API
+        const geocodeResponse = await fetch('/api/geocode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address })
+        });
+
+        if (!geocodeResponse.ok) {
+          throw new Error('Could not find location for that address');
+        }
+
+        const geocodeData = await geocodeResponse.json();
+        latitude = geocodeData.latitude;
+        longitude = geocodeData.longitude;
+        city = geocodeData.city || '';
+        county = geocodeData.county || '';
+        state = geocodeData.state || 'GA';
       }
-
-      const geocodeData = await geocodeResponse.json();
       
-      // Step 2: Search for permit offices
+      // Search for permit offices
       const params = new URLSearchParams({
-        lat: geocodeData.latitude.toString(),
-        lng: geocodeData.longitude.toString(),
-        city: geocodeData.city || '',
-        county: geocodeData.county || '',
-        state: geocodeData.state || 'GA'
+        lat: latitude.toString(),
+        lng: longitude.toString(),
+        city: city,
+        county: county,
+        state: state
       });
 
       const officesResponse = await fetch(`/api/permit-offices?${params}`);
@@ -129,15 +166,16 @@ export default function SearchPage() {
                 <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
                   Property Address
                 </label>
-                <input
-                  type="text"
-                  id="address"
+                <GooglePlacesAutocomplete
+                  onPlaceSelect={handlePlaceSelect}
                   value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder="Enter your property address..."
-                  className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-black"
-                  required
+                  onChange={setAddress}
+                  placeholder="Start typing your address..."
+                  className="w-full"
                 />
+                <p className="mt-2 text-sm text-gray-500">
+                  💡 Start typing to see address suggestions from Google
+                </p>
               </div>
               <button
                 type="submit"
