@@ -71,8 +71,7 @@ export interface PermitOffice {
 
 // Helper function to execute queries with error handling
 export async function query<T = unknown>(
-  queryText: string,
-  _params?: (string | number)[]
+  queryText: string
 ): Promise<T[]> {
   try {
     // For dynamic queries, we need to use a different approach

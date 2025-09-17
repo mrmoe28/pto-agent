@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db, permitOffices, PermitOffice } from '@/lib/db'
 import { georgiaPermitOffices } from '@/lib/georgia-permit-data'
-import { eq, and, ilike, sql as drizzleSql } from 'drizzle-orm'
+import { eq, and, ilike } from 'drizzle-orm'
 
 // Search for permit offices by location
 export async function GET(request: NextRequest) {
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
     try {
       // Build the Drizzle query
-      let whereConditions = [eq(permitOffices.active, true)]
+      const whereConditions = [eq(permitOffices.active, true)]
       
       // Filter by state
       const stateFilter = state ? state.toUpperCase() : 'GA'
@@ -134,8 +134,8 @@ export async function POST(request: NextRequest) {
               onlinePayments: office.online_payments,
               permitTracking: office.permit_tracking,
               onlinePortalUrl: office.online_portal_url,
-              latitude: office.latitude?.toString(),
-              longitude: office.longitude?.toString(),
+              latitude: office.latitude != null ? String(office.latitude) : null,
+              longitude: office.longitude != null ? String(office.longitude) : null,
               serviceAreaBounds: office.service_area_bounds,
               dataSource: office.data_source,
               lastVerified: office.last_verified ? new Date(office.last_verified) : null,
@@ -171,8 +171,8 @@ export async function POST(request: NextRequest) {
                 onlinePayments: office.online_payments,
                 permitTracking: office.permit_tracking,
                 onlinePortalUrl: office.online_portal_url,
-                latitude: office.latitude?.toString(),
-                longitude: office.longitude?.toString(),
+                latitude: office.latitude != null ? String(office.latitude) : null,
+                longitude: office.longitude != null ? String(office.longitude) : null,
                 serviceAreaBounds: office.service_area_bounds,
                 dataSource: office.data_source,
                 lastVerified: office.last_verified ? new Date(office.last_verified) : null,
