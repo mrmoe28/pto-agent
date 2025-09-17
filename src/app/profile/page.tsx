@@ -1,6 +1,6 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { useUser } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -25,7 +25,7 @@ interface UserProfile {
 }
 
 export default function Profile() {
-  const { data: session, status } = useSession();
+  const { user, isLoaded } = useUser();
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,15 +51,15 @@ export default function Profile() {
   });
 
   useEffect(() => {
-    if (status === 'loading') return;
+    if (!isLoaded) return;
 
-    if (!session) {
-      router.push('/auth/signin');
+    if (!user) {
+      router.push('/sign-in');
       return;
     }
 
     fetchProfile();
-  }, [session, status, router]);
+  }, [user, isLoaded, router]);
 
   const fetchProfile = async () => {
     try {
@@ -146,7 +146,7 @@ export default function Profile() {
     }));
   };
 
-  if (status === 'loading' || loading) {
+  if (!isLoaded || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -154,7 +154,7 @@ export default function Profile() {
     );
   }
 
-  if (!session) {
+  if (!user) {
     return null;
   }
 

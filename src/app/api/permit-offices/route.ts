@@ -10,61 +10,56 @@ export async function GET(request: NextRequest) {
     const longitude = searchParams.get('lng')
     const city = searchParams.get('city')
     const county = searchParams.get('county')
-    const state = searchParams.get('state')
-
-    // Build the SQL query dynamically
-    let queryText = `
-      SELECT * FROM permit_offices
-      WHERE active = true
-    `
-    const params: (string | number)[] = []
-    let paramCount = 1
-
-    // Filter by state
-    if (state) {
-      queryText += ` AND state = $${paramCount}`
-      params.push(state.toUpperCase())
-      paramCount++
-    } else {
-      queryText += ` AND state = $${paramCount}`
-      params.push('GA') // Default to Georgia
-      paramCount++
-    }
-
-    // Search by city if provided
-    if (city) {
-      queryText += ` AND city ILIKE $${paramCount}`
-      params.push(`%${city}%`)
-      paramCount++
-    }
-
-    // Search by county if provided
-    if (county) {
-      queryText += ` AND county ILIKE $${paramCount}`
-      params.push(`%${county}%`)
-      paramCount++
-    }
-
-    queryText += ` ORDER BY jurisdiction_type ASC, city ASC LIMIT 10`
+    const state = searchParams.get('state') || 'GA'
 
     let offices: PermitOffice[] = []
     let error = null
 
     try {
+      // Build the SQL query dynamically
+      let queryText = `
+        SELECT * FROM permit_offices
+        WHERE active = true
+      `
+      const params: (string | number)[] = []
+      let paramCount = 1
+
+      // Filter by state
+      if (state) {
+        queryText += ` AND state = $${paramCount}`
+        params.push(state.toUpperCase())
+        paramCount++
+      } else {
+        queryText += ` AND state = $${paramCount}`
+        params.push('GA') // Default to Georgia
+        paramCount++
+      }
+
+      // Search by city if provided
+      if (city) {
+        queryText += ` AND city ILIKE $${paramCount}`
+        params.push(`%${city}%`)
+        paramCount++
+      }
+
+      // Search by county if provided
+      if (county) {
+        queryText += ` AND county ILIKE $${paramCount}`
+        params.push(`%${county}%`)
+        paramCount++
+      }
+
+      queryText += ` ORDER BY jurisdiction_type ASC, city ASC LIMIT 10`
+
       offices = await query<PermitOffice>(queryText, params)
     } catch (dbError) {
       error = dbError
       console.error('Database query error:', dbError)
     }
 
-    if (error) {
-      console.error('Neon database error:', error)
-      // Fallback to static data if database fails
-      return getFallbackGeorgiaOffices(city, county)
-    }
-
-    // If no results from database, check fallback data
-    if (!offices || offices.length === 0) {
+    if (error || !offices || offices.length === 0) {
+      console.log('Using fallback data')
+      // Fallback to static data if database fails or no results
       return getFallbackGeorgiaOffices(city, county)
     }
 
@@ -77,8 +72,8 @@ export async function GET(request: NextRequest) {
           ? calculateDistance(
               parseFloat(latitude), 
               parseFloat(longitude),
-              office.latitude,
-              office.longitude
+              parseFloat(office.latitude.toString()),
+              parseFloat(office.longitude.toString())
             )
           : null
       })).sort((a, b) => (a.distance || 999) - (b.distance || 999))
@@ -112,7 +107,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Insert Georgia permit offices using Neon
     const data: PermitOffice[] = []
     let error = null
 

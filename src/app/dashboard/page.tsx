@@ -1,6 +1,6 @@
 'use client';
 
-import { useSession, signOut } from 'next-auth/react';
+import { useUser, useClerk } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -25,22 +25,23 @@ interface UserProfile {
 }
 
 export default function Dashboard() {
-  const { data: session, status } = useSession();
+  const { user, isLoaded } = useUser();
+  const { signOut } = useClerk();
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (status === 'loading') return;
+    if (!isLoaded) return;
 
-    if (!session) {
-      router.push('/auth/signin');
+    if (!user) {
+      router.push('/sign-in');
       return;
     }
 
     fetchProfile();
-  }, [session, status, router]);
+  }, [user, isLoaded, router]);
 
   const fetchProfile = async () => {
     try {
@@ -62,10 +63,10 @@ export default function Dashboard() {
   };
 
   const handleSignOut = () => {
-    signOut({ callbackUrl: '/' });
+    signOut();
   };
 
-  if (status === 'loading' || loading) {
+  if (!isLoaded || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -73,7 +74,7 @@ export default function Dashboard() {
     );
   }
 
-  if (!session) {
+  if (!user) {
     return null;
   }
 
@@ -86,7 +87,7 @@ export default function Dashboard() {
             <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
             <div className="flex items-center space-x-4">
               <span className="text-gray-700">
-                Welcome, {session.user?.name || 'User'}
+                Welcome, {user.fullName || user.firstName || 'User'}
               </span>
               <button
                 onClick={handleSignOut}
@@ -117,17 +118,17 @@ export default function Dashboard() {
                     <div className="flex-shrink-0">
                       <img
                         className="h-16 w-16 rounded-full"
-                        src={session.user?.image || '/default-avatar.png'}
-                        alt={session.user?.name || 'User'}
+                        src={user.imageUrl || '/default-avatar.png'}
+                        alt={user.fullName || 'User'}
                       />
                     </div>
                     <div className="ml-4">
                       <h3 className="text-lg font-medium text-gray-900">
                         {profile?.firstName && profile?.lastName
                           ? `${profile.firstName} ${profile.lastName}`
-                          : session.user?.name || 'User'}
+                          : user.fullName || 'User'}
                       </h3>
-                      <p className="text-sm text-gray-500">{session.user?.email}</p>
+                      <p className="text-sm text-gray-500">{user.primaryEmailAddress?.emailAddress}</p>
                     </div>
                   </div>
 

@@ -1,0 +1,36 @@
+import { SignUp } from '@clerk/nextjs'
+
+export default function SignUpPage() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="max-w-md w-full space-y-8">
+        <div className="text-center">
+          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+            Create your account
+          </h2>
+          <p className="mt-2 text-sm text-gray-600">
+            Start searching for permit offices in your area
+          </p>
+        </div>
+        <div className="mt-8">
+          <SignUp 
+            appearance={{
+              elements: {
+                formButtonPrimary: 'bg-blue-600 hover:bg-blue-700 text-sm normal-case',
+                card: 'shadow-lg',
+                headerTitle: 'text-gray-900',
+                headerSubtitle: 'text-gray-600',
+                socialButtonsBlockButton: 'border border-gray-300 hover:bg-gray-50',
+                socialButtonsBlockButtonText: 'text-gray-700',
+                formFieldInput: 'border border-gray-300 rounded-md',
+                footerActionLink: 'text-blue-600 hover:text-blue-700'
+              }
+            }}
+            redirectUrl="/dashboard"
+            signInUrl="/sign-in"
+          />
+        </div>
+      </div>
+    </div>
+  )
+}

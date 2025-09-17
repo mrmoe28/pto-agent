@@ -25,22 +25,25 @@ This project has a clearly defined scope and feature set. To prevent scope creep
 ## Project Overview
 
 This is a **Permit Office Search Application** built with Next.js 15, designed to help users find local permit offices in Georgia. The application features:
-- Geocoding services with LocationIQ and Google Maps fallback
-- Supabase database integration for permit office data
-- Static Georgia permit office data as fallback
-- Landing page with Hero, Features, How It Works, and Contact sections
+- **User Authentication**: Clerk-based secure authentication system with dashboard and profile management
+- **Geocoding services**: LocationIQ and Google Maps fallback for address resolution
+- **Database integration**: Supabase for permit office data with static Georgia data fallback
+- **User Features**: Personal dashboard, profile management, and favorites system
+- **Landing page**: Hero, Features, How It Works, and Contact sections
 
 ## Technology Stack
 
 - **Framework**: Next.js 15.5.2 (App Router)
 - **Language**: TypeScript 5
 - **Styling**: Tailwind CSS 4
-- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Clerk (secure user management)
+- **Database**: Supabase (PostgreSQL) + Drizzle ORM
 - **APIs**:
   - LocationIQ for geocoding (primary)
   - Google Maps API (fallback)
 - **HTTP Client**: Axios
 - **Web Scraping**: Cheerio & Playwright
+- **Rate Limiting**: Upstash Redis
 
 ## Common Development Commands
 
@@ -100,9 +103,19 @@ Dual-provider geocoding with automatic fallback:
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 
+# Clerk Authentication
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+CLERK_SECRET_KEY=
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/
+NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/
+
 # Geocoding Services
 LOCATIONIQ_ACCESS_TOKEN=
 GOOGLE_MAPS_API_KEY=
+
+# Database
+DATABASE_URL=file:./dev.db
 ```
 
 ## Database Schema
