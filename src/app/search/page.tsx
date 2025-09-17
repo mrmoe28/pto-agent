@@ -4,6 +4,7 @@ import { useUser } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import GooglePlacesAutocomplete from '@/components/GooglePlacesAutocomplete';
+import { extractAddressComponents, getCoordinates } from '@/lib/google-apis';
 
 interface PermitOffice {
   id?: string;
@@ -62,21 +63,19 @@ export default function SearchPage() {
 
       // Use Google Places data if available, otherwise fallback to geocoding
       if (selectedPlace && selectedPlace.geometry?.location) {
-        latitude = selectedPlace.geometry.location.lat();
-        longitude = selectedPlace.geometry.location.lng();
-        
-        // Extract address components
-        if (selectedPlace.address_components) {
-          selectedPlace.address_components.forEach(component => {
-            if (component.types.includes('locality')) {
-              city = component.long_name;
-            } else if (component.types.includes('administrative_area_level_2')) {
-              county = component.long_name;
-            } else if (component.types.includes('administrative_area_level_1')) {
-              state = component.short_name;
-            }
-          });
+        const coords = getCoordinates(selectedPlace);
+        if (coords) {
+          latitude = coords.latitude;
+          longitude = coords.longitude;
+        } else {
+          throw new Error('Could not get coordinates from selected place');
         }
+        
+        // Extract address components using our utility function
+        const addressComponents = extractAddressComponents(selectedPlace);
+        city = addressComponents.city;
+        county = addressComponents.county;
+        state = addressComponents.state;
       } else {
         // Fallback to geocoding API
         const geocodeResponse = await fetch('/api/geocode', {

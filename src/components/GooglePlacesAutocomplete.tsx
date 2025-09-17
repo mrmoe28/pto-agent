@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Loader } from '@googlemaps/js-api-loader';
+import { PLACES_CONFIG, GOOGLE_API_ERRORS, isGoogleAPIConfigured } from '@/lib/google-apis';
 
 interface GooglePlacesAutocompleteProps {
   onPlaceSelect: (place: google.maps.places.PlaceResult) => void;
@@ -25,20 +26,23 @@ export default function GooglePlacesAutocomplete({
 
   useEffect(() => {
     const initializeAutocomplete = async () => {
+      // Check if Google API is configured
+      if (!isGoogleAPIConfigured()) {
+        console.warn(GOOGLE_API_ERRORS.NO_API_KEY);
+        setIsLoaded(true); // Still show the input, just without autocomplete
+        return;
+      }
+
       try {
         const loader = new Loader({
           apiKey: process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY || '',
           version: 'weekly',
           libraries: ['places']
         });
-
         await loader.load();
         
         if (inputRef.current && !autocompleteRef.current) {
-          autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
-            types: ['address'],
-            fields: ['formatted_address', 'geometry', 'address_components', 'place_id']
-          });
+          autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, PLACES_CONFIG);
 
           autocompleteRef.current.addListener('place_changed', () => {
             const place = autocompleteRef.current?.getPlace();
@@ -46,13 +50,16 @@ export default function GooglePlacesAutocomplete({
               setInputValue(place.formatted_address);
               onChange?.(place.formatted_address);
               onPlaceSelect(place);
+            } else {
+              console.warn(GOOGLE_API_ERRORS.INVALID_PLACE);
             }
           });
         }
         
         setIsLoaded(true);
       } catch (error) {
-        console.error('Error loading Google Places API:', error);
+        console.error(GOOGLE_API_ERRORS.LOAD_FAILED, error);
+        setIsLoaded(true); // Still show the input, just without autocomplete
       }
     };
 
