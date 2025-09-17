@@ -100,24 +100,27 @@ export default function PricingPage() {
   const router = useRouter();
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const isAuthenticated = !!user;
 
   useEffect(() => {
     if (!isLoaded) return;
 
+    if (user) {
+      // This would typically come from Clerk's subscription data
+      setCurrentPlan('free');
+    } else {
+      setCurrentPlan(null);
+    }
+  }, [isLoaded, user]);
+
+  const handleSelectPlan = async (planId: string) => {
     if (!user) {
       router.push('/sign-in');
       return;
     }
 
-    // Check user's current subscription
-    // This would typically come from Clerk's subscription data
-    // For now, we'll simulate it
-    setCurrentPlan('free');
-  }, [user, isLoaded, router]);
-
-  const handleSelectPlan = async (planId: string) => {
     if (planId === 'free') {
-      // Free plan - no action needed
+      setCurrentPlan('free');
       return;
     }
 
@@ -150,10 +153,6 @@ export default function PricingPage() {
     );
   }
 
-  if (!user) {
-    return null;
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       {/* Header */}
@@ -167,12 +166,12 @@ export default function PricingPage() {
               <h1 className="text-3xl font-bold text-gray-900">Pricing Plans</h1>
             </div>
             <Button
-              onClick={() => router.push('/dashboard')}
+              onClick={() => router.push(isAuthenticated ? '/dashboard' : '/sign-in')}
               variant="outline"
               className="flex items-center space-x-2"
             >
-              <ArrowRight className="h-4 w-4 rotate-180" />
-              <span>Back to Dashboard</span>
+              <ArrowRight className={`h-4 w-4 ${isAuthenticated ? 'rotate-180' : ''}`} />
+              <span>{isAuthenticated ? 'Back to Dashboard' : 'Sign In'}</span>
             </Button>
           </div>
         </div>
@@ -198,6 +197,15 @@ export default function PricingPage() {
             </div>
           )}
         </div>
+
+        {!isAuthenticated && (
+          <div className="mb-12 max-w-3xl mx-auto bg-blue-50 border border-blue-200 rounded-xl px-6 py-4 text-blue-800">
+            <p className="font-semibold">Browsing plans without an account</p>
+            <p className="text-sm text-blue-700">
+              You can continue using the free search tools without signing in. Create an account when you&apos;re ready to upgrade or save favorites.
+            </p>
+          </div>
+        )}
 
         {/* Pricing Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">

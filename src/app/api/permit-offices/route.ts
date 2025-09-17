@@ -7,6 +7,7 @@ import { eq, and, ilike } from 'drizzle-orm'
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
+    const officeId = searchParams.get('id')
     const latitude = searchParams.get('lat')
     const longitude = searchParams.get('lng')
     const city = searchParams.get('city')
@@ -15,6 +16,40 @@ export async function GET(request: NextRequest) {
 
     let offices: PermitOffice[] = []
     let error = null
+
+    if (officeId) {
+      try {
+        const result = await db
+          .select()
+          .from(permitOffices)
+          .where(
+            and(
+              eq(permitOffices.id, officeId),
+              eq(permitOffices.active, true)
+            )
+          )
+          .limit(1)
+
+        if (result.length > 0) {
+          return NextResponse.json({
+            success: true,
+            offices: result,
+            count: result.length,
+            source: 'database'
+          })
+        }
+      } catch (dbError) {
+        error = dbError
+        console.error('Database query error:', dbError)
+      }
+
+      return NextResponse.json({
+        success: true,
+        offices: [],
+        count: 0,
+        source: 'database'
+      })
+    }
 
     try {
       // Build the Drizzle query

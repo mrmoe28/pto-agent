@@ -1,7 +1,7 @@
 'use client';
 
 import { useUser } from '@clerk/nextjs';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import GooglePlacesAutocomplete from '@/components/GooglePlacesAutocomplete';
 import { extractAddressComponents, getCoordinates } from '@/lib/google-apis';
@@ -32,14 +32,7 @@ export default function SearchPage() {
   const [error, setError] = useState('');
   const [selectedPlace, setSelectedPlace] = useState<google.maps.places.PlaceResult | null>(null);
 
-  useEffect(() => {
-    if (!isLoaded) return;
-
-    if (!user) {
-      router.push('/sign-in');
-      return;
-    }
-  }, [user, isLoaded, router]);
+  const isAuthenticated = !!user;
 
   const handlePlaceSelect = (place: google.maps.places.PlaceResult) => {
     setSelectedPlace(place);
@@ -134,10 +127,6 @@ export default function SearchPage() {
     );
   }
 
-  if (!user) {
-    return null;
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -145,12 +134,21 @@ export default function SearchPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <h1 className="text-3xl font-bold text-gray-900">Search Permit Offices</h1>
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="text-gray-600 hover:text-gray-900 transition-colors duration-200"
-            >
-              ← Back to Dashboard
-            </button>
+            {isAuthenticated ? (
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="text-gray-600 hover:text-gray-900 transition-colors duration-200"
+              >
+                ← Back to Dashboard
+              </button>
+            ) : (
+              <button
+                onClick={() => router.push('/sign-in')}
+                className="text-gray-600 hover:text-gray-900 transition-colors duration-200"
+              >
+                Sign in to manage searches →
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -185,6 +183,15 @@ export default function SearchPage() {
               </button>
             </form>
           </div>
+
+          {!isAuthenticated && (
+            <div className="mb-8 p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-800">
+              <p className="font-semibold">Searching as a guest</p>
+              <p className="text-sm text-blue-700">
+                You can look up permit offices without an account. Sign in to save searches and manage favorites.
+              </p>
+            </div>
+          )}
 
           {/* Error Display */}
           {error && (

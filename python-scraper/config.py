@@ -9,7 +9,7 @@ class ScraperConfig(BaseSettings):
     """Configuration settings for the permit office scraper"""
     
     # Database settings
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/permit_offices")
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://neondb_owner:npg_CHW9DuN3bvTV@ep-long-wildflower-adf2shp3-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require")
     
     # Google APIs
     GOOGLE_MAPS_API_KEY: str = os.getenv("GOOGLE_MAPS_API_KEY", "")
@@ -82,6 +82,34 @@ class ScraperConfig(BaseSettings):
                 "phone": ".phone, [href^='tel:']",
                 "email": ".email, [href^='mailto:']",
                 "hours": ".hours, .business-hours"
+            }
+        },
+        {
+            "name": "Fulton County Permits",
+            "url": "https://www.fultoncountyga.gov/services/building-and-development",
+            "type": "county",
+            "state": "GA",
+            "county": "Fulton",
+            "selectors": {
+                "office_name": "h1, h2, .page-title, .department-name",
+                "address": ".address, .location, .contact-info",
+                "phone": ".phone, .contact-phone, [href^='tel:']",
+                "email": ".email, .contact-email, [href^='mailto:']",
+                "website": ".website, .external-link, [href*='http']"
+            }
+        },
+        {
+            "name": "DeKalb County Permits",
+            "url": "https://www.dekalbcountyga.gov/planning-and-sustainability",
+            "type": "county",
+            "state": "GA",
+            "county": "DeKalb",
+            "selectors": {
+                "office_name": "h1, h2, .page-title, .department-name",
+                "address": ".address, .location, .contact-info",
+                "phone": ".phone, .contact-phone, [href^='tel:']",
+                "email": ".email, .contact-email, [href^='mailto:']",
+                "website": ".website, .external-link, [href*='http']"
             }
         }
     ]

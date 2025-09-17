@@ -1,93 +1,101 @@
-import { auth } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { userFavorites } from '@/lib/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@clerk/nextjs/server'
+import { and, eq } from 'drizzle-orm'
+import { db, userFavorites } from '@/lib/db'
 
 export async function GET() {
+  const { userId } = await auth()
+
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
-    const { userId } = await auth();
-
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const favorites = await db
       .select()
       .from(userFavorites)
-      .where(eq(userFavorites.userId, userId));
+      .where(eq(userFavorites.userId, userId))
 
-    return NextResponse.json(favorites, { status: 200 });
+    return NextResponse.json(favorites)
   } catch (error) {
-    console.error('Error fetching user favorites:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    console.error('Favorites fetch error:', error)
+    return NextResponse.json({ error: 'Failed to fetch favorites' }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
-  try {
-    const { userId } = await auth();
+  const { userId } = await auth()
 
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  try {
+    const body = await request.json()
+
+    if (!body || typeof body !== 'object') {
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
     }
 
-    const body = await request.json();
-    const { action, permitOfficeId } = body;
+    const { action, permitOfficeId, notes } = body as {
+      action?: string
+      permitOfficeId?: string
+      notes?: string | null
+    }
 
     if (!action || !permitOfficeId) {
-      return NextResponse.json(
-        { error: 'Missing action or permitOfficeId' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing action or permitOfficeId' }, { status: 400 })
     }
 
     if (action === 'add') {
-      // Check if already favorited
-      const existing = await db
-        .select()
+      const [existing] = await db
+        .select({ id: userFavorites.id })
         .from(userFavorites)
-        .where(and(
-          eq(userFavorites.userId, userId),
-          eq(userFavorites.permitOfficeId, permitOfficeId)
-        ))
-        .limit(1);
+        .where(
+          and(
+            eq(userFavorites.userId, userId),
+            eq(userFavorites.permitOfficeId, permitOfficeId)
+          )
+        )
+        .limit(1)
 
-      if (existing.length === 0) {
-        await db.insert(userFavorites).values({
+      if (existing) {
+        return NextResponse.json(existing)
+      }
+
+      const [created] = await db
+        .insert(userFavorites)
+        .values({
           userId,
           permitOfficeId,
-        });
-      }
-    } else if (action === 'remove') {
-      await db
-        .delete(userFavorites)
-        .where(and(
-          eq(userFavorites.userId, userId),
-          eq(userFavorites.permitOfficeId, permitOfficeId)
-        ));
-    } else {
-      return NextResponse.json(
-        { error: 'Invalid action. Use "add" or "remove"' },
-        { status: 400 }
-      );
+          notes: notes ?? null,
+        })
+        .returning()
+
+      return NextResponse.json(created, { status: 201 })
     }
 
-    // Return updated favorites list
-    const favorites = await db
-      .select()
-      .from(userFavorites)
-      .where(eq(userFavorites.userId, userId));
+    if (action === 'remove') {
+      const deleted = await db
+        .delete(userFavorites)
+        .where(
+          and(
+            eq(userFavorites.userId, userId),
+            eq(userFavorites.permitOfficeId, permitOfficeId)
+          )
+        )
+        .returning({ id: userFavorites.id })
 
-    return NextResponse.json(favorites, { status: 200 });
+      if (deleted.length === 0) {
+        return NextResponse.json({ error: 'Favorite not found' }, { status: 404 })
+      }
+
+      return NextResponse.json({ success: true })
+    }
+
+    return NextResponse.json({ error: `Unsupported action: ${action}` }, { status: 400 })
   } catch (error) {
-    console.error('Error updating user favorites:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    console.error('Favorites update error:', error)
+    return NextResponse.json({ error: 'Failed to update favorites' }, { status: 500 })
   }
 }

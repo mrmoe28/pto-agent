@@ -1,12 +1,15 @@
-import { redirect } from 'next/navigation'
-import { auth } from '@clerk/nextjs/server'
+import Hero from '@/components/Hero'
+import Features from '@/components/Features'
+import HowItWorks from '@/components/HowItWorks'
+import Contact from '@/components/Contact'
 
-export default async function Home() {
-  const { userId } = await auth()
-  
-  if (!userId) {
-    redirect('/sign-in')
-  }
-  
-  redirect('/dashboard')
+export default function Home() {
+  return (
+    <main className="bg-white">
+      <Hero />
+      <Features />
+      <HowItWorks />
+      <Contact />
+    </main>
+  )
 }
