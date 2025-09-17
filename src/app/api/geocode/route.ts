@@ -84,6 +84,23 @@ async function geocodeWithLocationIQ(address: string) {
   }
 }
 
+type GoogleAddressComponent = {
+  long_name: string
+  short_name: string
+  types: string[]
+}
+
+type GoogleGeocodeLikeResult = {
+  geometry: {
+    location: {
+      lat: number
+      lng: number
+    }
+  }
+  formatted_address: string
+  address_components: GoogleAddressComponent[]
+}
+
 async function geocodeWithGoogle(address: string) {
   const GOOGLE_PLACES_KEY = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY
   
@@ -93,9 +110,10 @@ async function geocodeWithGoogle(address: string) {
   }
 
   try {
+    const encodedAddress = encodeURIComponent(address)
     // First, get place predictions using Places Autocomplete API
     const autocompleteResponse = await fetch(
-      `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(address)}&key=${GOOGLE_PLACES_KEY}&types=address&components=country:us`
+      `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodedAddress}&key=${GOOGLE_PLACES_KEY}&types=address&components=country:us`
     )
 
     if (!autocompleteResponse.ok) {
@@ -120,30 +138,80 @@ async function geocodeWithGoogle(address: string) {
       const detailsData = await detailsResponse.json()
       
       if (detailsData.result) {
-        const result = detailsData.result
-        const location = result.geometry.location
-        
-        // Extract city, county, state from address components
-        const components = result.address_components || []
-        const city = components.find((c: { types: string[] }) => c.types.includes('locality'))?.long_name || ''
-        const county = components.find((c: { types: string[] }) => c.types.includes('administrative_area_level_2'))?.long_name || ''
-        const state = components.find((c: { types: string[] }) => c.types.includes('administrative_area_level_1'))?.short_name || ''
-
-        return {
-          latitude: location.lat,
-          longitude: location.lng,
-          formatted_address: result.formatted_address,
-          city: city,
-          county: county.replace(' County', ''), // Remove 'County' suffix
-          state: state
-        }
+        return mapGoogleResult(detailsData.result as GoogleGeocodeLikeResult)
       }
+    }
+
+    // Fallback to the Geocoding API if autocomplete or details fail to resolve the address
+    const geocodeResponse = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&key=${GOOGLE_PLACES_KEY}&components=country:US`
+    )
+
+    if (!geocodeResponse.ok) {
+      throw new Error(`Google Geocoding API error: ${geocodeResponse.status}`)
+    }
+
+    const geocodeData = await geocodeResponse.json()
+
+    if (geocodeData.status === 'OK' && geocodeData.results && geocodeData.results.length > 0) {
+      return mapGoogleResult(geocodeData.results[0] as GoogleGeocodeLikeResult)
+    }
+
+    if (geocodeData.error_message) {
+      console.warn('Google Geocoding API warning:', geocodeData.error_message)
     }
 
     return null
   } catch (error) {
     console.error('Google Places error:', error)
     return null
+  }
+}
+
+function mapGoogleResult(result: GoogleGeocodeLikeResult | null) {
+  if (!result) return null
+
+  const location = result.geometry?.location
+  const components = result.address_components || []
+
+  if (!location || typeof location.lat !== 'number' || typeof location.lng !== 'number') {
+    return null
+  }
+
+  const { city, county, state } = extractGoogleAdministrativeAreas(components)
+
+  return {
+    latitude: location.lat,
+    longitude: location.lng,
+    formatted_address: result.formatted_address,
+    city,
+    county,
+    state
+  }
+}
+
+function extractGoogleAdministrativeAreas(components: GoogleAddressComponent[]) {
+  const getComponent = (matcher: (component: GoogleAddressComponent) => boolean) =>
+    components.find(matcher)
+
+  const locality = getComponent((c) => c.types.includes('locality'))
+  const postalTown = getComponent((c) => c.types.includes('postal_town'))
+  const sublocality = getComponent((c) => c.types.includes('sublocality') && c.types.includes('sublocality_level_1'))
+  const adminLevel3 = getComponent((c) => c.types.includes('administrative_area_level_3'))
+  const adminLevel2 = getComponent((c) => c.types.includes('administrative_area_level_2'))
+  const stateComponent = getComponent((c) => c.types.includes('administrative_area_level_1'))
+
+  const rawCounty = adminLevel2?.long_name ?? ''
+
+  return {
+    city: locality?.long_name
+      || postalTown?.long_name
+      || sublocality?.long_name
+      || adminLevel3?.long_name
+      || adminLevel2?.long_name
+      || '',
+    county: rawCounty.replace(/\s+(County|Parish)$/i, ''),
+    state: stateComponent?.short_name ?? ''
   }
 }
 
