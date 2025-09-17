@@ -12,9 +12,11 @@
   "dependencies": {
     "@clerk/nextjs": "^6.32.0",
     "@neondatabase/serverless": "^1.0.1",
+    "@types/better-sqlite3": "^7.6.13",
     "@upstash/ratelimit": "^2.0.6",
     "@upstash/redis": "^1.35.3",
     "axios": "^1.11.0",
+    "better-sqlite3": "^12.2.0",
     "cheerio": "^1.1.2",
     "drizzle-kit": "^0.31.4",
     "drizzle-orm": "^0.44.5",

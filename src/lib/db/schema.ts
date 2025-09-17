@@ -1,50 +1,9 @@
 import { pgTable, text, timestamp, uuid, boolean, integer, jsonb } from 'drizzle-orm/pg-core';
 
-// NextAuth required tables
-export const users = pgTable('users', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  name: text('name'),
-  email: text('email').unique().notNull(),
-  emailVerified: timestamp('email_verified', { mode: 'date' }),
-  image: text('image'),
-  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
-  updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow(),
-});
-
-export const accounts = pgTable('accounts', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  type: text('type').notNull(),
-  provider: text('provider').notNull(),
-  providerAccountId: text('provider_account_id').notNull(),
-  refresh_token: text('refresh_token'),
-  access_token: text('access_token'),
-  expires_at: integer('expires_at'),
-  token_type: text('token_type'),
-  scope: text('scope'),
-  id_token: text('id_token'),
-  session_state: text('session_state'),
-  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
-  updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow(),
-});
-
-export const sessions = pgTable('sessions', {
-  sessionToken: text('session_token').primaryKey(),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  expires: timestamp('expires', { mode: 'date' }).notNull(),
-  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
-});
-
-export const verificationTokens = pgTable('verification_tokens', {
-  identifier: text('identifier').notNull(),
-  token: text('token').notNull(),
-  expires: timestamp('expires', { mode: 'date' }).notNull(),
-});
-
-// User profile and application-specific tables
+// User profile and application-specific tables (using Clerk user IDs)
 export const userProfiles = pgTable('user_profiles', {
   id: uuid('id').defaultRandom().primaryKey(),
-  userId: uuid('user_id').unique().notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: text('user_id').unique().notNull(), // Clerk user ID (string)
   firstName: text('first_name'),
   lastName: text('last_name'),
   bio: text('bio'),
@@ -64,7 +23,7 @@ export const userProfiles = pgTable('user_profiles', {
 
 export const userPermitSearches = pgTable('user_permit_searches', {
   id: uuid('id').defaultRandom().primaryKey(),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull(), // Clerk user ID (string)
   searchName: text('search_name'),
   searchQuery: text('search_query'),
   locationData: jsonb('location_data').$type<{
@@ -82,7 +41,7 @@ export const userPermitSearches = pgTable('user_permit_searches', {
 
 export const userFavorites = pgTable('user_favorites', {
   id: uuid('id').defaultRandom().primaryKey(),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull(), // Clerk user ID (string)
   permitOfficeId: uuid('permit_office_id').notNull(),
   notes: text('notes'),
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
@@ -136,8 +95,6 @@ export const permitOffices = pgTable('permit_offices', {
 });
 
 // Type exports for TypeScript
-export type User = typeof users.$inferSelect;
-export type NewUser = typeof users.$inferInsert;
 export type UserProfile = typeof userProfiles.$inferSelect;
 export type NewUserProfile = typeof userProfiles.$inferInsert;
 export type UserPermitSearch = typeof userPermitSearches.$inferSelect;
