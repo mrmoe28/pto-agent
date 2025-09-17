@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sql, query, PermitOffice } from '@/lib/neon'
+import { db, permitOffices, PermitOffice } from '@/lib/db'
 import { georgiaPermitOffices } from '@/lib/georgia-permit-data'
+import { eq, and, ilike, sql as drizzleSql } from 'drizzle-orm'
 
 // Search for permit offices by location
 export async function GET(request: NextRequest) {
@@ -16,42 +17,30 @@ export async function GET(request: NextRequest) {
     let error = null
 
     try {
-      // Build the SQL query dynamically
-      let queryText = `
-        SELECT * FROM permit_offices
-        WHERE active = true
-      `
-      const params: (string | number)[] = []
-      let paramCount = 1
-
+      // Build the Drizzle query
+      let whereConditions = [eq(permitOffices.active, true)]
+      
       // Filter by state
-      if (state) {
-        queryText += ` AND state = $${paramCount}`
-        params.push(state.toUpperCase())
-        paramCount++
-      } else {
-        queryText += ` AND state = $${paramCount}`
-        params.push('GA') // Default to Georgia
-        paramCount++
-      }
+      const stateFilter = state ? state.toUpperCase() : 'GA'
+      whereConditions.push(eq(permitOffices.state, stateFilter))
 
       // Search by city if provided
       if (city) {
-        queryText += ` AND city ILIKE $${paramCount}`
-        params.push(`%${city}%`)
-        paramCount++
+        whereConditions.push(ilike(permitOffices.city, `%${city}%`))
       }
 
       // Search by county if provided
       if (county) {
-        queryText += ` AND county ILIKE $${paramCount}`
-        params.push(`%${county}%`)
-        paramCount++
+        whereConditions.push(ilike(permitOffices.county, `%${county}%`))
       }
 
-      queryText += ` ORDER BY jurisdiction_type ASC, city ASC LIMIT 10`
-
-      offices = await query<PermitOffice>(queryText, params)
+      // Execute the query
+      offices = await db
+        .select()
+        .from(permitOffices)
+        .where(and(...whereConditions))
+        .orderBy(permitOffices.jurisdictionType, permitOffices.city)
+        .limit(10)
     } catch (dbError) {
       error = dbError
       console.error('Database query error:', dbError)
@@ -111,133 +100,93 @@ export async function POST(request: NextRequest) {
     let error = null
 
     try {
-      // First, try to create the table if it doesn't exist
-      await sql`
-        CREATE TABLE IF NOT EXISTS permit_offices (
-          id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-          created_at TIMESTAMPTZ DEFAULT NOW(),
-          updated_at TIMESTAMPTZ DEFAULT NOW(),
-
-          -- Location Information
-          city VARCHAR(255) NOT NULL,
-          county VARCHAR(255) NOT NULL,
-          state VARCHAR(2) NOT NULL,
-          jurisdiction_type VARCHAR(50) NOT NULL,
-
-          -- Office Details
-          department_name VARCHAR(255) NOT NULL,
-          office_type VARCHAR(50) NOT NULL,
-
-          -- Contact Information
-          address VARCHAR(500) NOT NULL,
-          phone VARCHAR(50),
-          email VARCHAR(255),
-          website VARCHAR(500),
-
-          -- Operating Hours
-          hours_monday VARCHAR(100),
-          hours_tuesday VARCHAR(100),
-          hours_wednesday VARCHAR(100),
-          hours_thursday VARCHAR(100),
-          hours_friday VARCHAR(100),
-          hours_saturday VARCHAR(100),
-          hours_sunday VARCHAR(100),
-
-          -- Services Offered
-          building_permits BOOLEAN DEFAULT false,
-          electrical_permits BOOLEAN DEFAULT false,
-          plumbing_permits BOOLEAN DEFAULT false,
-          mechanical_permits BOOLEAN DEFAULT false,
-          zoning_permits BOOLEAN DEFAULT false,
-          planning_review BOOLEAN DEFAULT false,
-          inspections BOOLEAN DEFAULT false,
-
-          -- Online Services
-          online_applications BOOLEAN DEFAULT false,
-          online_payments BOOLEAN DEFAULT false,
-          permit_tracking BOOLEAN DEFAULT false,
-          online_portal_url VARCHAR(500),
-
-          -- Geographic Data
-          latitude DECIMAL(10, 8),
-          longitude DECIMAL(11, 8),
-          service_area_bounds JSONB,
-
-          -- Metadata
-          data_source VARCHAR(50) DEFAULT 'manual',
-          last_verified TIMESTAMPTZ,
-          crawl_frequency VARCHAR(50) DEFAULT 'monthly',
-          active BOOLEAN DEFAULT true,
-
-          -- Unique constraint
-          UNIQUE(city, county, department_name)
-        )
-      `
-
-      // Insert or update the Georgia permit offices
+      // Insert or update the Georgia permit offices using Drizzle
       for (const office of georgiaPermitOffices) {
-        const result = await sql`
-          INSERT INTO permit_offices (
-            city, county, state, jurisdiction_type, department_name, office_type,
-            address, phone, email, website,
-            hours_monday, hours_tuesday, hours_wednesday, hours_thursday,
-            hours_friday, hours_saturday, hours_sunday,
-            building_permits, electrical_permits, plumbing_permits,
-            mechanical_permits, zoning_permits, planning_review, inspections,
-            online_applications, online_payments, permit_tracking, online_portal_url,
-            latitude, longitude, service_area_bounds,
-            data_source, last_verified, crawl_frequency, active
-          ) VALUES (
-            ${office.city}, ${office.county}, ${office.state}, ${office.jurisdiction_type},
-            ${office.department_name}, ${office.office_type}, ${office.address},
-            ${office.phone}, ${office.email}, ${office.website},
-            ${office.hours_monday}, ${office.hours_tuesday}, ${office.hours_wednesday},
-            ${office.hours_thursday}, ${office.hours_friday}, ${office.hours_saturday || null},
-            ${office.hours_sunday || null}, ${office.building_permits}, ${office.electrical_permits},
-            ${office.plumbing_permits}, ${office.mechanical_permits}, ${office.zoning_permits},
-            ${office.planning_review}, ${office.inspections}, ${office.online_applications},
-            ${office.online_payments}, ${office.permit_tracking}, ${office.online_portal_url},
-            ${office.latitude}, ${office.longitude}, ${office.service_area_bounds},
-            ${office.data_source}, ${office.last_verified}, ${office.crawl_frequency}, ${office.active}
-          )
-          ON CONFLICT (city, county, department_name)
-          DO UPDATE SET
-            updated_at = NOW(),
-            state = EXCLUDED.state,
-            jurisdiction_type = EXCLUDED.jurisdiction_type,
-            office_type = EXCLUDED.office_type,
-            address = EXCLUDED.address,
-            phone = EXCLUDED.phone,
-            email = EXCLUDED.email,
-            website = EXCLUDED.website,
-            hours_monday = EXCLUDED.hours_monday,
-            hours_tuesday = EXCLUDED.hours_tuesday,
-            hours_wednesday = EXCLUDED.hours_wednesday,
-            hours_thursday = EXCLUDED.hours_thursday,
-            hours_friday = EXCLUDED.hours_friday,
-            hours_saturday = EXCLUDED.hours_saturday,
-            hours_sunday = EXCLUDED.hours_sunday,
-            building_permits = EXCLUDED.building_permits,
-            electrical_permits = EXCLUDED.electrical_permits,
-            plumbing_permits = EXCLUDED.plumbing_permits,
-            mechanical_permits = EXCLUDED.mechanical_permits,
-            zoning_permits = EXCLUDED.zoning_permits,
-            planning_review = EXCLUDED.planning_review,
-            inspections = EXCLUDED.inspections,
-            online_applications = EXCLUDED.online_applications,
-            online_payments = EXCLUDED.online_payments,
-            permit_tracking = EXCLUDED.permit_tracking,
-            online_portal_url = EXCLUDED.online_portal_url,
-            latitude = EXCLUDED.latitude,
-            longitude = EXCLUDED.longitude,
-            service_area_bounds = EXCLUDED.service_area_bounds,
-            data_source = EXCLUDED.data_source,
-            last_verified = EXCLUDED.last_verified,
-            crawl_frequency = EXCLUDED.crawl_frequency,
-            active = EXCLUDED.active
-          RETURNING *
-        `
-        data.push(result[0] as PermitOffice)
+        try {
+          const result = await db
+            .insert(permitOffices)
+            .values({
+              city: office.city,
+              county: office.county,
+              state: office.state,
+              jurisdictionType: office.jurisdiction_type,
+              departmentName: office.department_name,
+              officeType: office.office_type,
+              address: office.address,
+              phone: office.phone,
+              email: office.email,
+              website: office.website,
+              hoursMonday: office.hours_monday,
+              hoursTuesday: office.hours_tuesday,
+              hoursWednesday: office.hours_wednesday,
+              hoursThursday: office.hours_thursday,
+              hoursFriday: office.hours_friday,
+              hoursSaturday: office.hours_saturday,
+              hoursSunday: office.hours_sunday,
+              buildingPermits: office.building_permits,
+              electricalPermits: office.electrical_permits,
+              plumbingPermits: office.plumbing_permits,
+              mechanicalPermits: office.mechanical_permits,
+              zoningPermits: office.zoning_permits,
+              planningReview: office.planning_review,
+              inspections: office.inspections,
+              onlineApplications: office.online_applications,
+              onlinePayments: office.online_payments,
+              permitTracking: office.permit_tracking,
+              onlinePortalUrl: office.online_portal_url,
+              latitude: office.latitude?.toString(),
+              longitude: office.longitude?.toString(),
+              serviceAreaBounds: office.service_area_bounds,
+              dataSource: office.data_source,
+              lastVerified: office.last_verified ? new Date(office.last_verified) : null,
+              crawlFrequency: office.crawl_frequency,
+              active: office.active
+            })
+            .onConflictDoUpdate({
+              target: [permitOffices.city, permitOffices.county, permitOffices.departmentName],
+              set: {
+                updatedAt: new Date(),
+                state: office.state,
+                jurisdictionType: office.jurisdiction_type,
+                officeType: office.office_type,
+                address: office.address,
+                phone: office.phone,
+                email: office.email,
+                website: office.website,
+                hoursMonday: office.hours_monday,
+                hoursTuesday: office.hours_tuesday,
+                hoursWednesday: office.hours_wednesday,
+                hoursThursday: office.hours_thursday,
+                hoursFriday: office.hours_friday,
+                hoursSaturday: office.hours_saturday,
+                hoursSunday: office.hours_sunday,
+                buildingPermits: office.building_permits,
+                electricalPermits: office.electrical_permits,
+                plumbingPermits: office.plumbing_permits,
+                mechanicalPermits: office.mechanical_permits,
+                zoningPermits: office.zoning_permits,
+                planningReview: office.planning_review,
+                inspections: office.inspections,
+                onlineApplications: office.online_applications,
+                onlinePayments: office.online_payments,
+                permitTracking: office.permit_tracking,
+                onlinePortalUrl: office.online_portal_url,
+                latitude: office.latitude?.toString(),
+                longitude: office.longitude?.toString(),
+                serviceAreaBounds: office.service_area_bounds,
+                dataSource: office.data_source,
+                lastVerified: office.last_verified ? new Date(office.last_verified) : null,
+                crawlFrequency: office.crawl_frequency,
+                active: office.active
+              }
+            })
+            .returning()
+          
+          data.push(result[0])
+        } catch (insertError) {
+          console.error('Error inserting office:', office.department_name, insertError)
+          // Continue with other offices even if one fails
+        }
       }
     } catch (dbError) {
       error = dbError

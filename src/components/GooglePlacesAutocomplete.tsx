@@ -34,31 +34,42 @@ export default function GooglePlacesAutocomplete({
       }
 
       try {
+        console.log('Initializing Google Places Autocomplete...');
         const loader = new Loader({
           apiKey: process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY || '',
           version: 'weekly',
           libraries: ['places']
         });
+        
         await loader.load();
+        console.log('Google Maps API loaded successfully');
         
         if (inputRef.current && !autocompleteRef.current) {
+          console.log('Creating autocomplete instance...');
           autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, PLACES_CONFIG);
 
           autocompleteRef.current.addListener('place_changed', () => {
+            console.log('Place changed event triggered');
             const place = autocompleteRef.current?.getPlace();
+            console.log('Selected place:', place);
+            
             if (place && place.formatted_address) {
               setInputValue(place.formatted_address);
               onChange?.(place.formatted_address);
               onPlaceSelect(place);
+              console.log('Place selected successfully:', place.formatted_address);
             } else {
-              console.warn(GOOGLE_API_ERRORS.INVALID_PLACE);
+              console.warn(GOOGLE_API_ERRORS.INVALID_PLACE, place);
             }
           });
+          
+          console.log('Autocomplete initialized successfully');
         }
         
         setIsLoaded(true);
       } catch (error) {
         console.error(GOOGLE_API_ERRORS.LOAD_FAILED, error);
+        console.error('Full error details:', error);
         setIsLoaded(true); // Still show the input, just without autocomplete
       }
     };
