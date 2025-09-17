@@ -4,6 +4,16 @@ import { useEffect, useRef, useState } from 'react';
 import { Loader } from '@googlemaps/js-api-loader';
 import { PLACES_CONFIG, GOOGLE_API_ERRORS, isGoogleAPIConfigured } from '@/lib/google-apis';
 
+// Interface for Google Places API response
+interface GooglePlacesPrediction {
+  description: string;
+  place_id: string;
+  structured_formatting: {
+    main_text: string;
+    secondary_text: string;
+  };
+}
+
 interface GooglePlacesAutocompleteProps {
   onPlaceSelect: (place: google.maps.places.PlaceResult) => void;
   placeholder?: string;
@@ -113,7 +123,7 @@ export default function GooglePlacesAutocomplete({
         const data = await response.json();
         
         if (data.predictions) {
-          const suggestions = data.predictions.map((pred: any) => pred.description);
+          const suggestions = data.predictions.map((pred: GooglePlacesPrediction) => pred.description);
           setSuggestions(suggestions);
           setShowSuggestions(true);
         }
