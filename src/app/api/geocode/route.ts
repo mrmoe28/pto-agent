@@ -12,23 +12,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Try LocationIQ first (cheaper, OpenStreetMap-based)
-    const locationiqResult = await geocodeWithLocationIQ(address)
-    if (locationiqResult) {
-      return NextResponse.json({
-        success: true,
-        source: 'locationiq',
-        ...locationiqResult
-      })
-    }
-
-    // Fallback to Google Maps API
+    // Use Google Places API as primary geocoding method
     const googleResult = await geocodeWithGoogle(address)
     if (googleResult) {
       return NextResponse.json({
         success: true,
         source: 'google',
         ...googleResult
+      })
+    }
+
+    // Fallback to LocationIQ if Google fails
+    const locationiqResult = await geocodeWithLocationIQ(address)
+    if (locationiqResult) {
+      return NextResponse.json({
+        success: true,
+        source: 'locationiq',
+        ...locationiqResult
       })
     }
 
