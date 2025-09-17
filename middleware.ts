@@ -1,6 +1,14 @@
 import { clerkMiddleware } from '@clerk/nextjs/server';
 
-export default clerkMiddleware();
+export default clerkMiddleware({
+  // Enhanced security for production
+  authorizedParties: process.env.NODE_ENV === 'production' 
+    ? [process.env.NEXT_PUBLIC_APP_URL || 'https://yourdomain.com']
+    : undefined,
+  
+  // Additional security options
+  publishableKey: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+});
 
 export const config = {
   matcher: [
