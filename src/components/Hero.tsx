@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import GooglePlacesAutocomplete from './GooglePlacesAutocomplete'
+import { extractAddressComponents, getCoordinates } from '@/lib/google-apis'
 
 interface PermitOffice {
   id?: string
@@ -24,6 +26,7 @@ export default function Hero() {
   const [loading, setLoading] = useState(false)
   const [results, setResults] = useState<PermitOffice[]>([])
   const [error, setError] = useState('')
+  const [selectedPlace, setSelectedPlace] = useState<google.maps.places.PlaceResult | null>(null)
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,18 +37,41 @@ export default function Hero() {
     setResults([])
 
     try {
-      // Step 1: Geocode the address
-      const geocodeResponse = await fetch('/api/geocode', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address })
-      })
+      let geocodeData
 
-      if (!geocodeResponse.ok) {
-        throw new Error('Could not find location for that address')
+      // If we have a selected place from Google Places, use that data directly
+      if (selectedPlace && selectedPlace.formatted_address) {
+        const coordinates = getCoordinates(selectedPlace)
+        const addressComponents = extractAddressComponents(selectedPlace)
+        
+        if (coordinates) {
+          geocodeData = {
+            success: true,
+            source: 'google_places',
+            latitude: coordinates.latitude,
+            longitude: coordinates.longitude,
+            formatted_address: selectedPlace.formatted_address,
+            city: addressComponents.city,
+            county: addressComponents.county,
+            state: addressComponents.state
+          }
+        } else {
+          throw new Error('Could not get coordinates from selected place')
+        }
+      } else {
+        // Fallback to geocoding API for manual input
+        const geocodeResponse = await fetch('/api/geocode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address })
+        })
+
+        if (!geocodeResponse.ok) {
+          throw new Error('Could not find location for that address')
+        }
+
+        geocodeData = await geocodeResponse.json()
       }
-
-      const geocodeData = await geocodeResponse.json()
       
       // Step 2: Search for permit offices
       const params = new URLSearchParams({
@@ -77,6 +103,21 @@ export default function Hero() {
     }
   }
 
+  const handlePlaceSelect = (place: google.maps.places.PlaceResult) => {
+    setSelectedPlace(place)
+    if (place.formatted_address) {
+      setAddress(place.formatted_address)
+    }
+  }
+
+  const handleAddressChange = (value: string) => {
+    setAddress(value)
+    // Clear selected place when user types manually
+    if (selectedPlace) {
+      setSelectedPlace(null)
+    }
+  }
+
   return (
     <section className="bg-gradient-to-b from-blue-50 to-white py-20 px-4">
       <div className="max-w-7xl mx-auto text-center">
@@ -90,13 +131,12 @@ export default function Hero() {
         
         <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-12">
           <div className="flex flex-col sm:flex-row gap-4">
-            <input
-              type="text"
+            <GooglePlacesAutocomplete
               value={address}
-              onChange={(e) => setAddress(e.target.value)}
+              onChange={handleAddressChange}
+              onPlaceSelect={handlePlaceSelect}
               placeholder="Enter your property address..."
-              className="flex-1 px-6 py-4 text-lg text-black !text-black border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
-              required
+              className="flex-1"
             />
             <button
               type="submit"
