@@ -1,15 +1,12 @@
-import Hero from '@/components/Hero'
-import Features from '@/components/Features'
-import HowItWorks from '@/components/HowItWorks'
-import Contact from '@/components/Contact'
+import { redirect } from 'next/navigation'
+import { auth } from '@clerk/nextjs/server'
 
-export default function Home() {
-  return (
-    <main className="min-h-screen">
-      <Hero />
-      <Features />
-      <HowItWorks />
-      <Contact />
-    </main>
-  )
+export default async function Home() {
+  const { userId } = await auth()
+  
+  if (!userId) {
+    redirect('/sign-in')
+  }
+  
+  redirect('/dashboard')
 }
