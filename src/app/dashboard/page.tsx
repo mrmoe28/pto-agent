@@ -3,6 +3,26 @@
 import { useUser, useClerk } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
+import { 
+  Search, 
+  Heart, 
+  MapPin, 
+  Building2, 
+  Clock, 
+  Star, 
+  ChevronRight,
+  Settings,
+  LogOut,
+  User,
+  TrendingUp,
+  FileText,
+  Phone
+} from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -68,8 +88,11 @@ export default function Dashboard() {
 
   if (!isLoaded || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
+          <p className="text-gray-600 font-medium">Loading your dashboard...</p>
+        </div>
       </div>
     );
   }
@@ -78,127 +101,283 @@ export default function Dashboard() {
     return null;
   }
 
+  const userName = profile?.firstName && profile?.lastName
+    ? `${profile.firstName} ${profile.lastName}`
+    : user.fullName || 'User';
+
+  const userInitials = userName
+    .split(' ')
+    .map(name => name[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-            <div className="flex items-center space-x-4">
-              <span className="text-gray-700">
-                Welcome, {user.fullName || user.firstName || 'User'}
-              </span>
-              <button
-                onClick={handleSignOut}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200"
-              >
-                Sign Out
-              </button>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      {/* Hero Header */}
+      <div className="relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 opacity-90"></div>
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSI0Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-20"></div>
+        
+        {/* Header Content */}
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex-1">
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                  <Building2 className="h-8 w-8 text-white" />
+                </div>
+                <h1 className="text-4xl lg:text-5xl font-bold text-white">
+                  Welcome back, {userName.split(' ')[0]}!
+                </h1>
+              </div>
+              <p className="text-xl text-blue-100 mb-8 max-w-2xl">
+                Find the perfect permit office for your project. Search, save, and manage your favorite locations all in one place.
+              </p>
+              
+              {/* Quick Stats */}
+              <div className="flex flex-wrap gap-6">
+                <div className="flex items-center space-x-2 bg-white/20 rounded-lg px-4 py-2 backdrop-blur-sm">
+                  <MapPin className="h-5 w-5 text-white" />
+                  <span className="text-white font-medium">500+ Offices</span>
+                </div>
+                <div className="flex items-center space-x-2 bg-white/20 rounded-lg px-4 py-2 backdrop-blur-sm">
+                  <Star className="h-5 w-5 text-white" />
+                  <span className="text-white font-medium">4.8/5 Rating</span>
+                </div>
+                <div className="flex items-center space-x-2 bg-white/20 rounded-lg px-4 py-2 backdrop-blur-sm">
+                  <TrendingUp className="h-5 w-5 text-white" />
+                  <span className="text-white font-medium">Live Updates</span>
+                </div>
+              </div>
+            </div>
+
+            {/* User Profile Card */}
+            <div className="mt-8 lg:mt-0 lg:ml-8">
+              <Card className="w-full max-w-sm bg-white/95 backdrop-blur-sm border-0 shadow-2xl">
+                <CardContent className="p-6">
+                  <div className="flex items-center space-x-4 mb-4">
+                    <Avatar className="h-16 w-16">
+                      <AvatarImage src={user.imageUrl || ''} alt={userName} />
+                      <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-lg font-bold">
+                        {userInitials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900">{userName}</h3>
+                      <p className="text-sm text-gray-500">{user.primaryEmailAddress?.emailAddress}</p>
+                      <Badge variant="secondary" className="mt-1">
+                        <User className="h-3 w-3 mr-1" />
+                        Premium User
+                      </Badge>
+                    </div>
+                  </div>
+                  
+                  <Separator className="my-4" />
+                  
+                  <div className="space-y-2">
+                    <Button 
+                      onClick={() => router.push('/profile')} 
+                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                    >
+                      <Settings className="h-4 w-4 mr-2" />
+                      Edit Profile
+                    </Button>
+                    <Button 
+                      onClick={handleSignOut} 
+                      variant="outline" 
+                      className="w-full"
+                    >
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sign Out
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md">
-            {error}
-          </div>
+          <Card className="mb-8 border-red-200 bg-red-50">
+            <CardContent className="p-4">
+              <p className="text-red-600 font-medium">{error}</p>
+            </CardContent>
+          </Card>
         )}
 
-        <div className="px-4 py-6 sm:px-0">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Profile Card */}
-            <div className="lg:col-span-1">
-              <div className="bg-white overflow-hidden shadow rounded-lg">
-                <div className="px-4 py-5 sm:p-6">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0">
-                      <img
-                        className="h-16 w-16 rounded-full"
-                        src={user.imageUrl || '/default-avatar.png'}
-                        alt={user.fullName || 'User'}
-                      />
-                    </div>
-                    <div className="ml-4">
-                      <h3 className="text-lg font-medium text-gray-900">
-                        {profile?.firstName && profile?.lastName
-                          ? `${profile.firstName} ${profile.lastName}`
-                          : user.fullName || 'User'}
-                      </h3>
-                      <p className="text-sm text-gray-500">{user.primaryEmailAddress?.emailAddress}</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-6">
-                    <button
-                      onClick={() => router.push('/profile')}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200"
-                    >
-                      Edit Profile
-                    </button>
-                  </div>
+        {/* Quick Actions Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+          {/* Search Permit Offices */}
+          <Card className="group hover:shadow-xl transition-all duration-300 cursor-pointer border-0 shadow-lg bg-gradient-to-br from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100">
+            <CardContent className="p-8">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-blue-600 rounded-xl group-hover:scale-110 transition-transform duration-300">
+                  <Search className="h-8 w-8 text-white" />
                 </div>
+                <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
               </div>
-            </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Search Offices</h3>
+              <p className="text-gray-600 mb-4">Find permit offices near you with our advanced search tool</p>
+              <Button 
+                onClick={() => router.push('/search')} 
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Start Searching
+              </Button>
+            </CardContent>
+          </Card>
 
-            {/* Quick Actions */}
-            <div className="lg:col-span-2">
-              <div className="bg-white overflow-hidden shadow rounded-lg">
-                <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">
-                    Quick Actions
-                  </h3>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <button
-                      onClick={() => router.push('/search')}
-                      className="flex flex-col items-center p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors duration-200"
-                    >
-                      <svg className="h-8 w-8 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </svg>
-                      <span className="text-sm font-medium text-gray-900">
-                        Search Permit Offices
-                      </span>
-                    </button>
-
-                    <button
-                      onClick={() => router.push('/favorites')}
-                      className="flex flex-col items-center p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors duration-200"
-                    >
-                      <svg className="h-8 w-8 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                      </svg>
-                      <span className="text-sm font-medium text-gray-900">
-                        View Favorites
-                      </span>
-                    </button>
-                  </div>
+          {/* View Favorites */}
+          <Card className="group hover:shadow-xl transition-all duration-300 cursor-pointer border-0 shadow-lg bg-gradient-to-br from-pink-50 to-rose-50 hover:from-pink-100 hover:to-rose-100">
+            <CardContent className="p-8">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-pink-600 rounded-xl group-hover:scale-110 transition-transform duration-300">
+                  <Heart className="h-8 w-8 text-white" />
                 </div>
+                <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-pink-600 transition-colors" />
               </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">My Favorites</h3>
+              <p className="text-gray-600 mb-4">Access your saved permit offices and quick links</p>
+              <Button 
+                onClick={() => router.push('/favorites')} 
+                className="w-full bg-pink-600 hover:bg-pink-700 text-white"
+              >
+                View Favorites
+              </Button>
+            </CardContent>
+          </Card>
 
-              {/* Recent Activity */}
-              <div className="mt-6 bg-white overflow-hidden shadow rounded-lg">
-                <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">
-                    Recent Activity
-                  </h3>
-                  <div className="text-center py-8">
-                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                    <p className="mt-2 text-sm text-gray-500">No recent activity</p>
-                    <p className="text-xs text-gray-400">Start by searching for permit offices</p>
-                  </div>
+          {/* Recent Activity */}
+          <Card className="group hover:shadow-xl transition-all duration-300 cursor-pointer border-0 shadow-lg bg-gradient-to-br from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100">
+            <CardContent className="p-8">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-green-600 rounded-xl group-hover:scale-110 transition-transform duration-300">
+                  <Clock className="h-8 w-8 text-white" />
                 </div>
+                <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-green-600 transition-colors" />
               </div>
-            </div>
-          </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Recent Activity</h3>
+              <p className="text-gray-600 mb-4">Track your recent searches and interactions</p>
+              <Button 
+                onClick={() => router.push('/search')} 
+                className="w-full bg-green-600 hover:bg-green-700 text-white"
+              >
+                View Activity
+              </Button>
+            </CardContent>
+          </Card>
         </div>
-      </main>
+
+        {/* Features Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+          {/* Quick Stats */}
+          <Card className="border-0 shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <TrendingUp className="h-6 w-6 text-blue-600" />
+                <span>Your Statistics</span>
+              </CardTitle>
+              <CardDescription>Track your permit office search activity</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                  <div className="text-2xl font-bold text-blue-600">12</div>
+                  <div className="text-sm text-gray-600">Searches This Month</div>
+                </div>
+                <div className="text-center p-4 bg-green-50 rounded-lg">
+                  <div className="text-2xl font-bold text-green-600">8</div>
+                  <div className="text-sm text-gray-600">Favorites Saved</div>
+                </div>
+                <div className="text-center p-4 bg-purple-50 rounded-lg">
+                  <div className="text-2xl font-bold text-purple-600">3</div>
+                  <div className="text-sm text-gray-600">Offices Visited</div>
+                </div>
+                <div className="text-center p-4 bg-orange-50 rounded-lg">
+                  <div className="text-2xl font-bold text-orange-600">5</div>
+                  <div className="text-sm text-gray-600">Reviews Written</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Quick Tips */}
+          <Card className="border-0 shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <FileText className="h-6 w-6 text-green-600" />
+                <span>Quick Tips</span>
+              </CardTitle>
+              <CardDescription>Make the most of your permit office search</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-start space-x-3">
+                  <div className="p-1 bg-blue-100 rounded-full">
+                    <MapPin className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">Use Location Filters</p>
+                    <p className="text-sm text-gray-600">Filter by distance to find offices closest to you</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="p-1 bg-green-100 rounded-full">
+                    <Heart className="h-4 w-4 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">Save Favorites</p>
+                    <p className="text-sm text-gray-600">Bookmark offices you visit frequently</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="p-1 bg-purple-100 rounded-full">
+                    <Phone className="h-4 w-4 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">Call Ahead</p>
+                    <p className="text-sm text-gray-600">Check office hours and requirements before visiting</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Call to Action */}
+        <Card className="border-0 shadow-xl bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white">
+          <CardContent className="p-8 text-center">
+            <h2 className="text-3xl font-bold mb-4">Ready to Find Your Perfect Permit Office?</h2>
+            <p className="text-xl text-blue-100 mb-6 max-w-2xl mx-auto">
+              Start your search now and discover permit offices tailored to your specific needs and location.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button 
+                onClick={() => router.push('/search')} 
+                size="lg"
+                className="bg-white text-blue-600 hover:bg-gray-100 font-semibold px-8 py-3"
+              >
+                <Search className="h-5 w-5 mr-2" />
+                Start Searching
+              </Button>
+              <Button 
+                onClick={() => router.push('/favorites')} 
+                size="lg"
+                variant="outline"
+                className="border-white text-white hover:bg-white hover:text-blue-600 font-semibold px-8 py-3"
+              >
+                <Heart className="h-5 w-5 mr-2" />
+                View Favorites
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
