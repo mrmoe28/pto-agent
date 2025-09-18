@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { 
   MapPin, 
   Phone, 
@@ -8,13 +7,9 @@ import {
   Globe, 
   Clock, 
   FileText, 
-  DollarSign, 
   CheckCircle, 
   ExternalLink, 
   Shield, 
-  Calendar, 
-  RefreshCw, 
-  Navigation,
   Building,
   Zap,
   Wrench,
@@ -95,10 +90,10 @@ interface PermitOffice {
   // Geographic data
   latitude?: string | null;
   longitude?: string | null;
-  serviceAreaBounds?: any;
+  serviceAreaBounds?: Record<string, unknown> | null;
   // Metadata
   dataSource?: string;
-  lastVerified?: Date | null;
+  lastVerified?: string | null;
   crawlFrequency?: string;
   active?: boolean;
   distance?: number;
