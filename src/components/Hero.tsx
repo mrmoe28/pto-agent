@@ -111,6 +111,7 @@ interface PermitOffice {
 
 export default function Hero() {
   const [address, setAddress] = useState('')
+  const [instructionSearch, setInstructionSearch] = useState('')
   const [loading, setLoading] = useState(false)
   const [results, setResults] = useState<PermitOffice[]>([])
   const [error, setError] = useState('')
@@ -170,6 +171,11 @@ export default function Hero() {
         state: geocodeData.state || 'GA'
       })
 
+      // Add instruction search if provided
+      if (instructionSearch && instructionSearch.trim()) {
+        params.append('instructions', instructionSearch.trim())
+      }
+
       const officesResponse = await fetch(`/api/permit-offices?${params}`)
       
       if (!officesResponse.ok) {
@@ -224,6 +230,19 @@ export default function Hero() {
               />
               <p className="mt-2 text-sm text-gray-500 text-center">
                 💡 Start typing to see address suggestions from Google
+              </p>
+            </div>
+            
+            <div>
+              <input
+                type="text"
+                value={instructionSearch}
+                onChange={(e) => setInstructionSearch(e.target.value)}
+                placeholder="Search instructions (optional): e.g., 'building permit requirements', 'online application'"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-500"
+              />
+              <p className="mt-2 text-sm text-gray-500 text-center">
+                🔍 Search for specific instructions, requirements, or processes
               </p>
             </div>
             <button

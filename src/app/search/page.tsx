@@ -91,6 +91,7 @@ export default function SearchPage() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
   const [address, setAddress] = useState('');
+  const [instructionSearch, setInstructionSearch] = useState('');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<PermitOffice[]>([]);
   const [error, setError] = useState('');
@@ -161,6 +162,11 @@ export default function SearchPage() {
         county: county,
         state: state
       });
+
+      // Add instruction search if provided
+      if (instructionSearch && instructionSearch.trim()) {
+        params.append('instructions', instructionSearch.trim());
+      }
 
       const officesResponse = await fetch(`/api/permit-offices?${params}`);
       
@@ -236,6 +242,23 @@ export default function SearchPage() {
                 />
                 <p className="mt-2 text-sm text-gray-500">
                   💡 Start typing to see address suggestions from Google
+                </p>
+              </div>
+              
+              <div>
+                <label htmlFor="instructionSearch" className="block text-sm font-medium text-gray-700 mb-2">
+                  Search Instructions (Optional)
+                </label>
+                <input
+                  type="text"
+                  id="instructionSearch"
+                  value={instructionSearch}
+                  onChange={(e) => setInstructionSearch(e.target.value)}
+                  placeholder="e.g., 'building permit requirements', 'electrical inspection', 'online application'"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-500"
+                />
+                <p className="mt-2 text-sm text-gray-500">
+                  🔍 Search for specific instructions, requirements, or processes
                 </p>
               </div>
               <button

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db, permitOffices, PermitOffice } from '@/lib/db'
 import { georgiaPermitOffices } from '@/lib/georgia-permit-data'
-import { eq, and, ilike } from 'drizzle-orm'
+import { eq, and, ilike, sql } from 'drizzle-orm'
 
 // Search for permit offices by location
 export async function GET(request: NextRequest) {
@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
     const city = searchParams.get('city')
     const county = searchParams.get('county')
     const state = searchParams.get('state') || 'GA'
+    const instructionSearch = searchParams.get('instructions')
 
     let offices: PermitOffice[] = []
     let error = null
@@ -66,6 +67,22 @@ export async function GET(request: NextRequest) {
       } else if (city) {
         // Only search by city if no county is provided
         whereConditions.push(ilike(permitOffices.city, `%${city}%`))
+      }
+
+      // Add instruction search if provided
+      if (instructionSearch) {
+        const searchTerm = `%${instructionSearch}%`
+        whereConditions.push(
+          sql`(
+            instructions->>'general' ILIKE ${searchTerm} OR
+            instructions->>'building' ILIKE ${searchTerm} OR
+            instructions->>'electrical' ILIKE ${searchTerm} OR
+            instructions->>'plumbing' ILIKE ${searchTerm} OR
+            instructions->>'mechanical' ILIKE ${searchTerm} OR
+            instructions->>'zoning' ILIKE ${searchTerm} OR
+            instructions->>'applicationProcess' ILIKE ${searchTerm}
+          )`
+        )
       }
 
       // Execute the query
