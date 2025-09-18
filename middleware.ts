@@ -18,7 +18,7 @@ export default clerkMiddleware((auth, req) => {
   }
   
   // Protect all other routes
-  auth().protect();
+  auth.protect();
 }, {
   // Enhanced security for production
   authorizedParties: process.env.NODE_ENV === 'production' 
