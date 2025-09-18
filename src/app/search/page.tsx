@@ -4,7 +4,7 @@ import { useUser } from '@clerk/nextjs';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import GooglePlacesAutocomplete from '@/components/GooglePlacesAutocomplete';
-import PermitOfficeTable from '@/components/PermitOfficeTable';
+import EnhancedPermitOfficeTable from '@/components/EnhancedPermitOfficeTable';
 import { extractAddressComponents, getCoordinates } from '@/lib/google-apis';
 
 interface PermitOffice {
@@ -277,7 +277,7 @@ export default function SearchPage() {
         <h2 className="text-2xl font-bold text-gray-900">
           Found {results.length} Permit Office{results.length !== 1 ? 's' : ''}
         </h2>
-        <PermitOfficeTable offices={results} />
+        <EnhancedPermitOfficeTable offices={results} />
       </div>
     )}
         </div>
