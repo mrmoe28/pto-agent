@@ -177,20 +177,20 @@ export default function EnhancedPermitOfficeCard({ office }: EnhancedPermitOffic
   const onlineServices = getOnlineServices();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 max-w-6xl mx-auto">
       {/* Header Card */}
-      <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-        <div className="flex justify-between items-start mb-4">
+      <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
+        <div className="flex justify-between items-start mb-6">
           <div className="flex-1">
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">
+            <h3 className="text-3xl font-bold text-gray-900 mb-4">
               {office.department_name}
             </h3>
-            <div className="flex items-center gap-2 text-gray-600 mb-3">
-              <MapPin className="h-5 w-5 text-gray-400" />
-              <span className="text-lg">{office.address}</span>
+            <div className="flex items-center gap-2 text-gray-600 mb-4">
+              <MapPin className="h-6 w-6 text-gray-400" />
+              <span className="text-xl">{office.address}</span>
             </div>
-            <div className="text-gray-600 mb-3">
-              <span className="text-lg">{office.city}, {office.county} County, {office.state}</span>
+            <div className="text-gray-600 mb-4">
+              <span className="text-xl font-medium">{office.city}, {office.county} County, {office.state}</span>
             </div>
             <div className="flex flex-wrap gap-2">
               <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium capitalize">
@@ -218,9 +218,9 @@ export default function EnhancedPermitOfficeCard({ office }: EnhancedPermitOffic
       </div>
 
       {/* Services & Pricing Card */}
-      <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-        <h4 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-          <Shield className="h-5 w-5 mr-2 text-blue-600" />
+      <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
+        <h4 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+          <Shield className="h-6 w-6 mr-3 text-blue-600" />
           Services & Pricing
         </h4>
         
@@ -268,9 +268,9 @@ export default function EnhancedPermitOfficeCard({ office }: EnhancedPermitOffic
       </div>
 
       {/* Contact & Hours Card */}
-      <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-        <h4 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-          <Phone className="h-5 w-5 mr-2 text-green-600" />
+      <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
+        <h4 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+          <Phone className="h-6 w-6 mr-3 text-green-600" />
           Contact & Hours
         </h4>
         
@@ -338,9 +338,9 @@ export default function EnhancedPermitOfficeCard({ office }: EnhancedPermitOffic
       </div>
 
       {/* Online Services Card */}
-      <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-        <h4 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-          <Globe className="h-5 w-5 mr-2 text-purple-600" />
+      <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
+        <h4 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+          <Globe className="h-6 w-6 mr-3 text-purple-600" />
           Online Services
         </h4>
         
@@ -375,9 +375,9 @@ export default function EnhancedPermitOfficeCard({ office }: EnhancedPermitOffic
 
       {/* Instructions & Requirements Card */}
       {office.instructions && (
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-          <h4 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-            <FileText className="h-5 w-5 mr-2 text-orange-600" />
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
+          <h4 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+            <FileText className="h-6 w-6 mr-3 text-orange-600" />
             Instructions & Requirements
           </h4>
           
@@ -449,9 +449,9 @@ export default function EnhancedPermitOfficeCard({ office }: EnhancedPermitOffic
 
       {/* Downloadable Applications Card */}
       {downloadableApps.length > 0 && (
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-          <h4 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-            <Download className="h-5 w-5 mr-2 text-indigo-600" />
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
+          <h4 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+            <Download className="h-6 w-6 mr-3 text-indigo-600" />
             Downloadable Applications
           </h4>
           
@@ -478,9 +478,9 @@ export default function EnhancedPermitOfficeCard({ office }: EnhancedPermitOffic
 
       {/* Processing Times Card */}
       {office.processingTimes && (
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-          <h4 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-            <Clock className="h-5 w-5 mr-2 text-teal-600" />
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
+          <h4 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+            <Clock className="h-6 w-6 mr-3 text-teal-600" />
             Processing Times
           </h4>
           
