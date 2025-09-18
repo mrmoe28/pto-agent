@@ -69,6 +69,28 @@ A production-ready web application that revolutionizes how property owners, cont
   - Permit tracking systems
   - Direct portal links
 
+### 3.1. **Enhanced Data Extraction** 🆕
+- **Permit Fees Information**:
+  - Detailed fee structures by permit type
+  - Amount, description, and currency unit
+  - Categorized by Building, Electrical, Plumbing, Mechanical, Zoning
+  - Example: Building permit $150.00, Electrical permit $75.00
+- **Application Instructions**:
+  - Step-by-step application processes
+  - Required documents lists
+  - Permit-specific guidelines and procedures
+  - General application instructions
+- **Downloadable Application Forms**:
+  - Direct links to PDF, DOC, DOCX forms
+  - Categorized by permit type
+  - Automatic detection from office websites
+  - One-click download access
+- **Processing Time Estimates**:
+  - Time ranges for permit processing (e.g., 5-10 business days)
+  - Categorized by permit type
+  - Multiple time formats (days, weeks, months, hours)
+  - Turnaround time information
+
 ### 4. **User Experience Features**
 - **Instant Results**: Sub-second response times for searches
 - **No Registration Required**: Completely free and anonymous
@@ -89,6 +111,22 @@ A production-ready web application that revolutionizes how property owners, cont
   - Data source tracking (crawled/API/manual)
   - Crawl frequency settings
 
+### 5.1. **Enhanced Web Scraping System** 🆕
+- **Sophisticated Data Extraction**:
+  - Multi-strategy extraction (HTTP requests, Playwright, Selenium)
+  - Context-aware pattern matching for fees, times, and instructions
+  - Intelligent categorization of permit types
+  - Automatic detection of downloadable forms
+- **Enhanced Data Extractor Engine**:
+  - Advanced regex patterns for fee detection
+  - Processing time extraction with range parsing
+  - Application instruction parsing
+  - Form link detection and categorization
+- **Database Schema Enhancements**:
+  - New JSONB columns for structured enhanced data
+  - Proper indexing for optimal query performance
+  - Type-safe data storage with validation
+
 ### 6. **Technical Capabilities**
 - **Web Scraping Ready**: Cheerio and Playwright integration for data collection
 - **Rate Limiting**: Upstash Redis integration for API protection
@@ -105,6 +143,11 @@ Search for permit offices with multiple filter options:
   - `county`: Filter by county name
   - `state`: Filter by state (defaults to GA)
 - **Returns**: Up to 10 offices with calculated distances
+- **Enhanced Data Included** 🆕:
+  - `permitFees`: Structured permit fee information by type
+  - `instructions`: Application instructions and guidelines
+  - `downloadableApplications`: Direct links to application forms
+  - `processingTimes`: Processing time estimates by permit type
 
 ### **`POST /api/permit-offices`**
 Seed database with Georgia permit office data:
@@ -154,8 +197,9 @@ Convert addresses to coordinates with smart fallback:
 - Nationwide office database expansion
 - User reviews and ratings
 - Office photo integration
-- Wait time estimates
 - Document requirement checklists
+- Enhanced fee comparison tools
+- Processing time analytics
 
 ### Long-term
 - Mobile app development
@@ -164,6 +208,8 @@ Convert addresses to coordinates with smart fallback:
 - Appointment scheduling
 - Multi-language support
 - API for third-party integrations
+- AI-powered permit guidance
+- Cost estimation calculators
 
 ## 💡 Use Cases
 
@@ -333,7 +379,7 @@ users (
   updated_at TIMESTAMP
 )
 
--- Permit Offices
+-- Permit Offices (Enhanced Schema)
 permit_offices (
   id VARCHAR PRIMARY KEY,
   city VARCHAR,
@@ -353,6 +399,11 @@ permit_offices (
   permit_types TEXT[],
   online_services BOOLEAN,
   online_application_url VARCHAR,
+  -- Enhanced Data Fields 🆕
+  permit_fees JSONB,              -- Structured permit fees by type
+  instructions JSONB,             -- Application instructions and guidelines
+  downloadable_applications JSONB, -- Direct links to application forms
+  processing_times JSONB,         -- Processing time estimates by permit type
   data_source VARCHAR,
   last_verified TIMESTAMP,
   is_verified BOOLEAN,
@@ -382,7 +433,12 @@ search_history (
 
 ## 🎯 **Future Roadmap**
 
-### **Q4 2025**
+### **Q4 2025** ✅
+- [x] Enhanced data extraction system
+- [x] Permit fees extraction and categorization
+- [x] Application instructions parsing
+- [x] Downloadable forms detection
+- [x] Processing time estimates
 - [ ] Nationwide data expansion (all 50 states)
 - [ ] Advanced filtering UI
 - [ ] Bulk office data import tool
@@ -392,25 +448,104 @@ search_history (
 - [ ] Mobile app (React Native)
 - [ ] Office photo uploads
 - [ ] User reviews & ratings
-- [ ] Wait time predictions
+- [ ] Enhanced fee comparison tools
+- [ ] Processing time analytics dashboard
 
 ### **Q2 2026**
 - [ ] Document checklist generator
 - [ ] Appointment scheduling integration
 - [ ] Multi-language support (Spanish, Chinese)
 - [ ] API for developers
+- [ ] Fee trend analysis
 
 ### **Q3 2026**
 - [ ] AI-powered permit assistant
 - [ ] Cost estimation calculator
 - [ ] Contractor recommendations
 - [ ] Permit status tracking
+- [ ] Smart form pre-filling
+
+## 🕷️ **Enhanced Web Scraping System** 🆕
+
+### **Advanced Data Extraction Capabilities**
+The enhanced crawler system now extracts comprehensive information from permit office websites:
+
+#### **Permit Fees Extraction**
+- **Pattern Recognition**: Advanced regex patterns detect fee structures
+- **Categorization**: Automatically categorizes fees by permit type
+- **Structured Data**: Stores amounts, descriptions, and currency units
+- **Example Output**:
+  ```json
+  {
+    "permit_fees": {
+      "building": {
+        "amount": 150.00,
+        "description": "Building permit fee",
+        "unit": "USD"
+      },
+      "electrical": {
+        "amount": 75.00,
+        "description": "Electrical permit fee",
+        "unit": "USD"
+      }
+    }
+  }
+  ```
+
+#### **Application Instructions Parsing**
+- **Step-by-Step Processes**: Extracts application procedures
+- **Required Documents**: Identifies necessary documentation
+- **Permit-Specific Guidelines**: Categorizes instructions by permit type
+- **Context-Aware Extraction**: Finds instructions near relevant keywords
+
+#### **Downloadable Forms Detection**
+- **File Type Recognition**: Detects PDF, DOC, DOCX application forms
+- **Link Extraction**: Captures direct download URLs
+- **Categorization**: Groups forms by permit type
+- **Automatic Discovery**: Scans entire websites for application forms
+
+#### **Processing Time Extraction**
+- **Time Range Parsing**: Extracts processing time estimates
+- **Multiple Formats**: Supports days, weeks, months, hours
+- **Range Detection**: Identifies time ranges (e.g., "5-10 business days")
+- **Permit-Specific Times**: Categorizes by permit type
+
+### **Technical Implementation**
+- **Multi-Strategy Extraction**: HTTP requests, Playwright, Selenium
+- **Context-Aware Parsing**: Intelligent keyword proximity analysis
+- **Error Handling**: Graceful fallbacks and comprehensive logging
+- **Database Integration**: Structured storage with proper indexing
 
 ## 📖 **API Documentation Examples**
 
-### **Search with Coordinates**
+### **Search with Enhanced Data**
 ```bash
 curl -X GET "https://your-domain.com/api/permit-offices?lat=33.7490&lng=-84.3880"
+```
+**Response includes enhanced data**:
+```json
+{
+  "success": true,
+  "offices": [
+    {
+      "departmentName": "Building Department",
+      "address": "123 Main St, Atlanta, GA",
+      "permitFees": {
+        "building": {"amount": 150.00, "description": "Building permit fee", "unit": "USD"}
+      },
+      "instructions": {
+        "general": "Submit completed application with required documents",
+        "building": "Include site plans and construction drawings"
+      },
+      "downloadableApplications": {
+        "building": ["https://example.com/building-permit.pdf"]
+      },
+      "processingTimes": {
+        "building": {"min": 5, "max": 10, "unit": "days", "description": "Building permit processing time"}
+      }
+    }
+  ]
+}
 ```
 
 ### **Geocode Address**
