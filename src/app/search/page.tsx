@@ -75,6 +75,15 @@ interface PermitOffice {
     zoning?: { min?: number; max?: number; unit?: string; description?: string };
     general?: { min?: number; max?: number; unit?: string; description?: string };
   } | null;
+  // Geographic data
+  latitude?: string | null;
+  longitude?: string | null;
+  serviceAreaBounds?: Record<string, unknown> | null;
+  // Metadata
+  dataSource?: string;
+  lastVerified?: string | null;
+  crawlFrequency?: string;
+  active?: boolean;
   distance?: number;
 }
 
