@@ -102,7 +102,7 @@ type GoogleGeocodeLikeResult = {
 }
 
 async function geocodeWithGoogle(address: string) {
-  const GOOGLE_PLACES_KEY = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY
+  const GOOGLE_PLACES_KEY = process.env.GOOGLE_PLACES_API_KEY
   
   if (!GOOGLE_PLACES_KEY) {
     console.warn('Google Places API key not configured - skipping Google Places geocoding')
