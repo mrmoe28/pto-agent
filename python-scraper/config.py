@@ -3,7 +3,7 @@ Configuration for Permit Office Scraper
 """
 import os
 from typing import List, Dict, Any
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 
 class ScraperConfig(BaseSettings):
     """Configuration settings for the permit office scraper"""
@@ -14,6 +14,9 @@ class ScraperConfig(BaseSettings):
     # Google APIs
     GOOGLE_MAPS_API_KEY: str = os.getenv("GOOGLE_MAPS_API_KEY", "")
     GOOGLE_PLACES_API_KEY: str = os.getenv("GOOGLE_PLACES_API_KEY", "")
+    
+    # LocationIQ for additional geocoding
+    LOCATIONIQ_ACCESS_TOKEN: str = os.getenv("LOCATIONIQ_ACCESS_TOKEN", "")
     
     # Scraping settings
     SCRAPING_DELAY: float = 1.0  # Delay between requests (seconds)

@@ -21,6 +21,7 @@ import json
 
 from models import PermitOffice, ScrapingTarget, ScrapingResult
 from geocoding_service import GeocodingService
+from enhanced_data_extractor import EnhancedDataExtractor
 from config import config
 
 logger = logging.getLogger(__name__)
@@ -30,6 +31,7 @@ class EnhancedPermitOfficeScraper:
     
     def __init__(self):
         self.geocoding_service = GeocodingService()
+        self.data_extractor = EnhancedDataExtractor()
         self.session = None
         self.playwright = None
         self.browser = None
@@ -450,6 +452,18 @@ class EnhancedPermitOfficeScraper:
                 except Exception as e:
                     logger.debug(f"Geocoding failed for {office.address}: {e}")
             
+            # Extract enhanced data from the website
+            if office.website:
+                try:
+                    enhanced_data = await self._extract_enhanced_data_from_website(office.website)
+                    if enhanced_data:
+                        office.permit_fees = enhanced_data.get('permit_fees')
+                        office.instructions = enhanced_data.get('instructions')
+                        office.downloadable_applications = enhanced_data.get('downloadable_applications')
+                        office.processing_times = enhanced_data.get('processing_times')
+                except Exception as e:
+                    logger.debug(f"Enhanced data extraction failed for {office.website}: {e}")
+            
             # Set additional metadata
             office.data_source = 'enhanced_scraped'
             office.last_verified = datetime.now()
@@ -460,6 +474,34 @@ class EnhancedPermitOfficeScraper:
             logger.error(f"Error enhancing office data: {e}")
         
         return office
+    
+    async def _extract_enhanced_data_from_website(self, website_url: str) -> Optional[Dict[str, Any]]:
+        """Extract enhanced data from a permit office website"""
+        try:
+            async with self.session.get(website_url) as response:
+                if response.status == 200:
+                    html = await response.text()
+                    soup = BeautifulSoup(html, 'html.parser')
+                    
+                    # Use the enhanced data extractor
+                    enhanced_data = self.data_extractor.extract_enhanced_data(soup, website_url)
+                    
+                    # Log what we found
+                    if enhanced_data.get('permit_fees'):
+                        logger.info(f"Found permit fees for {website_url}")
+                    if enhanced_data.get('instructions'):
+                        logger.info(f"Found instructions for {website_url}")
+                    if enhanced_data.get('downloadable_applications'):
+                        logger.info(f"Found downloadable applications for {website_url}")
+                    if enhanced_data.get('processing_times'):
+                        logger.info(f"Found processing times for {website_url}")
+                    
+                    return enhanced_data
+                    
+        except Exception as e:
+            logger.debug(f"Failed to extract enhanced data from {website_url}: {e}")
+        
+        return None
     
     async def _process_office(self, office: PermitOffice, target: ScrapingTarget):
         """Process and log office information"""

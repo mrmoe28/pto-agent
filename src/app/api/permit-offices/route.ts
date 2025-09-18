@@ -87,20 +87,34 @@ export async function GET(request: NextRequest) {
     }
 
     // Calculate distances if coordinates provided
-    let enrichedOffices = offices
-    if (latitude && longitude) {
-      enrichedOffices = offices.map(office => ({
-        ...office,
-        distance: office.latitude && office.longitude 
-          ? calculateDistance(
-              parseFloat(latitude), 
-              parseFloat(longitude),
-              parseFloat(office.latitude.toString()),
-              parseFloat(office.longitude.toString())
-            )
-          : null
-      })).sort((a, b) => (a.distance || 999) - (b.distance || 999))
-    }
+        let enrichedOffices = offices
+        if (latitude && longitude) {
+          enrichedOffices = offices.map(office => ({
+            ...office,
+            distance: office.latitude && office.longitude 
+              ? calculateDistance(
+                  parseFloat(latitude), 
+                  parseFloat(longitude),
+                  parseFloat(office.latitude.toString()),
+                  parseFloat(office.longitude.toString())
+                )
+              : null,
+            // Include enhanced data if available
+            permitFees: office.permitFees || null,
+            instructions: office.instructions || null,
+            downloadableApplications: office.downloadableApplications || null,
+            processingTimes: office.processingTimes || null
+          })).sort((a, b) => (a.distance || 999) - (b.distance || 999))
+        } else {
+          // Include enhanced data even without distance calculation
+          enrichedOffices = offices.map(office => ({
+            ...office,
+            permitFees: office.permitFees || null,
+            instructions: office.instructions || null,
+            downloadableApplications: office.downloadableApplications || null,
+            processingTimes: office.processingTimes || null
+          }))
+        }
 
     return NextResponse.json({
       success: true,

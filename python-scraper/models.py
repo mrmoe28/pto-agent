@@ -88,6 +88,12 @@ class PermitOffice(BaseModel):
     crawl_frequency: CrawlFrequency = CrawlFrequency.WEEKLY
     active: bool = True
     
+    # Enhanced information
+    permit_fees: Optional[Dict[str, Any]] = None  # JSON structure for permit fees
+    instructions: Optional[Dict[str, Any]] = None  # JSON structure for instructions
+    downloadable_applications: Optional[Dict[str, Any]] = None  # JSON structure for downloadable apps
+    processing_times: Optional[Dict[str, Any]] = None  # JSON structure for processing times
+    
     # Scraping metadata
     source_url: Optional[str] = None
     scraped_at: Optional[datetime] = None
