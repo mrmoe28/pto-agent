@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { MapPin, Phone, Mail, Globe, Clock, FileText, Download, DollarSign, CheckCircle, ExternalLink, Map, Shield, Calendar, RefreshCw, Navigation } from 'lucide-react';
+import { MapPin, Phone, Mail, Globe, Clock, FileText, DollarSign, CheckCircle, ExternalLink, Shield, Calendar, RefreshCw, Navigation } from 'lucide-react';
 
 interface PermitOffice {
   id?: string;
@@ -135,19 +135,25 @@ export default function PermitOfficeCard({ office }: PermitOfficeCardProps) {
   };
 
   const renderQuickInfo = () => (
-    <div className="space-y-4">
-      {/* Essential Contact & Hours */}
+    <div className="space-y-6">
+      {/* Primary Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Contact Actions */}
         <div className="space-y-3">
-          <h4 className="font-semibold text-gray-900 flex items-center">
-            <Phone className="h-4 w-4 mr-2 text-green-600" />
-            Quick Contact
+          <h4 className="font-semibold text-gray-900 flex items-center text-lg">
+            <Phone className="h-5 w-5 mr-2 text-green-600" />
+            Contact & Visit
           </h4>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {office.phone && (
-              <a href={`tel:${office.phone}`} className="block p-2 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
-                <div className="text-sm font-medium text-green-800">Call Now</div>
-                <div className="text-lg font-semibold text-green-900">{office.phone}</div>
+              <a href={`tel:${office.phone}`} className="block p-4 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors group">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-medium text-green-800 mb-1">Call Office</div>
+                    <div className="text-lg font-semibold text-green-900">{office.phone}</div>
+                  </div>
+                  <Phone className="h-6 w-6 text-green-600 group-hover:scale-110 transition-transform" />
+                </div>
               </a>
             )}
             {office.website && (
@@ -155,83 +161,119 @@ export default function PermitOfficeCard({ office }: PermitOfficeCardProps) {
                 href={office.website} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="block p-2 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                className="block p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors group"
               >
-                <div className="text-sm font-medium text-blue-800">Visit Website</div>
-                <div className="text-sm text-blue-900 truncate">{office.website}</div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-medium text-blue-800 mb-1">Visit Website</div>
+                    <div className="text-sm text-blue-900 truncate">{office.website}</div>
+                  </div>
+                  <ExternalLink className="h-6 w-6 text-blue-600 group-hover:scale-110 transition-transform" />
+                </div>
+              </a>
+            )}
+            {office.email && (
+              <a 
+                href={`mailto:${office.email}`} 
+                className="block p-4 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors group"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-medium text-purple-800 mb-1">Send Email</div>
+                    <div className="text-sm text-purple-900 truncate">{office.email}</div>
+                  </div>
+                  <Mail className="h-6 w-6 text-purple-600 group-hover:scale-110 transition-transform" />
+                </div>
               </a>
             )}
           </div>
         </div>
 
+        {/* Hours & Location */}
         <div className="space-y-3">
-          <h4 className="font-semibold text-gray-900 flex items-center">
-            <Clock className="h-4 w-4 mr-2 text-orange-600" />
-            Today&apos;s Hours
+          <h4 className="font-semibold text-gray-900 flex items-center text-lg">
+            <Clock className="h-5 w-5 mr-2 text-orange-600" />
+            Hours & Location
           </h4>
-          <div className="space-y-1">
-            {getOperatingHours().slice(0, 3).map((day, idx) => (
-              <div key={idx} className="flex justify-between text-sm">
-                <span className="text-gray-600">{day.name}:</span>
-                <span className="text-gray-900 font-medium">{day.hours}</span>
+          <div className="space-y-3">
+            {/* Operating Hours */}
+            <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+              <div className="text-sm font-medium text-orange-800 mb-2">Operating Hours</div>
+              <div className="space-y-1">
+                {getOperatingHours().slice(0, 3).map((day, idx) => (
+                  <div key={idx} className="flex justify-between text-sm">
+                    <span className="text-orange-700 font-medium">{day.name}:</span>
+                    <span className="text-orange-900">{day.hours}</span>
+                  </div>
+                ))}
+                {getOperatingHours().length > 3 && (
+                  <div className="text-xs text-orange-600 text-center pt-2 border-t border-orange-200">
+                    +{getOperatingHours().length - 3} more days available
+                  </div>
+                )}
               </div>
-            ))}
-            {getOperatingHours().length > 3 && (
-              <div className="text-xs text-gray-500 text-center pt-1">
-                +{getOperatingHours().length - 3} more days
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Key Services */}
-      <div className="space-y-3">
-        <h4 className="font-semibold text-gray-900 flex items-center">
-          <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
-          Available Services
-        </h4>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-          {getAvailableServices().map((service, idx) => (
-            <div key={idx} className="flex items-center p-2 bg-green-50 rounded-lg">
-              <CheckCircle className="h-4 w-4 text-green-600 mr-2 flex-shrink-0" />
-              <span className="text-sm text-green-800">{service}</span>
             </div>
-          ))}
+            
+            {/* Address */}
+            <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+              <div className="text-sm font-medium text-gray-800 mb-1">Office Address</div>
+              <div className="text-sm text-gray-700">{office.address}</div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Online Services */}
-      {getOnlineServices().length > 0 && (
-        <div className="space-y-3">
-          <h4 className="font-semibold text-gray-900 flex items-center">
-            <Globe className="h-4 w-4 mr-2 text-blue-600" />
-            Online Services
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            {getOnlineServices().map((service, idx) => (
-              <div key={idx} className="flex items-center p-2 bg-blue-50 rounded-lg">
-                <Globe className="h-4 w-4 text-blue-600 mr-2 flex-shrink-0" />
-                <span className="text-sm text-blue-800">{service}</span>
-              </div>
-            ))}
+      {/* Services Overview */}
+      <div className="space-y-4">
+        <h4 className="font-semibold text-gray-900 flex items-center text-lg">
+          <CheckCircle className="h-5 w-5 mr-2 text-green-600" />
+          Services Available
+        </h4>
+        
+        {/* Available Services */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="text-sm font-medium text-green-800 mb-3">Permit Services</div>
+            <div className="grid grid-cols-1 gap-2">
+              {getAvailableServices().map((service, idx) => (
+                <div key={idx} className="flex items-center text-sm">
+                  <CheckCircle className="h-4 w-4 text-green-600 mr-2 flex-shrink-0" />
+                  <span className="text-green-800">{service}</span>
+                </div>
+              ))}
+            </div>
           </div>
+
+          {/* Online Services */}
+          {getOnlineServices().length > 0 && (
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="text-sm font-medium text-blue-800 mb-3">Online Services</div>
+              <div className="grid grid-cols-1 gap-2">
+                {getOnlineServices().map((service, idx) => (
+                  <div key={idx} className="flex items-center text-sm">
+                    <Globe className="h-4 w-4 text-blue-600 mr-2 flex-shrink-0" />
+                    <span className="text-blue-800">{service}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Quick Fees Preview */}
       {office.permitFees && Object.keys(office.permitFees).length > 0 && (
         <div className="space-y-3">
-          <h4 className="font-semibold text-gray-900 flex items-center">
-            <DollarSign className="h-4 w-4 mr-2 text-green-600" />
+          <h4 className="font-semibold text-gray-900 flex items-center text-lg">
+            <DollarSign className="h-5 w-5 mr-2 text-green-600" />
             Sample Fees
           </h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            {Object.entries(office.permitFees).slice(0, 4).map(([type, fee]) => {
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {Object.entries(office.permitFees).slice(0, 6).map(([type, fee]) => {
               if (!fee) return null;
               return (
-                <div key={type} className="p-2 bg-gray-50 rounded-lg">
-                  <div className="text-sm font-medium text-gray-800 capitalize">{type}</div>
+                <div key={type} className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                  <div className="text-sm font-medium text-gray-800 capitalize mb-1">{type}</div>
                   <div className="text-sm text-gray-600">{formatFee(fee)}</div>
                 </div>
               );
@@ -243,127 +285,155 @@ export default function PermitOfficeCard({ office }: PermitOfficeCardProps) {
   );
 
   const renderOverview = () => (
-    <div className="space-y-4">
-      {/* Key Information Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Contact Information */}
-        <div className="space-y-3">
-          <h4 className="font-semibold text-gray-900 flex items-center">
-            <MapPin className="h-4 w-4 mr-2 text-blue-600" />
-            Contact Information
+    <div className="space-y-6">
+      {/* Office Details */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Contact & Location */}
+        <div className="space-y-4">
+          <h4 className="font-semibold text-gray-900 flex items-center text-lg">
+            <MapPin className="h-5 w-5 mr-2 text-blue-600" />
+            Contact & Location
           </h4>
-          <div className="space-y-2 text-sm">
-            <p className="text-gray-700">{office.address}</p>
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-3">
+            <div>
+              <div className="text-sm font-medium text-blue-800 mb-1">Office Address</div>
+              <div className="text-sm text-blue-900">{office.address}</div>
+            </div>
             {office.phone && (
-              <p className="flex items-center text-gray-700">
-                <Phone className="h-4 w-4 mr-2 text-green-600" />
-                <a href={`tel:${office.phone}`} className="hover:text-blue-600">
-                  {office.phone}
-                </a>
-              </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-medium text-blue-800">Phone</div>
+                  <a href={`tel:${office.phone}`} className="text-sm text-blue-900 hover:text-blue-700">
+                    {office.phone}
+                  </a>
+                </div>
+                <Phone className="h-5 w-5 text-blue-600" />
+              </div>
             )}
             {office.email && (
-              <p className="flex items-center text-gray-700">
-                <Mail className="h-4 w-4 mr-2 text-blue-600" />
-                <a href={`mailto:${office.email}`} className="hover:text-blue-600">
-                  {office.email}
-                </a>
-              </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-medium text-blue-800">Email</div>
+                  <a href={`mailto:${office.email}`} className="text-sm text-blue-900 hover:text-blue-700">
+                    {office.email}
+                  </a>
+                </div>
+                <Mail className="h-5 w-5 text-blue-600" />
+              </div>
             )}
             {office.website && (
-              <p className="flex items-center text-gray-700">
-                <Globe className="h-4 w-4 mr-2 text-purple-600" />
-                <a 
-                  href={office.website} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="hover:text-blue-600 flex items-center"
-                >
-                  Visit Website
-                  <ExternalLink className="h-3 w-3 ml-1" />
-                </a>
-              </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-medium text-blue-800">Website</div>
+                  <a 
+                    href={office.website} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-900 hover:text-blue-700 flex items-center"
+                  >
+                    Visit Website
+                    <ExternalLink className="h-3 w-3 ml-1" />
+                  </a>
+                </div>
+                <Globe className="h-5 w-5 text-blue-600" />
+              </div>
             )}
           </div>
         </div>
 
-        {/* Service Area & Coverage */}
-        <div className="space-y-3">
-          <h4 className="font-semibold text-gray-900 flex items-center">
-            <Map className="h-4 w-4 mr-2 text-green-600" />
-            Service Area & Coverage
+        {/* Jurisdiction & Coverage */}
+        <div className="space-y-4">
+          <h4 className="font-semibold text-gray-900 flex items-center text-lg">
+            <Shield className="h-5 w-5 mr-2 text-green-600" />
+            Jurisdiction & Coverage
           </h4>
-          <div className="space-y-2 text-sm">
-            <div className="flex items-center text-gray-700">
-              <Shield className="h-4 w-4 mr-2 text-green-600" />
-              <span className="font-medium">Jurisdiction:</span>
-              <span className="ml-2 capitalize">{office.jurisdiction_type}</span>
+          <div className="p-4 bg-green-50 border border-green-200 rounded-lg space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium text-green-800">Jurisdiction Type</div>
+                <div className="text-sm text-green-900 capitalize">{office.jurisdiction_type}</div>
+              </div>
+              <Shield className="h-5 w-5 text-green-600" />
             </div>
             {office.serviceAreaBounds && (
-              <div className="flex items-center text-gray-700">
-                <Navigation className="h-4 w-4 mr-2 text-blue-600" />
-                <span className="font-medium">Service Area:</span>
-                <span className="ml-2">Defined boundaries</span>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-medium text-green-800">Service Area</div>
+                  <div className="text-sm text-green-900">Defined boundaries</div>
+                </div>
+                <Navigation className="h-5 w-5 text-green-600" />
               </div>
             )}
             {office.latitude && office.longitude && (
-              <div className="flex items-center text-gray-700">
-                <MapPin className="h-4 w-4 mr-2 text-red-600" />
-                <span className="font-medium">Coordinates:</span>
-                <span className="ml-2 text-xs">{office.latitude}, {office.longitude}</span>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-medium text-green-800">Coordinates</div>
+                  <div className="text-xs text-green-900 font-mono">{office.latitude}, {office.longitude}</div>
+                </div>
+                <MapPin className="h-5 w-5 text-green-600" />
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Data Quality & Freshness */}
-      {(office.dataSource || office.lastVerified || office.crawlFrequency) && (
-        <div className="bg-gray-50 p-3 rounded-lg">
-          <h4 className="font-semibold text-gray-900 mb-2 flex items-center">
-            <Shield className="h-4 w-4 mr-2 text-gray-600" />
-            Data Quality & Freshness
+      {/* Operating Hours */}
+      {getOperatingHours().length > 0 && (
+        <div className="space-y-4">
+          <h4 className="font-semibold text-gray-900 flex items-center text-lg">
+            <Clock className="h-5 w-5 mr-2 text-orange-600" />
+            Operating Hours
           </h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-            {office.dataSource && (
-              <div className="flex items-center text-gray-700">
-                <RefreshCw className="h-4 w-4 mr-2 text-blue-600" />
-                <span className="font-medium">Source:</span>
-                <span className="ml-2 capitalize">{office.dataSource}</span>
-              </div>
-            )}
-            {office.lastVerified && (
-              <div className="flex items-center text-gray-700">
-                <Calendar className="h-4 w-4 mr-2 text-green-600" />
-                <span className="font-medium">Last Verified:</span>
-                <span className="ml-2">{new Date(office.lastVerified).toLocaleDateString()}</span>
-              </div>
-            )}
-            {office.crawlFrequency && (
-              <div className="flex items-center text-gray-700">
-                <RefreshCw className="h-4 w-4 mr-2 text-orange-600" />
-                <span className="font-medium">Update Frequency:</span>
-                <span className="ml-2 capitalize">{office.crawlFrequency}</span>
-              </div>
-            )}
+          <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {getOperatingHours().map((day, idx) => (
+                <div key={idx} className="flex justify-between items-center p-2 bg-white rounded border">
+                  <span className="text-sm font-medium text-orange-800">{day.name}</span>
+                  <span className="text-sm text-orange-900">{day.hours}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
 
-      {/* Operating Hours */}
-      {getOperatingHours().length > 0 && (
-        <div className="space-y-2">
-          <h4 className="font-semibold text-gray-900 flex items-center">
-            <Clock className="h-4 w-4 mr-2 text-orange-600" />
-            Operating Hours
+      {/* Data Quality & Freshness */}
+      {(office.dataSource || office.lastVerified || office.crawlFrequency) && (
+        <div className="space-y-4">
+          <h4 className="font-semibold text-gray-900 flex items-center text-lg">
+            <Shield className="h-5 w-5 mr-2 text-gray-600" />
+            Data Quality & Freshness
           </h4>
-          <div className="space-y-1 text-sm">
-            {getOperatingHours().map((day, idx) => (
-              <div key={idx} className="flex justify-between">
-                <span className="text-gray-600">{day.name}:</span>
-                <span className="text-gray-700">{day.hours}</span>
-              </div>
-            ))}
+          <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {office.dataSource && (
+                <div className="flex items-center justify-between p-3 bg-white rounded border">
+                  <div>
+                    <div className="text-sm font-medium text-gray-800">Data Source</div>
+                    <div className="text-sm text-gray-600 capitalize">{office.dataSource}</div>
+                  </div>
+                  <RefreshCw className="h-5 w-5 text-gray-600" />
+                </div>
+              )}
+              {office.lastVerified && (
+                <div className="flex items-center justify-between p-3 bg-white rounded border">
+                  <div>
+                    <div className="text-sm font-medium text-gray-800">Last Verified</div>
+                    <div className="text-sm text-gray-600">{new Date(office.lastVerified).toLocaleDateString()}</div>
+                  </div>
+                  <Calendar className="h-5 w-5 text-gray-600" />
+                </div>
+              )}
+              {office.crawlFrequency && (
+                <div className="flex items-center justify-between p-3 bg-white rounded border">
+                  <div>
+                    <div className="text-sm font-medium text-gray-800">Update Frequency</div>
+                    <div className="text-sm text-gray-600 capitalize">{office.crawlFrequency}</div>
+                  </div>
+                  <RefreshCw className="h-5 w-5 text-gray-600" />
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -414,69 +484,133 @@ export default function PermitOfficeCard({ office }: PermitOfficeCardProps) {
   );
 
   const renderServices = () => (
-    <div className="space-y-4">
-      {office.instructions && (
-        <div className="space-y-3">
-          <h4 className="font-semibold text-gray-900">Application Instructions</h4>
-          {office.instructions.general && (
-            <div className="bg-gray-50 p-3 rounded-lg">
-              <h5 className="font-medium text-gray-800 mb-2">General Instructions</h5>
-              <p className="text-sm text-gray-700">{office.instructions.general}</p>
-            </div>
-          )}
-          {office.instructions.applicationProcess && (
-            <div className="bg-blue-50 p-3 rounded-lg">
-              <h5 className="font-medium text-gray-800 mb-2">Application Process</h5>
-              <p className="text-sm text-gray-700">{office.instructions.applicationProcess}</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {office.instructions?.requiredDocuments && (
-        <div className="space-y-2">
-          <h4 className="font-semibold text-gray-900">Required Documents</h4>
-          <ul className="space-y-1">
-            {office.instructions.requiredDocuments.map((doc, idx) => (
-              <li key={idx} className="flex items-start text-sm text-gray-700">
-                <FileText className="h-4 w-4 mr-2 text-gray-400 mt-0.5 flex-shrink-0" />
-                {doc}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {office.downloadableApplications && (
-        <div className="space-y-2">
-          <h4 className="font-semibold text-gray-900">Downloadable Applications</h4>
-          <div className="space-y-2">
-            {Object.entries(office.downloadableApplications).map(([type, urls]) => {
-              if (!urls || urls.length === 0) return null;
-              return (
-                <div key={type} className="space-y-1">
-                  <h5 className="font-medium text-gray-800 capitalize">{type} Applications</h5>
-                  <div className="space-y-1">
-                    {urls.map((url, idx) => (
-                      <a 
-                        key={idx}
-                        href={url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="flex items-center text-sm text-blue-600 hover:text-blue-800"
-                      >
-                        <Download className="h-3 w-3 mr-1" />
-                        Download {type} application
-                        <ExternalLink className="h-3 w-3 ml-1" />
-                      </a>
-                    ))}
-                  </div>
+    <div className="space-y-6">
+      {/* Services Overview */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Available Services */}
+        <div className="space-y-4">
+          <h4 className="font-semibold text-gray-900 flex items-center text-lg">
+            <CheckCircle className="h-5 w-5 mr-2 text-green-600" />
+            Available Services
+          </h4>
+          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="grid grid-cols-1 gap-3">
+              {getAvailableServices().map((service, idx) => (
+                <div key={idx} className="flex items-center p-3 bg-white rounded-lg border border-green-100">
+                  <CheckCircle className="h-5 w-5 text-green-600 mr-3 flex-shrink-0" />
+                  <span className="text-sm font-medium text-green-800">{service}</span>
                 </div>
-              );
-            })}
+              ))}
+            </div>
           </div>
         </div>
-      )}
+
+        {/* Online Services */}
+        {getOnlineServices().length > 0 && (
+          <div className="space-y-4">
+            <h4 className="font-semibold text-gray-900 flex items-center text-lg">
+              <Globe className="h-5 w-5 mr-2 text-blue-600" />
+              Online Services
+            </h4>
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="grid grid-cols-1 gap-3">
+                {getOnlineServices().map((service, idx) => (
+                  <div key={idx} className="flex items-center p-3 bg-white rounded-lg border border-blue-100">
+                    <Globe className="h-5 w-5 text-blue-600 mr-3 flex-shrink-0" />
+                    <span className="text-sm font-medium text-blue-800">{service}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Service Categories */}
+      <div className="space-y-4">
+        <h4 className="font-semibold text-gray-900 flex items-center text-lg">
+          <FileText className="h-5 w-5 mr-2 text-purple-600" />
+          Service Categories
+        </h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Building Permits */}
+          {office.building_permits && (
+            <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+              <div className="flex items-center mb-2">
+                <CheckCircle className="h-5 w-5 text-purple-600 mr-2" />
+                <span className="font-medium text-purple-800">Building Permits</span>
+              </div>
+              <p className="text-sm text-purple-700">Construction and renovation permits</p>
+            </div>
+          )}
+
+          {/* Electrical Permits */}
+          {office.electrical_permits && (
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex items-center mb-2">
+                <CheckCircle className="h-5 w-5 text-yellow-600 mr-2" />
+                <span className="font-medium text-yellow-800">Electrical Permits</span>
+              </div>
+              <p className="text-sm text-yellow-700">Electrical system installations</p>
+            </div>
+          )}
+
+          {/* Plumbing Permits */}
+          {office.plumbing_permits && (
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center mb-2">
+                <CheckCircle className="h-5 w-5 text-blue-600 mr-2" />
+                <span className="font-medium text-blue-800">Plumbing Permits</span>
+              </div>
+              <p className="text-sm text-blue-700">Plumbing system installations</p>
+            </div>
+          )}
+
+          {/* Mechanical Permits */}
+          {office.mechanical_permits && (
+            <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+              <div className="flex items-center mb-2">
+                <CheckCircle className="h-5 w-5 text-orange-600 mr-2" />
+                <span className="font-medium text-orange-800">Mechanical Permits</span>
+              </div>
+              <p className="text-sm text-orange-700">HVAC and mechanical systems</p>
+            </div>
+          )}
+
+          {/* Zoning Permits */}
+          {office.zoning_permits && (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center mb-2">
+                <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
+                <span className="font-medium text-green-800">Zoning Permits</span>
+              </div>
+              <p className="text-sm text-green-700">Land use and zoning approvals</p>
+            </div>
+          )}
+
+          {/* Planning Review */}
+          {office.planning_review && (
+            <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
+              <div className="flex items-center mb-2">
+                <CheckCircle className="h-5 w-5 text-indigo-600 mr-2" />
+                <span className="font-medium text-indigo-800">Planning Review</span>
+              </div>
+              <p className="text-sm text-indigo-700">Development plan reviews</p>
+            </div>
+          )}
+
+          {/* Inspections */}
+          {office.inspections && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center mb-2">
+                <CheckCircle className="h-5 w-5 text-red-600 mr-2" />
+                <span className="font-medium text-red-800">Inspections</span>
+              </div>
+              <p className="text-sm text-red-700">Construction and safety inspections</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 
@@ -561,62 +695,65 @@ export default function PermitOfficeCard({ office }: PermitOfficeCardProps) {
     <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
       {/* Header */}
       <div className="p-6 border-b border-gray-100">
-        <div className="flex justify-between items-start mb-3">
+        {/* Main Office Info */}
+        <div className="flex justify-between items-start mb-4">
           <div className="flex-1">
             <h3 className="text-xl font-semibold text-gray-900 mb-1">
               {office.department_name}
             </h3>
-            <p className="text-gray-600 mb-2">
-              {office.city}, {office.county} County, {office.state}
-            </p>
-            <div className="flex flex-wrap gap-2 text-sm">
-              <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full capitalize">
+            <div className="flex items-center gap-2 text-gray-600 mb-2">
+              <MapPin className="h-4 w-4 text-gray-400" />
+              <span>{office.city}, {office.county} County, {office.state}</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium capitalize">
                 {office.office_type}
               </span>
-              <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full capitalize">
+              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium capitalize">
                 {office.jurisdiction_type}
               </span>
               {office.active !== false && (
-                <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full">
-                  Active
+                <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-sm font-medium">
+                  ✓ Active
                 </span>
               )}
             </div>
           </div>
           {office.distance && (
             <div className="text-right">
-              <span className="text-sm text-blue-600 font-medium bg-blue-50 px-3 py-1 rounded-full">
-                {office.distance.toFixed(1)} miles away
+              <div className="text-sm text-gray-500 mb-1">Distance</div>
+              <span className="text-lg font-semibold text-blue-600 bg-blue-50 px-3 py-2 rounded-lg">
+                {office.distance.toFixed(1)} mi
               </span>
             </div>
           )}
         </div>
         
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 pt-3 border-t border-gray-100">
-          <div className="text-center">
-            <div className="text-lg font-semibold text-gray-900">
+        {/* Key Metrics Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-100">
+          <div className="text-center p-3 bg-gray-50 rounded-lg">
+            <div className="text-2xl font-bold text-gray-900 mb-1">
               {getAvailableServices().length}
             </div>
-            <div className="text-xs text-gray-500">Services</div>
+            <div className="text-sm text-gray-600 font-medium">Services</div>
           </div>
-          <div className="text-center">
-            <div className="text-lg font-semibold text-gray-900">
+          <div className="text-center p-3 bg-blue-50 rounded-lg">
+            <div className="text-2xl font-bold text-blue-600 mb-1">
               {getOnlineServices().length}
             </div>
-            <div className="text-xs text-gray-500">Online</div>
+            <div className="text-sm text-blue-700 font-medium">Online</div>
           </div>
-          <div className="text-center">
-            <div className="text-lg font-semibold text-gray-900">
+          <div className="text-center p-3 bg-green-50 rounded-lg">
+            <div className="text-2xl font-bold text-green-600 mb-1">
               {getOperatingHours().length}
             </div>
-            <div className="text-xs text-gray-500">Open Days</div>
+            <div className="text-sm text-green-700 font-medium">Open Days</div>
           </div>
-          <div className="text-center">
-            <div className="text-lg font-semibold text-gray-900">
+          <div className="text-center p-3 bg-orange-50 rounded-lg">
+            <div className="text-2xl font-bold text-orange-600 mb-1">
               {office.permitFees ? Object.keys(office.permitFees).length : 0}
             </div>
-            <div className="text-xs text-gray-500">Fee Types</div>
+            <div className="text-sm text-orange-700 font-medium">Fee Types</div>
           </div>
         </div>
       </div>
