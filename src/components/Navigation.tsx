@@ -2,9 +2,15 @@
 
 import Link from 'next/link'
 import { useUser, SignOutButton } from '@clerk/nextjs'
+import { useState, useEffect } from 'react'
 
 export default function Navigation() {
-  const { isSignedIn, user } = useUser()
+  const { isSignedIn, user, isLoaded } = useUser()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   return (
     <nav className="bg-white shadow-sm border-b border-gray-200">
@@ -37,7 +43,7 @@ export default function Navigation() {
               >
                 Search
               </Link>
-              {isSignedIn && (
+              {mounted && isLoaded && isSignedIn && (
                 <>
                   <Link
                     href="/dashboard"
@@ -58,7 +64,12 @@ export default function Navigation() {
 
           {/* Authentication Buttons */}
           <div className="flex items-center space-x-4">
-            {isSignedIn ? (
+            {!mounted || !isLoaded ? (
+              <div className="flex items-center space-x-3">
+                <div className="w-20 h-8 bg-gray-200 animate-pulse rounded"></div>
+                <div className="w-16 h-8 bg-gray-200 animate-pulse rounded"></div>
+              </div>
+            ) : isSignedIn ? (
               <div className="flex items-center space-x-4">
                 <Link
                   href="/profile"

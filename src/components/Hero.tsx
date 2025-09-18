@@ -4,6 +4,37 @@ import { useState } from 'react'
 import GooglePlacesAutocomplete from './GooglePlacesAutocomplete'
 import { extractAddressComponents, getCoordinates } from '@/lib/google-apis'
 
+interface PermitFeeDetail {
+  amount?: number
+  description?: string
+  unit?: string
+}
+
+type PermitFeesRecord = Record<string, PermitFeeDetail | undefined>
+
+interface PermitProcessingTime {
+  min?: number
+  max?: number
+  unit?: string
+  description?: string
+}
+
+type ProcessingTimesRecord = Record<string, PermitProcessingTime | undefined>
+
+type DownloadableApplicationsRecord = Record<string, string[] | undefined>
+
+interface PermitInstructions {
+  general?: string
+  building?: string
+  electrical?: string
+  plumbing?: string
+  mechanical?: string
+  zoning?: string
+  requiredDocuments?: string[]
+  applicationProcess?: string
+  [key: string]: string | string[] | undefined
+}
+
 interface PermitOffice {
   id?: string
   city: string
@@ -42,10 +73,10 @@ interface PermitOffice {
   permitTracking?: boolean
   onlinePortalUrl?: string | null
   // Enhanced data
-  permitFees?: any
-  instructions?: any
-  downloadableApplications?: any
-  processingTimes?: any
+  permitFees?: PermitFeesRecord | null
+  instructions?: PermitInstructions | null
+  downloadableApplications?: DownloadableApplicationsRecord | null
+  processingTimes?: ProcessingTimesRecord | null
   distance?: number
 }
 
@@ -304,37 +335,47 @@ export default function Hero() {
                       <div className="mb-4">
                         <h4 className="text-sm font-semibold text-gray-900 mb-2">Processing Times</h4>
                         <div className="space-y-1">
-                          {Object.entries(office.processingTimes).map(([type, time]: [string, any]) => (
-                            time && (
-                              <div key={type} className="text-xs text-gray-600">
-                                <span className="capitalize font-medium">{type}:</span>{' '}
-                                {time.min && time.max ? `${time.min}-${time.max}` : time.min || time.max}{' '}
-                                {time.unit || 'days'}
-                                {time.description && <span className="text-gray-500"> - {time.description}</span>}
-                              </div>
-                            )
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                      {Object.entries(office.processingTimes).map(([type, time]: [string, PermitProcessingTime | undefined]) => {
+                        if (!time) {
+                          return null
+                        }
 
-                    {/* Permit Fees */}
-                    {office.permitFees && Object.keys(office.permitFees).length > 0 && (
-                      <div className="mb-4">
-                        <h4 className="text-sm font-semibold text-gray-900 mb-2">Permit Fees</h4>
-                        <div className="space-y-1">
-                          {Object.entries(office.permitFees).map(([type, fee]: [string, any]) => (
-                            fee && fee.amount && (
-                              <div key={type} className="text-xs text-gray-600">
-                                <span className="capitalize font-medium">{type}:</span>{' '}
-                                ${fee.amount}{fee.unit && `/${fee.unit}`}
-                                {fee.description && <span className="text-gray-500"> - {fee.description}</span>}
-                              </div>
-                            )
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                        const duration = time.min && time.max ? `${time.min}-${time.max}` : time.min ?? time.max
+
+                        return (
+                          <div key={type} className="text-xs text-gray-600">
+                            <span className="capitalize font-medium">{type}:</span>{' '}
+                            {duration}{' '}
+                            {time.unit || 'days'}
+                            {time.description && <span className="text-gray-500"> - {time.description}</span>}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Permit Fees */}
+                {office.permitFees && Object.keys(office.permitFees).length > 0 && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-semibold text-gray-900 mb-2">Permit Fees</h4>
+                    <div className="space-y-1">
+                      {Object.entries(office.permitFees).map(([type, fee]: [string, PermitFeeDetail | undefined]) => {
+                        if (!fee || fee.amount == null) {
+                          return null
+                        }
+
+                        return (
+                          <div key={type} className="text-xs text-gray-600">
+                            <span className="capitalize font-medium">{type}:</span>{' '}
+                            ${fee.amount}{fee.unit && `/${fee.unit}`}
+                            {fee.description && <span className="text-gray-500"> - {fee.description}</span>}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
 
                     {/* Services & Permit Types */}
                     <div className="flex flex-wrap gap-2 mb-4">
@@ -383,12 +424,16 @@ export default function Hero() {
                       <div className="mb-4">
                         <h4 className="text-sm font-semibold text-gray-900 mb-2">Application Forms</h4>
                         <div className="space-y-1">
-                          {Object.entries(office.downloadableApplications).map(([type, apps]: [string, any]) => (
-                            apps && apps.length > 0 && (
+                          {Object.entries(office.downloadableApplications).map(([type, apps]: [string, string[] | undefined]) => {
+                            if (!apps || apps.length === 0) {
+                              return null
+                            }
+
+                            return (
                               <div key={type} className="text-xs">
                                 <span className="capitalize font-medium text-gray-700">{type}:</span>
                                 <div className="ml-2 space-y-1">
-                                  {apps.map((app: string, appIndex: number) => (
+                                  {apps.map((app, appIndex) => (
                                     <a 
                                       key={appIndex}
                                       href={app} 
@@ -402,7 +447,7 @@ export default function Hero() {
                                 </div>
                               </div>
                             )
-                          ))}
+                          })}
                         </div>
                       </div>
                     )}

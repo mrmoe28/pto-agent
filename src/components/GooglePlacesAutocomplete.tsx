@@ -41,6 +41,7 @@ export default function GooglePlacesAutocomplete({
       // Check if Google API is configured
       if (!isGoogleAPIConfigured()) {
         console.warn(GOOGLE_API_ERRORS.NO_API_KEY);
+        console.warn('Google Places API key not found. Autocomplete will be disabled.');
         setIsLoaded(true); // Still show the input, just without autocomplete
         return;
       }
@@ -115,7 +116,7 @@ export default function GooglePlacesAutocomplete({
     onChange?.(newValue);
     
     // If Google Places API is not working, use fallback
-    if (newValue.length > 2 && !autocompleteRef.current) {
+    if (newValue.length > 2 && !autocompleteRef.current && process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY) {
       try {
         const response = await fetch(
           `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(newValue)}&key=${process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY}&types=address&components=country:us`
@@ -141,29 +142,31 @@ export default function GooglePlacesAutocomplete({
     setShowSuggestions(false);
     
     // Get place details for the selected suggestion
-    try {
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(suggestion)}&inputtype=textquery&key=${process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY}&fields=place_id,formatted_address,geometry,address_components`
-      );
-      const data = await response.json();
-      
-      if (data.candidates && data.candidates.length > 0) {
-        const place = data.candidates[0];
-        // Convert to the expected format
-        const placeResult = {
-          formatted_address: place.formatted_address,
-          geometry: {
-            location: {
-              lat: () => place.geometry.location.lat,
-              lng: () => place.geometry.location.lng
-            }
-          },
-          address_components: place.address_components || []
-        };
-        onPlaceSelect(placeResult as google.maps.places.PlaceResult);
+    if (process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY) {
+      try {
+        const response = await fetch(
+          `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(suggestion)}&inputtype=textquery&key=${process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY}&fields=place_id,formatted_address,geometry,address_components`
+        );
+        const data = await response.json();
+        
+        if (data.candidates && data.candidates.length > 0) {
+          const place = data.candidates[0];
+          // Convert to the expected format
+          const placeResult = {
+            formatted_address: place.formatted_address,
+            geometry: {
+              location: {
+                lat: () => place.geometry.location.lat,
+                lng: () => place.geometry.location.lng
+              }
+            },
+            address_components: place.address_components || []
+          };
+          onPlaceSelect(placeResult as google.maps.places.PlaceResult);
+        }
+      } catch (error) {
+        console.error('Error getting place details:', error);
       }
-    } catch (error) {
-      console.error('Error getting place details:', error);
     }
   };
 
