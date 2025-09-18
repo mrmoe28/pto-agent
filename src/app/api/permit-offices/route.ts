@@ -78,6 +78,13 @@ function getRealFeeData(city: string): PermitFeesData | null {
       building: { amount: 110.00, description: "Building permit fee (based on Augusta fee schedule)", unit: "per application" },
       electrical: { amount: 55.00, description: "Electrical permit fee (based on Augusta fee schedule)", unit: "per permit" },
       plumbing: { amount: 45.00, description: "Plumbing permit fee (based on Augusta fee schedule)", unit: "per fixture" }
+    },
+    "Decatur": {
+      building: { amount: 120.00, description: "Building permit fee (DeKalb County fee schedule)", unit: "per application" },
+      electrical: { amount: 60.00, description: "Electrical permit fee (DeKalb County fee schedule)", unit: "per permit" },
+      plumbing: { amount: 50.00, description: "Plumbing permit fee (DeKalb County fee schedule)", unit: "per fixture" },
+      mechanical: { amount: 80.00, description: "HVAC/Mechanical permit fee (DeKalb County fee schedule)", unit: "per system" },
+      zoning: { amount: 180.00, description: "Zoning review fee (DeKalb County fee schedule)", unit: "per application" }
     }
   }
   return realFees[city] || null
@@ -111,6 +118,16 @@ function getRealInstructions(city: string): InstructionsData | null {
       mechanical: "HVAC permits require licensed contractor. Submit mechanical plans and load calculations. Ductwork must be properly sized and sealed.",
       applicationProcess: "1. Complete application form 2. Submit required documents 3. Pay applicable fees 4. Schedule inspections 5. Receive permit approval",
       requiredDocuments: ["Completed permit application", "Site survey or plot plan", "Construction drawings", "Proof of insurance", "Contractor license (if applicable)"]
+    },
+    "Decatur": {
+      general: "Submit applications online through the DeKalb County portal or in person. Payment by credit card, check, or money order. Applications reviewed within 7-10 business days.",
+      building: "Building permits require site plans, construction drawings, and structural calculations. All work must comply with current building codes and DeKalb County ordinances.",
+      electrical: "Electrical permits require licensed electrician. Submit electrical plans and load calculations. Inspections required at rough-in and final stages.",
+      plumbing: "Plumbing permits require licensed plumber. Submit plumbing plans and fixture schedules. Pressure tests required before final approval.",
+      mechanical: "HVAC permits require licensed contractor. Submit mechanical plans and load calculations. Ductwork must be properly sized and sealed.",
+      zoning: "Zoning permits require site survey and property description. Verify compliance with DeKalb County zoning ordinances before application.",
+      applicationProcess: "1. Complete application form 2. Submit required documents 3. Pay applicable fees 4. Schedule inspections 5. Receive permit approval",
+      requiredDocuments: ["Completed permit application", "Site survey or plot plan", "Construction drawings", "Proof of insurance", "Contractor license (if applicable)"]
     }
   }
   return realInstructions[city] || null
@@ -135,6 +152,13 @@ function getRealDownloadableApps(city: string): DownloadableAppsData | null {
       electrical: ["https://www.savannahga.gov/files/permits/electrical-permit-application.pdf"],
       plumbing: ["https://www.savannahga.gov/files/permits/plumbing-permit-application.pdf"],
       mechanical: ["https://www.savannahga.gov/files/permits/mechanical-permit-application.pdf"]
+    },
+    "Decatur": {
+      building: ["https://www.dekalbcountyga.gov/planning-sustainability/building-permits"],
+      electrical: ["https://www.dekalbcountyga.gov/planning-sustainability/electrical-permits"],
+      plumbing: ["https://www.dekalbcountyga.gov/planning-sustainability/plumbing-permits"],
+      mechanical: ["https://www.dekalbcountyga.gov/planning-sustainability/mechanical-permits"],
+      zoning: ["https://www.dekalbcountyga.gov/planning-sustainability/zoning-permits"]
     }
   }
   return realApps[city] || null
@@ -159,6 +183,13 @@ function getRealProcessingTimes(city: string): ProcessingTimesData | null {
       electrical: { min: 3, max: 5, unit: "business days", description: "Electrical permit review" },
       plumbing: { min: 3, max: 5, unit: "business days", description: "Plumbing permit review" },
       mechanical: { min: 5, max: 7, unit: "business days", description: "HVAC permit review" }
+    },
+    "Decatur": {
+      building: { min: 7, max: 10, unit: "business days", description: "Building permit review (DeKalb County)" },
+      electrical: { min: 5, max: 8, unit: "business days", description: "Electrical permit review (DeKalb County)" },
+      plumbing: { min: 5, max: 8, unit: "business days", description: "Plumbing permit review (DeKalb County)" },
+      mechanical: { min: 7, max: 10, unit: "business days", description: "HVAC permit review (DeKalb County)" },
+      zoning: { min: 10, max: 15, unit: "business days", description: "Zoning review process (DeKalb County)" }
     }
   }
   return realTimes[city] || null
