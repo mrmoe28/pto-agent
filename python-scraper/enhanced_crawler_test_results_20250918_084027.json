@@ -1,0 +1,65 @@
+[
+  {
+    "target": {
+      "name": "Atlanta Building Department",
+      "url": "https://www.atlantaga.gov/government/departments/city-planning/bureau-of-buildings",
+      "type": "city",
+      "state": "GA",
+      "city": "Atlanta",
+      "county": "Fulton",
+      "selectors": {},
+      "enabled": true,
+      "last_scraped": null,
+      "success_count": 0,
+      "error_count": 0
+    },
+    "success": false,
+    "offices_found": 0,
+    "offices_processed": 0,
+    "errors": [],
+    "duration_seconds": 0.25638890266418457,
+    "scraped_at": "2025-09-18 08:40:26.897278"
+  },
+  {
+    "target": {
+      "name": "Fulton County Building Department",
+      "url": "https://www.fultoncountyga.gov/services/building-permits",
+      "type": "county",
+      "state": "GA",
+      "city": null,
+      "county": "Fulton",
+      "selectors": {},
+      "enabled": true,
+      "last_scraped": null,
+      "success_count": 0,
+      "error_count": 0
+    },
+    "success": false,
+    "offices_found": 0,
+    "offices_processed": 0,
+    "errors": [],
+    "duration_seconds": 0.3163309097290039,
+    "scraped_at": "2025-09-18 08:40:27.213788"
+  },
+  {
+    "target": {
+      "name": "Gwinnett County Planning",
+      "url": "https://www.gwinnettcounty.com/web/gwinnett/departments/planninganddevelopment",
+      "type": "county",
+      "state": "GA",
+      "city": null,
+      "county": "Gwinnett",
+      "selectors": {},
+      "enabled": true,
+      "last_scraped": null,
+      "success_count": 0,
+      "error_count": 0
+    },
+    "success": false,
+    "offices_found": 0,
+    "offices_processed": 0,
+    "errors": [],
+    "duration_seconds": 0.4139251708984375,
+    "scraped_at": "2025-09-18 08:40:27.628024"
+  }
+]
