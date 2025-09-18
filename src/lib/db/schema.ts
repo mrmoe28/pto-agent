@@ -83,6 +83,41 @@ export const permitOffices = pgTable('permit_offices', {
   onlinePayments: boolean('online_payments').default(false),
   permitTracking: boolean('permit_tracking').default(false),
   onlinePortalUrl: text('online_portal_url'),
+  // Enhanced information
+  permitFees: jsonb('permit_fees').$type<{
+    building?: { amount?: number; description?: string; unit?: string };
+    electrical?: { amount?: number; description?: string; unit?: string };
+    plumbing?: { amount?: number; description?: string; unit?: string };
+    mechanical?: { amount?: number; description?: string; unit?: string };
+    zoning?: { amount?: number; description?: string; unit?: string };
+    general?: { amount?: number; description?: string; unit?: string };
+  }>(),
+  instructions: jsonb('instructions').$type<{
+    general?: string;
+    building?: string;
+    electrical?: string;
+    plumbing?: string;
+    mechanical?: string;
+    zoning?: string;
+    requiredDocuments?: string[];
+    applicationProcess?: string;
+  }>(),
+  downloadableApplications: jsonb('downloadable_applications').$type<{
+    building?: string[];
+    electrical?: string[];
+    plumbing?: string[];
+    mechanical?: string[];
+    zoning?: string[];
+    general?: string[];
+  }>(),
+  processingTimes: jsonb('processing_times').$type<{
+    building?: { min?: number; max?: number; unit?: string; description?: string };
+    electrical?: { min?: number; max?: number; unit?: string; description?: string };
+    plumbing?: { min?: number; max?: number; unit?: string; description?: string };
+    mechanical?: { min?: number; max?: number; unit?: string; description?: string };
+    zoning?: { min?: number; max?: number; unit?: string; description?: string };
+    general?: { min?: number; max?: number; unit?: string; description?: string };
+  }>(),
   // Geographic data
   latitude: text('latitude'),
   longitude: text('longitude'),
