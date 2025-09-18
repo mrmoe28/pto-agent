@@ -4,7 +4,7 @@ import { useUser } from '@clerk/nextjs';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import GooglePlacesAutocomplete from '@/components/GooglePlacesAutocomplete';
-import PermitOfficeCard from '@/components/PermitOfficeCard';
+import PermitOfficeTable from '@/components/PermitOfficeTable';
 import { extractAddressComponents, getCoordinates } from '@/lib/google-apis';
 
 interface PermitOffice {
@@ -91,7 +91,6 @@ export default function SearchPage() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
   const [address, setAddress] = useState('');
-  const [instructionSearch, setInstructionSearch] = useState('');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<PermitOffice[]>([]);
   const [error, setError] = useState('');
@@ -163,10 +162,6 @@ export default function SearchPage() {
         state: state
       });
 
-      // Add instruction search if provided
-      if (instructionSearch && instructionSearch.trim()) {
-        params.append('instructions', instructionSearch.trim());
-      }
 
       const officesResponse = await fetch(`/api/permit-offices?${params}`);
       
@@ -245,22 +240,6 @@ export default function SearchPage() {
                 </p>
               </div>
               
-              <div>
-                <label htmlFor="instructionSearch" className="block text-sm font-medium text-gray-700 mb-2">
-                  Search Instructions (Optional)
-                </label>
-                <input
-                  type="text"
-                  id="instructionSearch"
-                  value={instructionSearch}
-                  onChange={(e) => setInstructionSearch(e.target.value)}
-                  placeholder="e.g., 'building permit requirements', 'electrical inspection', 'online application'"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-500"
-                />
-                <p className="mt-2 text-sm text-gray-500">
-                  🔍 Search for specific instructions, requirements, or processes
-                </p>
-              </div>
               <button
                 type="submit"
                 disabled={loading}
@@ -293,18 +272,14 @@ export default function SearchPage() {
           )}
 
           {/* Results Display */}
-          {results.length > 0 && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-gray-900">
-                Found {results.length} Permit Office{results.length !== 1 ? 's' : ''}
-              </h2>
-              <div className="grid grid-cols-1 gap-6">
-                {results.map((office, index) => (
-                  <PermitOfficeCard key={office.id || index} office={office} />
-                ))}
-              </div>
-            </div>
-          )}
+    {results.length > 0 && (
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-gray-900">
+          Found {results.length} Permit Office{results.length !== 1 ? 's' : ''}
+        </h2>
+        <PermitOfficeTable offices={results} />
+      </div>
+    )}
         </div>
       </main>
     </div>
