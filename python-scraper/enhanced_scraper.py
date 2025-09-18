@@ -70,12 +70,25 @@ class EnhancedPermitOfficeScraper:
     
     async def __aenter__(self):
         """Async context manager entry"""
+        # Enhanced headers for government websites
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+        }
+        
         self.session = aiohttp.ClientSession(
             timeout=aiohttp.ClientTimeout(total=config.TIMEOUT),
-            headers={'User-Agent': config.USER_AGENT}
+            headers=headers
         )
         self.playwright = await async_playwright().start()
-        self.browser = await self.playwright.chromium.launch(headless=True)
+        self.browser = await self.playwright.chromium.launch(
+            headless=True,
+            args=['--no-sandbox', '--disable-dev-shm-usage']
+        )
         return self
     
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -162,6 +175,9 @@ class EnhancedPermitOfficeScraper:
         offices = []
         
         try:
+            # Add rate limiting
+            await asyncio.sleep(config.SCRAPING_DELAY)
+            
             async with self.session.get(target.url) as response:
                 if response.status == 200:
                     html = await response.text()
@@ -293,12 +309,132 @@ class EnhancedPermitOfficeScraper:
         text_content = soup.get_text()
         
         # Look for permit-related content
-        if any(keyword in text_content.lower() for keyword in ['permit', 'building', 'planning', 'zoning']):
+        permit_keywords = ['permit', 'building', 'planning', 'zoning', 'construction', 'development', 'inspection']
+        if any(keyword in text_content.lower() for keyword in permit_keywords):
             office = self._create_office_from_content_analysis(soup, target)
             if office:
                 offices.append(office)
         
         return offices
+    
+    def _create_office_from_content_analysis(self, soup: BeautifulSoup, target: ScrapingTarget) -> Optional[PermitOffice]:
+        """Create office from content analysis"""
+        try:
+            # Try to extract basic information from the page
+            title = soup.find('title')
+            page_title = title.get_text().strip() if title else ''
+            
+            # Look for department name in common locations
+            department_name = None
+            for selector in ['h1', 'h2', '.page-title', '.department-name', '.office-name']:
+                element = soup.select_one(selector)
+                if element:
+                    text = element.get_text().strip()
+                    if any(keyword in text.lower() for keyword in ['department', 'office', 'bureau', 'division']):
+                        department_name = text
+                        break
+            
+            if not department_name:
+                department_name = page_title or f"{target.city} Building Department"
+            
+            # Extract contact information
+            phone = self._extract_phone_from_text(soup.get_text())
+            email = self._extract_email_from_text(soup.get_text())
+            address = self._extract_address_from_text(soup.get_text())
+            
+            # Extract hours
+            hours = self._extract_hours_from_text(soup.get_text())
+            
+            # Determine services based on content
+            services = self._determine_services_from_content(soup.get_text())
+            
+            return PermitOffice(
+                department_name=department_name,
+                city=target.city or 'Unknown',
+                county=target.county or 'Unknown',
+                state=target.state,
+                jurisdiction_type=target.type,
+                office_type='combined',
+                address=address or 'Address not found',
+                phone=phone,
+                email=email,
+                website=target.url,
+                hours_monday=hours.get('monday'),
+                hours_tuesday=hours.get('tuesday'),
+                hours_wednesday=hours.get('wednesday'),
+                hours_thursday=hours.get('thursday'),
+                hours_friday=hours.get('friday'),
+                hours_saturday=hours.get('saturday'),
+                hours_sunday=hours.get('sunday'),
+                building_permits=services.get('building_permits', True),
+                electrical_permits=services.get('electrical_permits', True),
+                plumbing_permits=services.get('plumbing_permits', True),
+                mechanical_permits=services.get('mechanical_permits', True),
+                zoning_permits=services.get('zoning_permits', True),
+                planning_review=services.get('planning_review', True),
+                inspections=services.get('inspections', True),
+                data_source='enhanced_scraped',
+                active=True
+            )
+        except Exception as e:
+            logger.debug(f"Error creating office from content analysis: {e}")
+            return None
+    
+    def _extract_phone_from_text(self, text: str) -> Optional[str]:
+        """Extract phone number from text"""
+        for pattern in self.phone_patterns:
+            match = re.search(pattern, text)
+            if match:
+                return match.group().strip()
+        return None
+    
+    def _extract_email_from_text(self, text: str) -> Optional[str]:
+        """Extract email from text"""
+        for pattern in self.email_patterns:
+            match = re.search(pattern, text)
+            if match:
+                return match.group().strip().lower()
+        return None
+    
+    def _extract_address_from_text(self, text: str) -> Optional[str]:
+        """Extract address from text"""
+        for pattern in self.address_patterns:
+            match = re.search(pattern, text)
+            if match:
+                return match.group().strip()
+        return None
+    
+    def _extract_hours_from_text(self, text: str) -> Dict[str, str]:
+        """Extract business hours from text"""
+        hours = {}
+        for pattern in self.hours_patterns:
+            matches = re.findall(pattern, text, re.IGNORECASE)
+            for match in matches:
+                if 'monday' in match.lower() or 'mon' in match.lower():
+                    hours['monday'] = match.strip()
+                elif 'tuesday' in match.lower() or 'tue' in match.lower():
+                    hours['tuesday'] = match.strip()
+                elif 'wednesday' in match.lower() or 'wed' in match.lower():
+                    hours['wednesday'] = match.strip()
+                elif 'thursday' in match.lower() or 'thu' in match.lower():
+                    hours['thursday'] = match.strip()
+                elif 'friday' in match.lower() or 'fri' in match.lower():
+                    hours['friday'] = match.strip()
+                elif 'saturday' in match.lower() or 'sat' in match.lower():
+                    hours['saturday'] = match.strip()
+                elif 'sunday' in match.lower() or 'sun' in match.lower():
+                    hours['sunday'] = match.strip()
+        return hours
+    
+    def _determine_services_from_content(self, text: str) -> Dict[str, bool]:
+        """Determine services offered based on content"""
+        services = {}
+        text_lower = text.lower()
+        
+        for service, keywords in self.permit_keywords.items():
+            services[service] = any(keyword in text_lower for keyword in keywords)
+        
+        return services
     
     def _parse_structured_element(self, element, target: ScrapingTarget) -> Optional[PermitOffice]:
         """Parse a structured element for office information"""
@@ -514,9 +650,59 @@ class EnhancedPermitOfficeScraper:
     # (The methods are similar to the original scraper but with enhanced parsing)
     
     async def _scrape_with_playwright(self, target: ScrapingTarget) -> List[PermitOffice]:
-        """Scrape using Playwright (same as original)"""
-        # Implementation similar to original scraper
-        return []
+        """Scrape using Playwright for JavaScript-heavy sites"""
+        offices = []
+        
+        try:
+            # Add rate limiting
+            await asyncio.sleep(config.SCRAPING_DELAY)
+            
+            page = await self.browser.new_page()
+            
+            # Set realistic viewport and user agent
+            await page.set_viewport_size({"width": 1920, "height": 1080})
+            await page.set_extra_http_headers({
+                'Accept-Language': 'en-US,en;q=0.9'
+            })
+            
+            # Navigate to the page
+            await page.goto(target.url, wait_until='networkidle', timeout=30000)
+            
+            # Wait for content to load
+            await page.wait_for_timeout(2000)
+            
+            # Get page content
+            html = await page.content()
+            soup = BeautifulSoup(html, 'html.parser')
+            
+            # Use the same extraction methods as HTTP requests
+            extraction_methods = [
+                self._extract_from_structured_elements,
+                self._extract_from_contact_sections,
+                self._extract_from_department_lists,
+                self._extract_from_sidebar_info,
+                self._extract_from_footer_contacts,
+                self._extract_from_content_analysis
+            ]
+            
+            for method in extraction_methods:
+                try:
+                    method_offices = method(soup, target)
+                    offices.extend(method_offices)
+                except Exception as e:
+                    logger.debug(f"Playwright extraction method {method.__name__} failed: {e}")
+                    continue
+            
+            # Remove duplicates and enhance data
+            unique_offices = self._deduplicate_offices(offices)
+            enhanced_offices = [self._enhance_office_data(office, target) for office in unique_offices]
+            
+            await page.close()
+            return enhanced_offices
+            
+        except Exception as e:
+            logger.error(f"Playwright scraping error for {target.name}: {e}")
+            return []
     
     async def _scrape_with_selenium(self, target: ScrapingTarget) -> List[PermitOffice]:
         """Scrape using Selenium (same as original)"""
