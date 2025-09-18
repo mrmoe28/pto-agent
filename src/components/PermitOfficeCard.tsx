@@ -124,7 +124,7 @@ export default function PermitOfficeCard({ office }: PermitOfficeCardProps) {
   };
 
   const formatFee = (fee: { amount?: number; description?: string; unit?: string }) => {
-    if (!fee.amount) return fee.description || 'Contact for pricing';
+    if (!fee.amount) return fee.description || 'Not Applicable';
     return `$${fee.amount}${fee.unit ? ` per ${fee.unit}` : ''}${fee.description ? ` - ${fee.description}` : ''}`;
   };
 

@@ -88,7 +88,7 @@ interface PermitOfficeTableProps {
 
 export default function PermitOfficeTable({ offices }: PermitOfficeTableProps) {
   const formatFee = (fee: { amount?: number; description?: string; unit?: string }) => {
-    if (!fee.amount) return fee.description || 'Contact for pricing';
+    if (!fee.amount) return fee.description || 'Not Applicable';
     return `$${fee.amount}${fee.unit ? ` per ${fee.unit}` : ''}${fee.description ? ` - ${fee.description}` : ''}`;
   };
 
@@ -126,7 +126,7 @@ export default function PermitOfficeTable({ offices }: PermitOfficeTableProps) {
   };
 
   const getSampleFees = (office: PermitOffice) => {
-    if (!office.permitFees) return 'Contact for pricing';
+    if (!office.permitFees) return 'Not Applicable';
     const fees = [];
     if (office.permitFees.building) fees.push(`Building: ${formatFee(office.permitFees.building)}`);
     if (office.permitFees.electrical) fees.push(`Electrical: ${formatFee(office.permitFees.electrical)}`);
