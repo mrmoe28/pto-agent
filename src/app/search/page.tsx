@@ -330,11 +330,14 @@ export default function SearchPage() {
 
           {/* Results Display */}
     {results.length > 0 && (
-      <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-gray-900">
-          Found {results.length} Permit Office{results.length !== 1 ? 's' : ''}
-        </h2>
-        <div className="space-y-8">
+      <div className="space-y-8">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            Found {results.length} Permit Office{results.length !== 1 ? 's' : ''}
+          </h2>
+          <p className="text-gray-600">Scroll down to view all information for each office</p>
+        </div>
+        <div className="space-y-12">
           {results.map((office, index) => (
             <EnhancedPermitOfficeCard key={office.id || index} office={office} />
           ))}
