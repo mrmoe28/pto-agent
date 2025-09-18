@@ -1,9 +1,28 @@
-import { clerkMiddleware } from '@clerk/nextjs/server';
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
-export default clerkMiddleware({
+// Define public routes that don't require authentication
+const isPublicRoute = createRouteMatcher([
+  '/',
+  '/search(.*)',
+  '/api/geocode(.*)',
+  '/api/permit-offices(.*)',
+  '/sign-in(.*)',
+  '/sign-up(.*)',
+  '/forgot-password(.*)',
+]);
+
+export default clerkMiddleware((auth, req) => {
+  // Allow public routes without authentication
+  if (isPublicRoute(req)) {
+    return;
+  }
+  
+  // Protect all other routes
+  auth().protect();
+}, {
   // Enhanced security for production
   authorizedParties: process.env.NODE_ENV === 'production' 
-    ? [process.env.NEXT_PUBLIC_APP_URL || 'https://yourdomain.com']
+    ? [process.env.NEXT_PUBLIC_APP_URL || 'https://pto-agent-main.vercel.app']
     : undefined,
   
   // Additional security options
