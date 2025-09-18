@@ -9,15 +9,43 @@ interface PermitOffice {
   city: string
   county: string
   state: string
-  department_name: string
-  office_type: string
+  department_name?: string
+  departmentName?: string
+  office_type?: string
+  officeType?: string
   address: string
   phone: string | null
+  email?: string | null
   website: string | null
-  online_applications: boolean
-  building_permits: boolean
-  electrical_permits: boolean
-  plumbing_permits: boolean
+  // Operating hours
+  hoursMonday?: string | null
+  hoursTuesday?: string | null
+  hoursWednesday?: string | null
+  hoursThursday?: string | null
+  hoursFriday?: string | null
+  hoursSaturday?: string | null
+  hoursSunday?: string | null
+  // Services
+  online_applications?: boolean
+  onlineApplications?: boolean
+  building_permits?: boolean
+  buildingPermits?: boolean
+  electrical_permits?: boolean
+  electricalPermits?: boolean
+  plumbing_permits?: boolean
+  plumbingPermits?: boolean
+  mechanicalPermits?: boolean
+  zoningPermits?: boolean
+  planningReview?: boolean
+  inspections?: boolean
+  onlinePayments?: boolean
+  permitTracking?: boolean
+  onlinePortalUrl?: string | null
+  // Enhanced data
+  permitFees?: any
+  instructions?: any
+  downloadableApplications?: any
+  processingTimes?: any
   distance?: number
 }
 
@@ -166,76 +194,221 @@ export default function Hero() {
             <h2 className="text-2xl font-bold text-gray-900 mb-6">
               Found {results.length} Permit Office{results.length !== 1 ? 's' : ''}
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {results.map((office, index) => (
-                <div key={office.id || index} className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
-                  <div className="mb-4">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                      {office.department_name}
-                    </h3>
-                    <p className="text-gray-600">
-                      {office.city}, {office.county} County, {office.state}
-                    </p>
-                    {office.distance && (
-                      <p className="text-sm text-blue-600 font-medium">
-                        {office.distance.toFixed(1)} miles away
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {results.map((office, index) => {
+                const departmentName = office.department_name || office.departmentName || 'Permit Office'
+                const buildingPermits = office.building_permits || office.buildingPermits
+                const electricalPermits = office.electrical_permits || office.electricalPermits
+                const plumbingPermits = office.plumbing_permits || office.plumbingPermits
+                const onlineApplications = office.online_applications || office.onlineApplications
+                
+                return (
+                  <div key={office.id || index} className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+                    {/* Header */}
+                    <div className="mb-4">
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                        {departmentName}
+                      </h3>
+                      <p className="text-gray-600">
+                        {office.city}, {office.county} County, {office.state}
                       </p>
-                    )}
-                  </div>
-
-                  <div className="space-y-3 mb-4">
-                    <div className="flex items-start gap-2">
-                      <svg className="w-5 h-5 text-gray-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                      <span className="text-sm text-gray-700">{office.address}</span>
+                      {office.distance && (
+                        <p className="text-sm text-blue-600 font-medium">
+                          {office.distance.toFixed(1)} miles away
+                        </p>
+                      )}
                     </div>
-                    
-                    {office.phone && (
-                      <div className="flex items-center gap-2">
-                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                        </svg>
-                        <a href={`tel:${office.phone}`} className="text-sm text-blue-600 hover:underline">
-                          {office.phone}
-                        </a>
-                      </div>
-                    )}
-                    
-                    {office.website && (
-                      <div className="flex items-center gap-2">
-                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
-                        </svg>
-                        <a 
-                          href={office.website} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-sm text-blue-600 hover:underline"
-                        >
-                          Visit Website
-                        </a>
-                      </div>
-                    )}
-                  </div>
 
-                  <div className="flex flex-wrap gap-2">
-                    {office.building_permits && (
-                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Building</span>
+                    {/* Contact Information */}
+                    <div className="space-y-3 mb-4">
+                      <div className="flex items-start gap-2">
+                        <svg className="w-5 h-5 text-gray-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span className="text-sm text-gray-700">{office.address}</span>
+                      </div>
+                      
+                      {office.phone && (
+                        <div className="flex items-center gap-2">
+                          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                          </svg>
+                          <a href={`tel:${office.phone}`} className="text-sm text-blue-600 hover:underline">
+                            {office.phone}
+                          </a>
+                        </div>
+                      )}
+
+                      {office.email && (
+                        <div className="flex items-center gap-2">
+                          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          </svg>
+                          <a href={`mailto:${office.email}`} className="text-sm text-blue-600 hover:underline">
+                            {office.email}
+                          </a>
+                        </div>
+                      )}
+                      
+                      {office.website && (
+                        <div className="flex items-center gap-2">
+                          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
+                          </svg>
+                          <a 
+                            href={office.website} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-sm text-blue-600 hover:underline"
+                          >
+                            Visit Website
+                          </a>
+                        </div>
+                      )}
+
+                      {office.onlinePortalUrl && (
+                        <div className="flex items-center gap-2">
+                          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <a 
+                            href={office.onlinePortalUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-sm text-blue-600 hover:underline font-medium"
+                          >
+                            Online Portal
+                          </a>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Operating Hours */}
+                    {(office.hoursMonday || office.hoursTuesday || office.hoursWednesday || office.hoursThursday || office.hoursFriday) && (
+                      <div className="mb-4">
+                        <h4 className="text-sm font-semibold text-gray-900 mb-2">Operating Hours</h4>
+                        <div className="grid grid-cols-2 gap-1 text-xs text-gray-600">
+                          {office.hoursMonday && <div>Mon: {office.hoursMonday}</div>}
+                          {office.hoursTuesday && <div>Tue: {office.hoursTuesday}</div>}
+                          {office.hoursWednesday && <div>Wed: {office.hoursWednesday}</div>}
+                          {office.hoursThursday && <div>Thu: {office.hoursThursday}</div>}
+                          {office.hoursFriday && <div>Fri: {office.hoursFriday}</div>}
+                          {office.hoursSaturday && <div>Sat: {office.hoursSaturday}</div>}
+                        </div>
+                      </div>
                     )}
-                    {office.electrical_permits && (
-                      <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">Electrical</span>
+
+                    {/* Processing Times */}
+                    {office.processingTimes && Object.keys(office.processingTimes).length > 0 && (
+                      <div className="mb-4">
+                        <h4 className="text-sm font-semibold text-gray-900 mb-2">Processing Times</h4>
+                        <div className="space-y-1">
+                          {Object.entries(office.processingTimes).map(([type, time]: [string, any]) => (
+                            time && (
+                              <div key={type} className="text-xs text-gray-600">
+                                <span className="capitalize font-medium">{type}:</span>{' '}
+                                {time.min && time.max ? `${time.min}-${time.max}` : time.min || time.max}{' '}
+                                {time.unit || 'days'}
+                                {time.description && <span className="text-gray-500"> - {time.description}</span>}
+                              </div>
+                            )
+                          ))}
+                        </div>
+                      </div>
                     )}
-                    {office.plumbing_permits && (
-                      <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Plumbing</span>
+
+                    {/* Permit Fees */}
+                    {office.permitFees && Object.keys(office.permitFees).length > 0 && (
+                      <div className="mb-4">
+                        <h4 className="text-sm font-semibold text-gray-900 mb-2">Permit Fees</h4>
+                        <div className="space-y-1">
+                          {Object.entries(office.permitFees).map(([type, fee]: [string, any]) => (
+                            fee && fee.amount && (
+                              <div key={type} className="text-xs text-gray-600">
+                                <span className="capitalize font-medium">{type}:</span>{' '}
+                                ${fee.amount}{fee.unit && `/${fee.unit}`}
+                                {fee.description && <span className="text-gray-500"> - {fee.description}</span>}
+                              </div>
+                            )
+                          ))}
+                        </div>
+                      </div>
                     )}
-                    {office.online_applications && (
-                      <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">Online Apps</span>
+
+                    {/* Services & Permit Types */}
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {buildingPermits && (
+                        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Building</span>
+                      )}
+                      {electricalPermits && (
+                        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">Electrical</span>
+                      )}
+                      {plumbingPermits && (
+                        <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Plumbing</span>
+                      )}
+                      {office.mechanicalPermits && (
+                        <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">Mechanical</span>
+                      )}
+                      {office.zoningPermits && (
+                        <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">Zoning</span>
+                      )}
+                      {office.planningReview && (
+                        <span className="px-2 py-1 bg-pink-100 text-pink-800 text-xs rounded-full">Planning</span>
+                      )}
+                      {office.inspections && (
+                        <span className="px-2 py-1 bg-indigo-100 text-indigo-800 text-xs rounded-full">Inspections</span>
+                      )}
+                      {onlineApplications && (
+                        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Online Apps</span>
+                      )}
+                      {office.onlinePayments && (
+                        <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Online Pay</span>
+                      )}
+                      {office.permitTracking && (
+                        <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">Tracking</span>
+                      )}
+                    </div>
+
+                    {/* Instructions */}
+                    {office.instructions && office.instructions.general && (
+                      <div className="mb-4">
+                        <h4 className="text-sm font-semibold text-gray-900 mb-2">Application Instructions</h4>
+                        <p className="text-xs text-gray-600 leading-relaxed">{office.instructions.general}</p>
+                      </div>
+                    )}
+
+                    {/* Downloadable Applications */}
+                    {office.downloadableApplications && Object.keys(office.downloadableApplications).length > 0 && (
+                      <div className="mb-4">
+                        <h4 className="text-sm font-semibold text-gray-900 mb-2">Application Forms</h4>
+                        <div className="space-y-1">
+                          {Object.entries(office.downloadableApplications).map(([type, apps]: [string, any]) => (
+                            apps && apps.length > 0 && (
+                              <div key={type} className="text-xs">
+                                <span className="capitalize font-medium text-gray-700">{type}:</span>
+                                <div className="ml-2 space-y-1">
+                                  {apps.map((app: string, appIndex: number) => (
+                                    <a 
+                                      key={appIndex}
+                                      href={app} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="block text-blue-600 hover:underline"
+                                    >
+                                      Download Form {appIndex + 1}
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            )
+                          ))}
+                        </div>
+                      </div>
                     )}
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         )}
