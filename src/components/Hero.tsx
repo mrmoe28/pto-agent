@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import GooglePlacesAutocomplete from './GooglePlacesAutocomplete'
-import PermitOfficeCard from './PermitOfficeCard'
+import PermitOfficeTable from './PermitOfficeTable'
 import { extractAddressComponents, getCoordinates } from '@/lib/google-apis'
 
 interface PermitFeeDetail {
@@ -111,7 +111,6 @@ interface PermitOffice {
 
 export default function Hero() {
   const [address, setAddress] = useState('')
-  const [instructionSearch, setInstructionSearch] = useState('')
   const [loading, setLoading] = useState(false)
   const [results, setResults] = useState<PermitOffice[]>([])
   const [error, setError] = useState('')
@@ -171,10 +170,6 @@ export default function Hero() {
         state: geocodeData.state || 'GA'
       })
 
-      // Add instruction search if provided
-      if (instructionSearch && instructionSearch.trim()) {
-        params.append('instructions', instructionSearch.trim())
-      }
 
       const officesResponse = await fetch(`/api/permit-offices?${params}`)
       
@@ -233,18 +228,6 @@ export default function Hero() {
               </p>
             </div>
             
-            <div>
-              <input
-                type="text"
-                value={instructionSearch}
-                onChange={(e) => setInstructionSearch(e.target.value)}
-                placeholder="Search instructions (optional): e.g., 'building permit requirements', 'online application'"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-500"
-              />
-              <p className="mt-2 text-sm text-gray-500 text-center">
-                🔍 Search for specific instructions, requirements, or processes
-              </p>
-            </div>
             <button
               type="submit"
               disabled={loading}
@@ -269,15 +252,11 @@ export default function Hero() {
 
         {/* Results Display */}
         {results.length > 0 && (
-          <div className="max-w-6xl mx-auto mb-12">
+          <div className="max-w-7xl mx-auto mb-12">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">
               Found {results.length} Permit Office{results.length !== 1 ? 's' : ''}
             </h2>
-            <div className="grid grid-cols-1 gap-8">
-              {results.map((office, index) => (
-                <PermitOfficeCard key={office.id || index} office={office} />
-              ))}
-            </div>
+            <PermitOfficeTable offices={results} />
           </div>
         )}
 
