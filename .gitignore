@@ -128,4 +128,4 @@ Thumbs.db
 
 # Build outputs
 dist/
-build/
+build/tsconfig.tsbuildinfo
