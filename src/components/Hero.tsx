@@ -23,6 +23,7 @@ interface PermitOffice {
   city: string
   county: string
   state: string
+  jurisdiction_type: string
   department_name: string
   departmentName?: string
   office_type: string
@@ -246,7 +247,7 @@ export default function Hero() {
             </h2>
             <div className="grid grid-cols-1 gap-8">
               {results.map((office, index) => (
-                <PermitOfficeCard key={office.id || index} office={office} index={index} />
+                <PermitOfficeCard key={office.id || index} office={office} />
               ))}
             </div>
           </div>

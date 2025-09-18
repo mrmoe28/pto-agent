@@ -14,19 +14,74 @@ interface UserFavorite {
 }
 
 interface PermitOffice {
-  id: string;
+  id?: string;
   city: string;
   county: string;
   state: string;
+  jurisdiction_type: string;
   department_name: string;
   office_type: string;
   address: string;
   phone: string | null;
+  email: string | null;
   website: string | null;
-  building_permits: boolean;
-  electrical_permits: boolean;
-  plumbing_permits: boolean;
-  online_applications: boolean;
+  // Operating hours
+  hours_monday?: string | null;
+  hours_tuesday?: string | null;
+  hours_wednesday?: string | null;
+  hours_thursday?: string | null;
+  hours_friday?: string | null;
+  hours_saturday?: string | null;
+  hours_sunday?: string | null;
+  // Services
+  building_permits?: boolean;
+  electrical_permits?: boolean;
+  plumbing_permits?: boolean;
+  mechanical_permits?: boolean;
+  zoning_permits?: boolean;
+  planning_review?: boolean;
+  inspections?: boolean;
+  // Online services
+  online_applications?: boolean;
+  online_payments?: boolean;
+  permit_tracking?: boolean;
+  online_portal_url?: string | null;
+  // Enhanced information
+  permitFees?: {
+    building?: { amount?: number; description?: string; unit?: string };
+    electrical?: { amount?: number; description?: string; unit?: string };
+    plumbing?: { amount?: number; description?: string; unit?: string };
+    mechanical?: { amount?: number; description?: string; unit?: string };
+    zoning?: { amount?: number; description?: string; unit?: string };
+    general?: { amount?: number; description?: string; unit?: string };
+  } | null;
+  instructions?: {
+    general?: string;
+    building?: string;
+    electrical?: string;
+    plumbing?: string;
+    mechanical?: string;
+    zoning?: string;
+    requiredDocuments?: string[];
+    applicationProcess?: string;
+  } | null;
+  downloadableApplications?: {
+    building?: string[];
+    electrical?: string[];
+    plumbing?: string[];
+    mechanical?: string[];
+    zoning?: string[];
+    general?: string[];
+  } | null;
+  processingTimes?: {
+    building?: { min?: number; max?: number; unit?: string; description?: string };
+    electrical?: { min?: number; max?: number; unit?: string; description?: string };
+    plumbing?: { min?: number; max?: number; unit?: string; description?: string };
+    mechanical?: { min?: number; max?: number; unit?: string; description?: string };
+    zoning?: { min?: number; max?: number; unit?: string; description?: string };
+    general?: { min?: number; max?: number; unit?: string; description?: string };
+  } | null;
+  distance?: number;
 }
 
 export default function FavoritesPage() {
@@ -191,7 +246,7 @@ export default function FavoritesPage() {
 
                   return (
                     <div key={favorite.id} className="relative">
-                      <PermitOfficeCard office={office} index={0} />
+                      <PermitOfficeCard office={office} />
                       <button
                         onClick={() => removeFavorite(favorite.permitOfficeId)}
                         className="absolute top-4 right-4 z-10 p-2 bg-red-100 text-red-600 hover:bg-red-200 rounded-full transition-colors duration-200"

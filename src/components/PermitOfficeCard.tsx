@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { MapPin, Phone, Mail, Globe, Clock, FileText, Download, DollarSign, Calendar, CheckCircle, ExternalLink } from 'lucide-react';
+import { MapPin, Phone, Mail, Globe, Clock, FileText, Download, DollarSign, CheckCircle, ExternalLink } from 'lucide-react';
 
 interface PermitOffice {
   id?: string;
   city: string;
   county: string;
   state: string;
+  jurisdiction_type: string;
   department_name: string;
   office_type: string;
   address: string;
@@ -75,22 +76,10 @@ interface PermitOffice {
 
 interface PermitOfficeCardProps {
   office: PermitOffice;
-  index: number;
 }
 
-export default function PermitOfficeCard({ office, index }: PermitOfficeCardProps) {
+export default function PermitOfficeCard({ office }: PermitOfficeCardProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'services' | 'instructions' | 'fees'>('overview');
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
-
-  const toggleSection = (section: string) => {
-    const newExpanded = new Set(expandedSections);
-    if (newExpanded.has(section)) {
-      newExpanded.delete(section);
-    } else {
-      newExpanded.add(section);
-    }
-    setExpandedSections(newExpanded);
-  };
 
   const getOperatingHours = () => {
     const days = [
@@ -419,7 +408,7 @@ export default function PermitOfficeCard({ office, index }: PermitOfficeCardProp
           ].map(({ id, label, icon: Icon }) => (
             <button
               key={id}
-              onClick={() => setActiveTab(id as any)}
+              onClick={() => setActiveTab(id as 'overview' | 'services' | 'instructions' | 'fees')}
               className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
                 activeTab === id
                   ? 'border-blue-500 text-blue-600'
