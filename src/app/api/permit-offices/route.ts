@@ -3,9 +3,58 @@ import { db, permitOffices, PermitOffice } from '@/lib/db'
 import { georgiaPermitOffices } from '@/lib/georgia-permit-data'
 import { eq, and, ilike, sql } from 'drizzle-orm'
 
+// Type definitions for real data
+interface PermitFeeDetail {
+  amount: number
+  description: string
+  unit: string
+}
+
+interface PermitFeesData {
+  building?: PermitFeeDetail
+  electrical?: PermitFeeDetail
+  plumbing?: PermitFeeDetail
+  mechanical?: PermitFeeDetail
+  zoning?: PermitFeeDetail
+}
+
+interface InstructionsData {
+  general?: string
+  building?: string
+  electrical?: string
+  plumbing?: string
+  mechanical?: string
+  zoning?: string
+  applicationProcess?: string
+  requiredDocuments?: string[]
+}
+
+interface DownloadableAppsData {
+  building?: string[]
+  electrical?: string[]
+  plumbing?: string[]
+  mechanical?: string[]
+  zoning?: string[]
+}
+
+interface ProcessingTimeDetail {
+  min: number
+  max: number
+  unit: string
+  description: string
+}
+
+interface ProcessingTimesData {
+  building?: ProcessingTimeDetail
+  electrical?: ProcessingTimeDetail
+  plumbing?: ProcessingTimeDetail
+  mechanical?: ProcessingTimeDetail
+  zoning?: ProcessingTimeDetail
+}
+
 // Real permit fee data based on publicly available information
-function getRealFeeData(city: string) {
-  const realFees: Record<string, any> = {
+function getRealFeeData(city: string): PermitFeesData | null {
+  const realFees: Record<string, PermitFeesData> = {
     "Atlanta": {
       building: { amount: 125.00, description: "Building permit application fee (based on Atlanta.gov fee schedule)", unit: "per application" },
       electrical: { amount: 65.00, description: "Electrical permit fee (based on Atlanta.gov fee schedule)", unit: "per permit" },
@@ -34,8 +83,8 @@ function getRealFeeData(city: string) {
   return realFees[city] || null
 }
 
-function getRealInstructions(city: string) {
-  const realInstructions: Record<string, any> = {
+function getRealInstructions(city: string): InstructionsData | null {
+  const realInstructions: Record<string, InstructionsData> = {
     "Atlanta": {
       general: "Submit completed application with required documents. Payment must be made at time of submission. Applications are reviewed within 5-10 business days.",
       building: "Building permits require site plans, construction drawings, and structural calculations. All work must comply with current building codes.",
@@ -67,8 +116,8 @@ function getRealInstructions(city: string) {
   return realInstructions[city] || null
 }
 
-function getRealDownloadableApps(city: string) {
-  const realApps: Record<string, any> = {
+function getRealDownloadableApps(city: string): DownloadableAppsData | null {
+  const realApps: Record<string, DownloadableAppsData> = {
     "Atlanta": {
       building: ["https://www.atlantaga.gov/files/permits/building-permit-application.pdf"],
       electrical: ["https://www.atlantaga.gov/files/permits/electrical-permit-application.pdf"],
@@ -91,8 +140,8 @@ function getRealDownloadableApps(city: string) {
   return realApps[city] || null
 }
 
-function getRealProcessingTimes(city: string) {
-  const realTimes: Record<string, any> = {
+function getRealProcessingTimes(city: string): ProcessingTimesData | null {
+  const realTimes: Record<string, ProcessingTimesData> = {
     "Atlanta": {
       building: { min: 5, max: 10, unit: "business days", description: "Standard building permit review" },
       electrical: { min: 3, max: 7, unit: "business days", description: "Electrical permit review" },
