@@ -4,7 +4,7 @@ import { useUser } from '@clerk/nextjs';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import GooglePlacesAutocomplete from '@/components/GooglePlacesAutocomplete';
-import EnhancedPermitOfficeTable from '@/components/EnhancedPermitOfficeTable';
+import EnhancedPermitOfficeCard from '@/components/EnhancedPermitOfficeCard';
 import { extractAddressComponents, getCoordinates } from '@/lib/google-apis';
 
 interface PermitOffice {
@@ -91,12 +91,22 @@ export default function SearchPage() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
   const [address, setAddress] = useState('');
+  const [selectedCounty, setSelectedCounty] = useState('');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<PermitOffice[]>([]);
   const [error, setError] = useState('');
   const [selectedPlace, setSelectedPlace] = useState<google.maps.places.PlaceResult | null>(null);
 
   const isAuthenticated = !!user;
+
+  // Available counties in Georgia
+  const availableCounties = [
+    { value: '', label: 'All Counties' },
+    { value: 'Chatham', label: 'Chatham County' },
+    { value: 'DeKalb', label: 'DeKalb County' },
+    { value: 'Fulton', label: 'Fulton County' },
+    { value: 'Gwinnett', label: 'Gwinnett County' },
+  ];
 
   const handlePlaceSelect = (place: google.maps.places.PlaceResult) => {
     setSelectedPlace(place);
@@ -105,62 +115,69 @@ export default function SearchPage() {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!address.trim()) return;
+    if (!address.trim() && !selectedCounty) return;
 
     setLoading(true);
     setError('');
     setResults([]);
 
     try {
-      let latitude: number;
-      let longitude: number;
+      let latitude: number | undefined;
+      let longitude: number | undefined;
       let city = '';
       let county = '';
       let state = 'GA';
 
-      // Use Google Places data if available, otherwise fallback to geocoding
-      if (selectedPlace && selectedPlace.geometry?.location) {
-        const coords = getCoordinates(selectedPlace);
-        if (coords) {
-          latitude = coords.latitude;
-          longitude = coords.longitude;
+      // If we have an address, get coordinates and location data
+      if (address.trim()) {
+        // Use Google Places data if available, otherwise fallback to geocoding
+        if (selectedPlace && selectedPlace.geometry?.location) {
+          const coords = getCoordinates(selectedPlace);
+          if (coords) {
+            latitude = coords.latitude;
+            longitude = coords.longitude;
+          } else {
+            throw new Error('Could not get coordinates from selected place');
+          }
+          
+          // Extract address components using our utility function
+          const addressComponents = extractAddressComponents(selectedPlace);
+          city = addressComponents.city;
+          county = addressComponents.county;
+          state = addressComponents.state;
         } else {
-          throw new Error('Could not get coordinates from selected place');
-        }
-        
-        // Extract address components using our utility function
-        const addressComponents = extractAddressComponents(selectedPlace);
-        city = addressComponents.city;
-        county = addressComponents.county;
-        state = addressComponents.state;
-      } else {
-        // Fallback to geocoding API
-        const geocodeResponse = await fetch('/api/geocode', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ address })
-        });
+          // Fallback to geocoding API
+          const geocodeResponse = await fetch('/api/geocode', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ address })
+          });
 
-        if (!geocodeResponse.ok) {
-          throw new Error('Could not find location for that address');
-        }
+          if (!geocodeResponse.ok) {
+            throw new Error('Could not find location for that address');
+          }
 
-        const geocodeData = await geocodeResponse.json();
-        latitude = geocodeData.latitude;
-        longitude = geocodeData.longitude;
-        city = geocodeData.city || '';
-        county = geocodeData.county || '';
-        state = geocodeData.state || 'GA';
+          const geocodeData = await geocodeResponse.json();
+          latitude = geocodeData.latitude;
+          longitude = geocodeData.longitude;
+          city = geocodeData.city || '';
+          county = geocodeData.county || '';
+          state = geocodeData.state || 'GA';
+        }
       }
       
       // Search for permit offices
       const params = new URLSearchParams({
-        lat: latitude.toString(),
-        lng: longitude.toString(),
         city: city,
-        county: county,
+        county: selectedCounty || county, // Use selected county if provided, otherwise use detected county
         state: state
       });
+
+      // Only add coordinates if we have them
+      if (latitude !== undefined && longitude !== undefined) {
+        params.append('lat', latitude.toString());
+        params.append('lng', longitude.toString());
+      }
 
 
       const officesResponse = await fetch(`/api/permit-offices?${params}`);
@@ -224,29 +241,69 @@ export default function SearchPage() {
           {/* Search Form */}
           <div className="bg-white p-6 rounded-lg shadow mb-8">
             <form onSubmit={handleSearch} className="space-y-4">
-              <div>
-                <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
-                  Property Address
-                </label>
-                <GooglePlacesAutocomplete
-                  onPlaceSelect={handlePlaceSelect}
-                  value={address}
-                  onChange={setAddress}
-                  placeholder="Start typing your address..."
-                  className="w-full"
-                />
-                <p className="mt-2 text-sm text-gray-500">
-                  💡 Start typing to see address suggestions from Google
-                </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
+                    Property Address
+                  </label>
+                  <GooglePlacesAutocomplete
+                    onPlaceSelect={handlePlaceSelect}
+                    value={address}
+                    onChange={setAddress}
+                    placeholder="Start typing your address..."
+                    className="w-full"
+                  />
+                  <p className="mt-2 text-sm text-gray-500">
+                    💡 Start typing to see address suggestions from Google
+                  </p>
+                </div>
+                
+                <div>
+                  <label htmlFor="county" className="block text-sm font-medium text-gray-700 mb-2">
+                    County (Optional)
+                  </label>
+                  <select
+                    id="county"
+                    value={selectedCounty}
+                    onChange={(e) => setSelectedCounty(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {availableCounties.map((county) => (
+                      <option key={county.value} value={county.value}>
+                        {county.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-2 text-sm text-gray-500">
+                    🏛️ Filter by specific county or search all
+                  </p>
+                </div>
               </div>
               
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full px-6 py-3 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? 'Searching...' : 'Find Permit Offices'}
-              </button>
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 px-6 py-3 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? 'Searching...' : 'Find Permit Offices'}
+                </button>
+                
+                {selectedCounty && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAddress('');
+                      setSelectedPlace(null);
+                      handleSearch({ preventDefault: () => {} } as React.FormEvent);
+                    }}
+                    disabled={loading}
+                    className="px-6 py-3 bg-green-600 text-white text-lg font-semibold rounded-lg hover:bg-green-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? 'Searching...' : `Search ${selectedCounty} County`}
+                  </button>
+                )}
+              </div>
             </form>
           </div>
 
@@ -277,7 +334,11 @@ export default function SearchPage() {
         <h2 className="text-2xl font-bold text-gray-900">
           Found {results.length} Permit Office{results.length !== 1 ? 's' : ''}
         </h2>
-        <EnhancedPermitOfficeTable offices={results} />
+        <div className="space-y-8">
+          {results.map((office, index) => (
+            <EnhancedPermitOfficeCard key={office.id || index} office={office} />
+          ))}
+        </div>
       </div>
     )}
         </div>

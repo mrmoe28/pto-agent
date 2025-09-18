@@ -98,7 +98,7 @@ export default function EnhancedPermitOfficeTable({ offices }: EnhancedPermitOff
   const [sortBy, setSortBy] = useState('distance');
 
   const formatFee = (fee: { amount?: number; description?: string; unit?: string }) => {
-    if (!fee.amount) return fee.description || 'Contact for pricing';
+    if (!fee.amount) return fee.description || 'Not Applicable';
     return `$${fee.amount}${fee.unit ? ` per ${fee.unit}` : ''}${fee.description ? ` - ${fee.description}` : ''}`;
   };
 
@@ -369,7 +369,7 @@ export default function EnhancedPermitOfficeTable({ offices }: EnhancedPermitOff
                                   </div>
                                 ))
                               ) : (
-                                <div className="text-xs text-gray-500">Contact for pricing</div>
+                                <div className="text-xs text-gray-500">Not Applicable</div>
                               )}
                             </div>
                           </div>
