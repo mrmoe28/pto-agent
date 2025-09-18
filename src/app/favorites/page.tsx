@@ -3,7 +3,7 @@
 import { useUser } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import PermitOfficeTable from '@/components/PermitOfficeTable';
+import EnhancedPermitOfficeTable from '@/components/EnhancedPermitOfficeTable';
 
 interface UserFavorite {
   id: string;
@@ -255,7 +255,7 @@ export default function FavoritesPage() {
 
                   return (
                     <div key={favorite.id} className="relative">
-                      <PermitOfficeTable offices={[office]} />
+                      <EnhancedPermitOfficeTable offices={[office]} />
                       <button
                         onClick={() => removeFavorite(favorite.permitOfficeId)}
                         className="absolute top-4 right-4 z-10 p-2 bg-red-100 text-red-600 hover:bg-red-200 rounded-full transition-colors duration-200"
