@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { EnhancedWebScraper, DetailedOfficeInfo } from '@/lib/enhanced-web-scraper'
+import { EnhancedWebScraper } from '@/lib/enhanced-web-scraper'
 
 // API endpoint for detailed permit office information extraction
 export async function POST(request: NextRequest) {
@@ -156,16 +156,16 @@ export async function GET(request: NextRequest) {
       },
       services: {
         permitTypes: Object.entries(detailedInfo.services)
-          .filter(([_, available]) => available)
-          .map(([type, _]) => type),
+          .filter(([, available]) => available)
+          .map(([type]) => type),
         onlineCapabilities: Object.entries(detailedInfo.onlineServices)
-          .filter(([_, available]) => available)
-          .map(([type, _]) => type)
+          .filter(([, available]) => available)
+          .map(([type]) => type)
       },
       forms: {
         totalForms: Object.values(detailedInfo.forms).reduce((sum, arr) => sum + arr.length, 0),
         categories: Object.entries(detailedInfo.forms)
-          .filter(([_, forms]) => forms.length > 0)
+          .filter(([, forms]) => forms.length > 0)
           .map(([type, forms]) => ({ type, count: forms.length }))
       },
       businessHours: detailedInfo.businessHours,

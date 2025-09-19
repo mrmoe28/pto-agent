@@ -445,7 +445,8 @@ async function searchGovernmentWebsites(query: string): Promise<SearchResult[]> 
   return results.slice(0, 3) // Limit to 3 results
 }
 
-// Search using DuckDuckGo HTML (more comprehensive)
+// Search using DuckDuckGo HTML (more comprehensive) - currently unused
+/*
 async function searchDuckDuckGoHTML(query: string): Promise<SearchResult[]> {
   const results: SearchResult[] = []
   
@@ -468,6 +469,7 @@ async function searchDuckDuckGoHTML(query: string): Promise<SearchResult[]> {
   
   return results.slice(0, 3)
 }
+*/
 
 // Search using known government website patterns
 async function searchKnownPatterns(query: string): Promise<SearchResult[]> {
@@ -504,7 +506,7 @@ async function searchKnownPatterns(query: string): Promise<SearchResult[]> {
             })
             break // Use first working URL
           }
-        } catch (err) {
+        } catch {
           // Continue to next pattern
         }
       }
