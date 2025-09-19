@@ -123,6 +123,51 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
     }
   };
 
+  const convertTo12HourFormat = (timeString: string): string => {
+    if (!timeString || timeString.toLowerCase() === 'closed') {
+      return 'Closed';
+    }
+
+    // Handle various time formats
+    const timePattern = /(\d{1,2}):?(\d{0,2})\s*(am|pm|a\.m\.|p\.m\.)?/gi;
+
+    return timeString.replace(timePattern, (match, hours, minutes, period) => {
+      let hour = parseInt(hours);
+      const min = minutes || '00';
+
+      // If no period specified, determine based on hour
+      if (!period) {
+        if (hour >= 1 && hour <= 6) {
+          period = 'PM'; // Assume afternoon/evening for 1-6
+        } else if (hour >= 7 && hour <= 11) {
+          period = 'AM'; // Morning hours
+        } else if (hour === 12) {
+          period = 'PM'; // Noon
+        } else if (hour >= 13 && hour <= 23) {
+          // Convert 24-hour to 12-hour
+          hour = hour - 12;
+          period = 'PM';
+        } else if (hour === 0) {
+          hour = 12;
+          period = 'AM';
+        } else {
+          period = hour >= 12 ? 'PM' : 'AM';
+        }
+      }
+
+      // Convert to 12-hour format if needed
+      if (hour > 12) {
+        hour = hour - 12;
+        period = 'PM';
+      } else if (hour === 0) {
+        hour = 12;
+        period = 'AM';
+      }
+
+      return `${hour}:${min} ${period.toUpperCase()}`;
+    });
+  };
+
   if (offices.length === 0) {
     return (
       <div className="text-center py-12">
@@ -259,7 +304,7 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
                     {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => {
                       const dayKey = `hours_${day.toLowerCase()}` as keyof PermitOffice;
                       const hours = office[dayKey];
-                      const hoursText = typeof hours === 'string' ? hours : 'Closed';
+                      const hoursText = typeof hours === 'string' ? convertTo12HourFormat(hours) : 'Closed';
                       return (
                         <div key={day} className="flex justify-between text-sm">
                           <span className="font-medium text-gray-700">{day.slice(0, 3)}:</span>
