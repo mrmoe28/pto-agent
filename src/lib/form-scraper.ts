@@ -1,0 +1,331 @@
+import * as cheerio from 'cheerio';
+import { chromium } from 'playwright';
+
+interface PermitForm {
+  name: string;
+  url: string;
+  type: 'building' | 'electrical' | 'plumbing' | 'mechanical' | 'zoning' | 'general';
+  description?: string;
+  fileType?: string;
+}
+
+interface ScrapedForms {
+  building: PermitForm[];
+  electrical: PermitForm[];
+  plumbing: PermitForm[];
+  mechanical: PermitForm[];
+  zoning: PermitForm[];
+  general: PermitForm[];
+}
+
+// Common permit form keywords to search for
+const FORM_KEYWORDS = {
+  building: [
+    'building permit', 'construction permit', 'residential permit',
+    'commercial permit', 'building application', 'construction application'
+  ],
+  electrical: [
+    'electrical permit', 'electrical application', 'electrical work',
+    'wiring permit', 'electrical inspection'
+  ],
+  plumbing: [
+    'plumbing permit', 'plumbing application', 'water heater',
+    'sewer permit', 'plumbing inspection'
+  ],
+  mechanical: [
+    'mechanical permit', 'hvac permit', 'heating permit',
+    'cooling permit', 'mechanical application', 'hvac application'
+  ],
+  zoning: [
+    'zoning permit', 'zoning application', 'land use',
+    'zoning variance', 'special use permit', 'rezoning'
+  ],
+  general: [
+    'permit application', 'general application', 'permit form',
+    'application form', 'permit request'
+  ]
+};
+
+// File extensions that indicate downloadable forms
+const FORM_EXTENSIONS = ['.pdf', '.doc', '.docx', '.xlsx', '.xls'];
+
+export async function scrapePermitForms(websiteUrl: string): Promise<ScrapedForms> {
+  const forms: ScrapedForms = {
+    building: [],
+    electrical: [],
+    plumbing: [],
+    mechanical: [],
+    zoning: [],
+    general: []
+  };
+
+  try {
+    // First try with simple fetch for static content
+    const response = await fetch(websiteUrl);
+    const html = await response.text();
+    const $ = cheerio.load(html);
+
+    // Find all links that might be forms
+    $('a').each((_, element) => {
+      const href = $(element).attr('href');
+      const text = $(element).text().toLowerCase();
+      const title = $(element).attr('title')?.toLowerCase() || '';
+
+      if (href && isLikelyFormLink(href, text, title)) {
+        const fullUrl = resolveUrl(href, websiteUrl);
+        const formType = determineFormType(text, title, href);
+        const form: PermitForm = {
+          name: cleanFormName($(element).text()),
+          url: fullUrl,
+          type: formType,
+          fileType: getFileType(href)
+        };
+
+        forms[formType].push(form);
+      }
+    });
+
+    // If we didn't find many forms with static scraping, try dynamic scraping
+    if (getTotalFormsCount(forms) < 3) {
+      const dynamicForms = await scrapeDynamicContent(websiteUrl);
+      mergeForms(forms, dynamicForms);
+    }
+
+    // Look for common permit pages if we still don't have enough forms
+    if (getTotalFormsCount(forms) < 3) {
+      const permitPageForms = await scrapeCommonPermitPages(websiteUrl);
+      mergeForms(forms, permitPageForms);
+    }
+
+  } catch (error) {
+    console.error('Error scraping forms:', error);
+  }
+
+  return forms;
+}
+
+async function scrapeDynamicContent(websiteUrl: string): Promise<ScrapedForms> {
+  const forms: ScrapedForms = {
+    building: [],
+    electrical: [],
+    plumbing: [],
+    mechanical: [],
+    zoning: [],
+    general: []
+  };
+
+  try {
+    const browser = await chromium.launch({ headless: true });
+    const page = await browser.newPage();
+    await page.goto(websiteUrl, { waitUntil: 'networkidle' });
+
+    // Wait for potential dynamic content to load
+    await page.waitForTimeout(2000);
+
+    // Get all links
+    const links = await page.evaluate(() => {
+      const anchors = document.querySelectorAll('a');
+      return Array.from(anchors).map(a => ({
+        href: a.href,
+        text: a.textContent || '',
+        title: a.title || ''
+      }));
+    });
+
+    for (const link of links) {
+      if (link.href && isLikelyFormLink(link.href, link.text.toLowerCase(), link.title.toLowerCase())) {
+        const formType = determineFormType(link.text.toLowerCase(), link.title.toLowerCase(), link.href);
+        const form: PermitForm = {
+          name: cleanFormName(link.text),
+          url: link.href,
+          type: formType,
+          fileType: getFileType(link.href)
+        };
+
+        forms[formType].push(form);
+      }
+    }
+
+    await browser.close();
+  } catch (dynamicError) {
+    console.error('Error with dynamic scraping:', dynamicError);
+  }
+
+  return forms;
+}
+
+async function scrapeCommonPermitPages(baseUrl: string): Promise<ScrapedForms> {
+  const forms: ScrapedForms = {
+    building: [],
+    electrical: [],
+    plumbing: [],
+    mechanical: [],
+    zoning: [],
+    general: []
+  };
+
+  // Common permit page paths
+  const commonPaths = [
+    '/permits',
+    '/building',
+    '/building-permits',
+    '/forms',
+    '/applications',
+    '/downloads',
+    '/resources',
+    '/documents',
+    '/permit-forms',
+    '/permit-applications',
+    '/building-department',
+    '/planning-zoning',
+    '/development-services'
+  ];
+
+  for (const path of commonPaths) {
+    try {
+      const url = new URL(path, baseUrl).toString();
+      const response = await fetch(url);
+
+      if (response.ok) {
+        const html = await response.text();
+        const $ = cheerio.load(html);
+
+        $('a').each((_, element) => {
+          const href = $(element).attr('href');
+          const text = $(element).text().toLowerCase();
+          const title = $(element).attr('title')?.toLowerCase() || '';
+
+          if (href && isLikelyFormLink(href, text, title)) {
+            const fullUrl = resolveUrl(href, url);
+            const formType = determineFormType(text, title, href);
+
+            // Check if we already have this form
+            const exists = forms[formType].some(f => f.url === fullUrl);
+            if (!exists) {
+              const form: PermitForm = {
+                name: cleanFormName($(element).text()),
+                url: fullUrl,
+                type: formType,
+                fileType: getFileType(href)
+              };
+
+              forms[formType].push(form);
+            }
+          }
+        });
+      }
+    } catch {
+      // Silently continue if a path doesn't exist
+    }
+  }
+
+  return forms;
+}
+
+function isLikelyFormLink(href: string, text: string, title: string): boolean {
+  const combinedText = `${text} ${title} ${href}`.toLowerCase();
+
+  // Check if it's a downloadable file
+  const hasFormExtension = FORM_EXTENSIONS.some(ext => href.toLowerCase().includes(ext));
+
+  // Check if text contains form-related keywords
+  const hasFormKeyword = combinedText.includes('form') ||
+                         combinedText.includes('application') ||
+                         combinedText.includes('permit') ||
+                         combinedText.includes('download') ||
+                         combinedText.includes('pdf');
+
+  return hasFormExtension && hasFormKeyword;
+}
+
+function determineFormType(text: string, title: string, href: string): 'building' | 'electrical' | 'plumbing' | 'mechanical' | 'zoning' | 'general' {
+  const combinedText = `${text} ${title} ${href}`.toLowerCase();
+
+  // Check each category's keywords
+  for (const [type, keywords] of Object.entries(FORM_KEYWORDS)) {
+    for (const keyword of keywords) {
+      if (combinedText.includes(keyword)) {
+        return type as keyof ScrapedForms;
+      }
+    }
+  }
+
+  // Default to general if no specific type is found
+  return 'general';
+}
+
+function resolveUrl(href: string, baseUrl: string): string {
+  try {
+    // If it's already a full URL, return it
+    if (href.startsWith('http://') || href.startsWith('https://')) {
+      return href;
+    }
+
+    // Otherwise, resolve it relative to the base URL
+    return new URL(href, baseUrl).toString();
+  } catch {
+    return href;
+  }
+}
+
+function cleanFormName(text: string): string {
+  return text
+    .trim()
+    .replace(/\s+/g, ' ')
+    .replace(/\.pdf$/i, '')
+    .replace(/\.doc[x]?$/i, '')
+    .replace(/\.xls[x]?$/i, '')
+    .substring(0, 100); // Limit length
+}
+
+function getFileType(url: string): string {
+  const lowercaseUrl = url.toLowerCase();
+  for (const ext of FORM_EXTENSIONS) {
+    if (lowercaseUrl.includes(ext)) {
+      return ext.substring(1).toUpperCase();
+    }
+  }
+  return 'LINK';
+}
+
+function getTotalFormsCount(forms: ScrapedForms): number {
+  return Object.values(forms).reduce((total, formArray) => total + formArray.length, 0);
+}
+
+function mergeForms(target: ScrapedForms, source: ScrapedForms): void {
+  for (const [type, sourceForms] of Object.entries(source)) {
+    const targetForms = target[type as keyof ScrapedForms];
+
+    for (const form of sourceForms) {
+      // Check if form URL already exists
+      const exists = targetForms.some(f => f.url === form.url);
+      if (!exists) {
+        targetForms.push(form);
+      }
+    }
+  }
+}
+
+// Function to fetch and cache forms for a specific office
+export async function fetchAndCachePermitForms(office: {
+  website: string | null;
+  city: string;
+  county: string;
+  state: string;
+}): Promise<ScrapedForms | null> {
+  if (!office.website) {
+    return null;
+  }
+
+  try {
+    const forms = await scrapePermitForms(office.website);
+
+    // Store in database or cache
+    // This would be implemented based on your database setup
+
+    return forms;
+  } catch (error) {
+    console.error('Error fetching forms for office:', error);
+    return null;
+  }
+}
