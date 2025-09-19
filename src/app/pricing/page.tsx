@@ -38,16 +38,17 @@ const pricingPlans: PricingPlan[] = [
     icon: <Building2 className="h-8 w-8" />,
     color: 'from-gray-500 to-gray-600',
     features: [
-      'Search up to 10 permit offices per month',
+      '1 free search to try our service',
       'Basic address search functionality',
       'View office contact information',
       'Access to public permit data',
       'Email support'
     ],
     limitations: [
-      'Limited to 10 searches per month',
+      'Limited to 1 search total',
       'No advanced filtering options',
       'No favorites functionality',
+      'No export functionality',
       'No priority support'
     ]
   },
@@ -61,16 +62,17 @@ const pricingPlans: PricingPlan[] = [
     color: 'from-blue-500 to-blue-600',
     popular: true,
     features: [
-      'Unlimited permit office searches',
+      '40 searches per month',
       'Advanced filtering and sorting',
-      'Save favorite offices',
       'Distance-based search results',
       'Detailed office information',
-      'Phone and email support',
-      'Export search results',
-      'Priority customer support'
+      'Phone and email support'
     ],
-    limitations: []
+    limitations: [
+      'No favorites functionality',
+      'No export functionality',
+      'No priority support'
+    ]
   },
   {
     id: 'enterprise',
@@ -81,7 +83,11 @@ const pricingPlans: PricingPlan[] = [
     icon: <Crown className="h-8 w-8" />,
     color: 'from-purple-500 to-purple-600',
     features: [
+      'Unlimited searches',
       'Everything in Pro',
+      'Save favorite offices',
+      'Export search results',
+      'Priority customer support',
       'Team collaboration features',
       'Custom branding options',
       'API access for integrations',
@@ -106,8 +112,9 @@ export default function PricingPage() {
     if (!isLoaded) return;
 
     if (user) {
-      // This would typically come from Clerk's subscription data
-      setCurrentPlan('free');
+      // Get subscription plan from Clerk user metadata
+      const subscriptionPlan = user.publicMetadata?.subscriptionPlan as string;
+      setCurrentPlan(subscriptionPlan || 'free');
     } else {
       setCurrentPlan(null);
     }
@@ -120,20 +127,16 @@ export default function PricingPage() {
     }
 
     if (planId === 'free') {
+      // Free plan doesn't require payment
       setCurrentPlan('free');
       return;
     }
 
     setIsLoading(true);
     try {
-      // Here you would integrate with Clerk's subscription system
-      // For now, we'll simulate the process
-      console.log(`Selected plan: ${planId}`);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Redirect to checkout or success page
+      // For paid plans, redirect to checkout
+      // In a real implementation, this would integrate with Clerk's billing system
+      // or a payment processor like Stripe
       router.push(`/checkout?plan=${planId}`);
     } catch (error) {
       console.error('Error selecting plan:', error);
@@ -316,8 +319,8 @@ export default function PricingPage() {
               <tbody className="divide-y divide-gray-200">
                 <tr>
                   <td className="py-4 px-6 font-medium text-gray-900">Monthly searches</td>
-                  <td className="py-4 px-6 text-center text-gray-600">10</td>
-                  <td className="py-4 px-6 text-center text-gray-600">Unlimited</td>
+                  <td className="py-4 px-6 text-center text-gray-600">1 total</td>
+                  <td className="py-4 px-6 text-center text-gray-600">40</td>
                   <td className="py-4 px-6 text-center text-gray-600">Unlimited</td>
                 </tr>
                 <tr>
@@ -329,11 +332,11 @@ export default function PricingPage() {
                 <tr>
                   <td className="py-4 px-6 font-medium text-gray-900">Favorites</td>
                   <td className="py-4 px-6 text-center"><X className="h-5 w-5 text-red-500 mx-auto" /></td>
-                  <td className="py-4 px-6 text-center"><Check className="h-5 w-5 text-green-500 mx-auto" /></td>
+                  <td className="py-4 px-6 text-center"><X className="h-5 w-5 text-red-500 mx-auto" /></td>
                   <td className="py-4 px-6 text-center"><Check className="h-5 w-5 text-green-500 mx-auto" /></td>
                 </tr>
                 <tr>
-                  <td className="py-4 px-6 font-medium text-gray-900">API access</td>
+                  <td className="py-4 px-6 font-medium text-gray-900">Export results</td>
                   <td className="py-4 px-6 text-center"><X className="h-5 w-5 text-red-500 mx-auto" /></td>
                   <td className="py-4 px-6 text-center"><X className="h-5 w-5 text-red-500 mx-auto" /></td>
                   <td className="py-4 px-6 text-center"><Check className="h-5 w-5 text-green-500 mx-auto" /></td>
@@ -341,7 +344,13 @@ export default function PricingPage() {
                 <tr>
                   <td className="py-4 px-6 font-medium text-gray-900">Priority support</td>
                   <td className="py-4 px-6 text-center"><X className="h-5 w-5 text-red-500 mx-auto" /></td>
+                  <td className="py-4 px-6 text-center"><X className="h-5 w-5 text-red-500 mx-auto" /></td>
                   <td className="py-4 px-6 text-center"><Check className="h-5 w-5 text-green-500 mx-auto" /></td>
+                </tr>
+                <tr>
+                  <td className="py-4 px-6 font-medium text-gray-900">API access</td>
+                  <td className="py-4 px-6 text-center"><X className="h-5 w-5 text-red-500 mx-auto" /></td>
+                  <td className="py-4 px-6 text-center"><X className="h-5 w-5 text-red-500 mx-auto" /></td>
                   <td className="py-4 px-6 text-center"><Check className="h-5 w-5 text-green-500 mx-auto" /></td>
                 </tr>
               </tbody>

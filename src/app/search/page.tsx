@@ -1,11 +1,14 @@
 'use client';
 
 import { useUser } from '@clerk/nextjs';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import GooglePlacesAutocomplete from '@/components/GooglePlacesAutocomplete';
-import EnhancedPermitOfficeCard from '@/components/EnhancedPermitOfficeCard';
+import GeorgiaCountySelector from '@/components/GeorgiaCountySelector';
+import SimplePermitOfficeDisplay from '@/components/SimplePermitOfficeDisplay';
+import UpgradeModal from '@/components/UpgradeModal';
 import { extractAddressComponents, getCoordinates } from '@/lib/google-apis';
+import { type PlanType } from '@/lib/subscription-utils';
 
 interface PermitOffice {
   id?: string;
@@ -96,17 +99,43 @@ export default function SearchPage() {
   const [results, setResults] = useState<PermitOffice[]>([]);
   const [error, setError] = useState('');
   const [selectedPlace, setSelectedPlace] = useState<google.maps.places.PlaceResult | null>(null);
+  
+  // Subscription tracking state
+  const [userPlan, setUserPlan] = useState<PlanType>('free');
+  const [searchesUsed, setSearchesUsed] = useState(0);
+  const [searchesLimit, setSearchesLimit] = useState<number | null>(1);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [subscriptionLoaded, setSubscriptionLoaded] = useState(false);
 
   const isAuthenticated = !!user;
 
-  // Available counties in Georgia
-  const availableCounties = [
-    { value: '', label: 'All Counties' },
-    { value: 'Chatham', label: 'Chatham County' },
-    { value: 'DeKalb', label: 'DeKalb County' },
-    { value: 'Fulton', label: 'Fulton County' },
-    { value: 'Gwinnett', label: 'Gwinnett County' },
-  ];
+  // Load user subscription data
+  useEffect(() => {
+    const loadUserSubscription = async () => {
+      if (!isLoaded || !user) {
+        setSubscriptionLoaded(true);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/subscription/check');
+        if (response.ok) {
+          const data = await response.json();
+          setUserPlan(data.plan);
+          setSearchesUsed(data.usage.used);
+          setSearchesLimit(data.usage.limit);
+        }
+      } catch (error) {
+        console.error('Error loading user subscription:', error);
+      } finally {
+        setSubscriptionLoaded(true);
+      }
+    };
+
+    loadUserSubscription();
+  }, [isLoaded, user]);
+
+  // County state will be managed by the GeorgiaCountySelector component
 
   const handlePlaceSelect = (place: google.maps.places.PlaceResult) => {
     setSelectedPlace(place);
@@ -116,6 +145,26 @@ export default function SearchPage() {
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!address.trim() && !selectedCounty) return;
+
+    // Check usage limits for authenticated users
+    if (isAuthenticated && user) {
+      const response = await fetch('/api/subscription/check', { method: 'POST' });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (!data.success || !data.canSearch) {
+          setShowUpgradeModal(true);
+          return;
+        }
+        
+        // Update local state with new usage
+        setSearchesUsed(data.usage.used);
+      } else {
+        // If API call fails, still allow the search but log the error
+        console.error('Failed to check subscription limits');
+      }
+    }
 
     setLoading(true);
     setError('');
@@ -169,7 +218,7 @@ export default function SearchPage() {
       // Search for permit offices
       const params = new URLSearchParams({
         city: city,
-        county: selectedCounty || county, // Use selected county if provided, otherwise use detected county
+        county: selectedCounty === 'all' ? '' : (selectedCounty || county), // Use selected county if provided, otherwise use detected county
         state: state
       });
 
@@ -187,10 +236,17 @@ export default function SearchPage() {
       }
 
       const officesData = await officesResponse.json();
+
+      if (!officesData.success) {
+        setError(officesData.error || 'Unable to search permit offices at this time.');
+        setResults([]);
+        return;
+      }
+
       setResults(officesData.offices || []);
 
       if (officesData.offices.length === 0) {
-        setError('No permit offices found for this location. Try a different address.');
+        setError(officesData.message || 'No permit offices found for this location. Try a different address.');
       }
 
     } catch (err) {
@@ -218,6 +274,7 @@ export default function SearchPage() {
             <h1 className="text-3xl font-bold text-gray-900">Search Permit Offices</h1>
             {isAuthenticated ? (
               <button
+                type="button"
                 onClick={() => router.push('/dashboard')}
                 className="text-gray-600 hover:text-gray-900 transition-colors duration-200"
               >
@@ -225,6 +282,7 @@ export default function SearchPage() {
               </button>
             ) : (
               <button
+                type="button"
                 onClick={() => router.push('/sign-in')}
                 className="text-gray-600 hover:text-gray-900 transition-colors duration-200"
               >
@@ -253,8 +311,11 @@ export default function SearchPage() {
                     placeholder="Start typing your address..."
                     className="w-full"
                   />
-                  <p className="mt-2 text-sm text-gray-500">
-                    💡 Start typing to see address suggestions from Google
+                  <p className="mt-2 text-sm text-gray-500 flex items-center">
+                    <svg className="w-4 h-4 mr-1 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                    Start typing to see address suggestions from Google
                   </p>
                 </div>
                 
@@ -262,20 +323,17 @@ export default function SearchPage() {
                   <label htmlFor="county" className="block text-sm font-medium text-gray-700 mb-2">
                     County (Optional)
                   </label>
-                  <select
-                    id="county"
+                  <GeorgiaCountySelector
                     value={selectedCounty}
-                    onChange={(e) => setSelectedCounty(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    {availableCounties.map((county) => (
-                      <option key={county.value} value={county.value}>
-                        {county.label}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="mt-2 text-sm text-gray-500">
-                    🏛️ Filter by specific county or search all
+                    onChange={setSelectedCounty}
+                    placeholder="Select a county or search by city"
+                    className="w-full"
+                  />
+                  <p className="mt-2 text-sm text-gray-500 flex items-center">
+                    <svg className="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h3M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                    Filter by specific county or search all
                   </p>
                 </div>
               </div>
@@ -316,6 +374,46 @@ export default function SearchPage() {
             </div>
           )}
 
+          {isAuthenticated && subscriptionLoaded && (
+            <div className="mb-8 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-semibold text-gray-900">
+                    {userPlan === 'free' ? 'Free Plan' : userPlan === 'pro' ? 'Pro Plan' : 'Enterprise Plan'}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {searchesLimit === null 
+                      ? 'Unlimited searches' 
+                      : `${searchesUsed} / ${searchesLimit} searches used this month`
+                    }
+                  </p>
+                </div>
+                {searchesLimit !== null && (
+                  <div className="flex items-center space-x-2">
+                    <div className="w-24 bg-gray-200 rounded-full h-2">
+                      <div 
+                        className={`h-2 rounded-full transition-all duration-300 ${
+                          searchesUsed >= searchesLimit ? 'bg-red-500' : 
+                          searchesUsed / searchesLimit > 0.8 ? 'bg-yellow-500' : 'bg-green-500'
+                        }`}
+                        style={{ width: `${Math.min(100, (searchesUsed / searchesLimit) * 100)}%` }}
+                      />
+                    </div>
+                    {searchesUsed >= searchesLimit && (
+                      <button
+                        type="button"
+                        onClick={() => setShowUpgradeModal(true)}
+                        className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors"
+                      >
+                        Upgrade
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Error Display */}
           {error && (
             <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -339,13 +437,22 @@ export default function SearchPage() {
         </div>
         <div className="space-y-12">
           {results.map((office, index) => (
-            <EnhancedPermitOfficeCard key={office.id || index} office={office} />
+            <SimplePermitOfficeDisplay key={office.id || index} office={office} />
           ))}
         </div>
       </div>
     )}
         </div>
       </main>
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        currentPlan={userPlan}
+        searchesUsed={searchesUsed}
+        searchesLimit={searchesLimit}
+      />
     </div>
   );
 }

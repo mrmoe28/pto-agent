@@ -638,7 +638,12 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
                     {/* Required Documents */}
                     {office.instructions.requiredDocuments && office.instructions.requiredDocuments.length > 0 && (
                       <div className="bg-indigo-50 rounded-lg p-4">
-                        <h5 className="font-medium text-gray-900 mb-3">📋 Required Documents</h5>
+                        <h5 className="font-medium text-gray-900 mb-3 flex items-center">
+                          <svg className="w-4 h-4 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                          </svg>
+                          Required Documents
+                        </h5>
                         <ul className="space-y-2">
                           {office.instructions.requiredDocuments.map((doc, idx) => (
                             <li key={idx} className="flex items-start">
@@ -653,7 +658,12 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
                     {/* Application Process */}
                     {office.instructions.applicationProcess && (
                       <div className="bg-orange-50 rounded-lg p-4">
-                        <h5 className="font-medium text-gray-900 mb-2">📝 Application Process</h5>
+                        <h5 className="font-medium text-gray-900 mb-2 flex items-center">
+                          <svg className="w-4 h-4 mr-2 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          Application Process
+                        </h5>
                         <p className="text-sm text-gray-700 whitespace-pre-wrap">{office.instructions.applicationProcess}</p>
                       </div>
                     )}

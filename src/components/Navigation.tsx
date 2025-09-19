@@ -43,6 +43,12 @@ export default function Navigation() {
               >
                 Search
               </Link>
+              <Link
+                href="/pricing"
+                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+              >
+                Pricing
+              </Link>
               {mounted && isLoaded && isSignedIn && (
                 <>
                   <Link
@@ -51,12 +57,14 @@ export default function Navigation() {
                   >
                     Dashboard
                   </Link>
-                  <Link
-                    href="/favorites"
-                    className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
-                  >
-                    Favorites
-                  </Link>
+                  {user?.publicMetadata?.subscriptionPlan === 'enterprise' && (
+                    <Link
+                      href="/favorites"
+                      className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+                    >
+                      Favorites
+                    </Link>
+                  )}
                 </>
               )}
             </div>

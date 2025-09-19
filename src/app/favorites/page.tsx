@@ -4,6 +4,7 @@ import { useUser } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import EnhancedPermitOfficeTable from '@/components/EnhancedPermitOfficeTable';
+import { canUserAccessFeature, type PlanType } from '@/lib/subscription-utils';
 
 interface UserFavorite {
   id: string;
@@ -100,6 +101,8 @@ export default function FavoritesPage() {
   const [offices, setOffices] = useState<Record<string, PermitOffice>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [userPlan, setUserPlan] = useState<PlanType>('free');
+  const [canAccessFavorites, setCanAccessFavorites] = useState(false);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -109,7 +112,20 @@ export default function FavoritesPage() {
       return;
     }
 
-    fetchFavorites();
+    // Check user's subscription plan
+    const subscriptionPlan = user.publicMetadata?.subscriptionPlan as PlanType;
+    const plan = subscriptionPlan || 'free';
+    setUserPlan(plan);
+
+    // Check if user can access favorites (Enterprise only)
+    const canAccess = canUserAccessFeature(plan, 'canSaveFavorites');
+    setCanAccessFavorites(canAccess);
+
+    if (canAccess) {
+      fetchFavorites();
+    } else {
+      setLoading(false);
+    }
   }, [user, isLoaded, router]);
 
   const fetchFavorites = async () => {
@@ -219,7 +235,37 @@ export default function FavoritesPage() {
             </div>
           )}
 
-          {favorites.length === 0 ? (
+          {!canAccessFavorites && (
+            <div className="mb-8 p-6 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-xl">
+              <div className="text-center">
+                <div className="mx-auto mb-4 p-3 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full w-16 h-16 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Favorites Feature</h3>
+                <p className="text-gray-600 mb-4">
+                  Save your favorite permit offices for quick access. This feature is available with our Enterprise plan.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <button
+                    onClick={() => router.push('/pricing')}
+                    className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200"
+                  >
+                    Upgrade to Enterprise
+                  </button>
+                  <button
+                    onClick={() => router.push('/search')}
+                    className="px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition-colors duration-200"
+                  >
+                    Continue Searching
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {canAccessFavorites && favorites.length === 0 ? (
             <div className="text-center py-12">
               <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -235,7 +281,7 @@ export default function FavoritesPage() {
                 </button>
               </div>
             </div>
-          ) : (
+          ) : canAccessFavorites ? (
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-gray-900">
                 {favorites.length} Favorite{favorites.length !== 1 ? 's' : ''}
@@ -277,7 +323,7 @@ export default function FavoritesPage() {
                 })}
               </div>
             </div>
-          )}
+          ) : null}
         </div>
       </main>
     </div>
