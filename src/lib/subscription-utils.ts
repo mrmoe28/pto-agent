@@ -1,12 +1,14 @@
-import { currentUser } from '@clerk/nextjs/server';
 import { db } from './db';
 import { userSubscriptions } from './db/schema';
 import { eq } from 'drizzle-orm';
 import { PLAN_LIMITS, type PlanType, type PlanLimits } from './subscription-types';
 
-// Get user's subscription plan from Clerk metadata
+// Get user's subscription plan from Clerk metadata (server-side only)
 export async function getUserPlanFromClerk(): Promise<PlanType> {
   try {
+    // This function should only be called from server components or API routes
+    // For client components, use the subscription check API instead
+    const { currentUser } = await import('@clerk/nextjs/server');
     const user = await currentUser();
     if (!user) return 'free';
 
