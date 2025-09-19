@@ -55,26 +55,9 @@ export default function ApiSettingsPage() {
 
   const fetchApiKeys = async () => {
     try {
-      // TODO: Implement API key fetching
-      // For now, show mock data
-      setApiKeys([
-        {
-          id: '1',
-          name: 'Production API Key',
-          key: 'pk_live_1234567890abcdef',
-          lastUsed: '2024-01-15T10:30:00Z',
-          createdAt: '2024-01-01T00:00:00Z',
-          isActive: true,
-        },
-        {
-          id: '2',
-          name: 'Development API Key',
-          key: 'pk_test_abcdef1234567890',
-          lastUsed: null,
-          createdAt: '2024-01-10T00:00:00Z',
-          isActive: true,
-        },
-      ]);
+      // TODO: Implement real API key fetching from database
+      // For production, this should fetch actual API keys from the user's account
+      setApiKeys([]);
     } catch (error) {
       console.error('Error fetching API keys:', error);
     } finally {

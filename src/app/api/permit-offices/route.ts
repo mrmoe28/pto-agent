@@ -221,18 +221,131 @@ interface SearchResult {
 
 // Perform web search using a search API
 async function performWebSearch(query: string): Promise<SearchResult[]> {
-  // For now, we'll use a mock search result
-  // In production, you would integrate with Google Custom Search API, Bing Search API, or similar
   console.log(`Searching web for: ${query}`)
   
-  // Mock search results - in production, replace with actual search API
-  return [
-    {
-      title: `${query} - Official Government Website`,
-      url: `https://example.gov/permits`,
-      snippet: `Official government website for building permits and planning services.`
+  try {
+    // Use DuckDuckGo Instant Answer API for real search results
+    const searchUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`
+    
+    const response = await fetch(searchUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; PermitOfficeBot/1.0)'
+      }
+    })
+    
+    if (!response.ok) {
+      throw new Error(`Search API error: ${response.status}`)
     }
-  ]
+    
+    const data = await response.json()
+    
+    // Extract relevant results
+    const results: SearchResult[] = []
+    
+    // Add abstract if available (often contains government info)
+    if (data.Abstract) {
+      results.push({
+        title: data.Heading || query,
+        url: data.AbstractURL || '',
+        snippet: data.Abstract
+      })
+    }
+    
+    // Add related topics
+    if (data.RelatedTopics) {
+      for (const topic of data.RelatedTopics.slice(0, 3)) {
+        if (topic.Text && topic.FirstURL) {
+          results.push({
+            title: topic.Text.split(' - ')[0] || topic.Text,
+            url: topic.FirstURL,
+            snippet: topic.Text
+          })
+        }
+      }
+    }
+    
+    // If no results from DuckDuckGo, try a direct government website search
+    if (results.length === 0) {
+      const govResults = await searchGovernmentWebsites(query)
+      results.push(...govResults)
+    }
+    
+    return results.slice(0, 5) // Limit to 5 results
+    
+  } catch (error) {
+    console.error('Web search error:', error)
+    // Fallback to government website search
+    return await searchGovernmentWebsites(query)
+  }
+}
+
+// Search for government websites directly
+async function searchGovernmentWebsites(query: string): Promise<SearchResult[]> {
+  const results: SearchResult[] = []
+  
+  try {
+    // Common government website patterns
+    const govPatterns = [
+      `${query} site:gov`,
+      `${query} "building permits" site:gov`,
+      `${query} "planning department" site:gov`,
+      `${query} "development services" site:gov`
+    ]
+    
+    for (const pattern of govPatterns) {
+      try {
+        // Use a simple web search approach
+        const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(pattern)}`
+        const response = await fetch(searchUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (compatible; PermitOfficeBot/1.0)'
+          }
+        })
+        
+        if (response.ok) {
+          const html = await response.text()
+          const matches = extractGovernmentLinks(html, query)
+          results.push(...matches)
+        }
+      } catch (err) {
+        console.error(`Error searching pattern ${pattern}:`, err)
+      }
+    }
+    
+  } catch (error) {
+    console.error('Government website search error:', error)
+  }
+  
+  return results.slice(0, 3) // Limit to 3 results
+}
+
+// Extract government links from HTML
+function extractGovernmentLinks(html: string, query: string): SearchResult[] {
+  const results: SearchResult[] = []
+  
+  try {
+    // Simple regex to extract links and titles
+    const linkRegex = /<a[^>]+href="([^"]*)"[^>]*>([^<]*)<\/a>/gi
+    let match
+    
+    while ((match = linkRegex.exec(html)) !== null) {
+      const url = match[1]
+      const title = match[2].replace(/<[^>]*>/g, '').trim()
+      
+      // Only include .gov domains
+      if (url.includes('.gov') && title && title.length > 10) {
+        results.push({
+          title: title,
+          url: url.startsWith('http') ? url : `https://duckduckgo.com${url}`,
+          snippet: `Government website for ${query}`
+        })
+      }
+    }
+  } catch (error) {
+    console.error('Error extracting links:', error)
+  }
+  
+  return results
 }
 
 // Extract permit office information from search results
@@ -240,20 +353,25 @@ function extractPermitOfficesFromSearchResults(searchResults: SearchResult[], lo
   const offices: PermitOffice[] = []
   
   for (const result of searchResults) {
+    // Skip if not a government website
+    if (!result.url.includes('.gov')) {
+      continue
+    }
+    
     // Extract office information from search result
     const office: PermitOffice = {
       id: generateId(),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      city: jurisdictionType === 'city' ? location : '',
-      county: jurisdictionType === 'county' ? location : '',
+      city: jurisdictionType === 'city' ? location : extractCityFromTitle(result.title, location),
+      county: jurisdictionType === 'county' ? location : extractCountyFromTitle(result.title, location),
       state: state,
       jurisdiction_type: jurisdictionType as 'city' | 'county' | 'state' | 'special_district',
       department_name: extractDepartmentName(result.title, result.snippet),
-      office_type: 'combined' as const,
-      address: '', // Would be extracted from the actual webpage
-      phone: '', // Would be extracted from the actual webpage
-      email: '', // Would be extracted from the actual webpage
+      office_type: extractOfficeType(result.title, result.snippet),
+      address: extractAddressFromSnippet(result.snippet),
+      phone: extractPhoneFromSnippet(result.snippet),
+      email: extractEmailFromSnippet(result.snippet),
       website: result.url,
       hours_monday: '8:00 AM - 5:00 PM',
       hours_tuesday: '8:00 AM - 5:00 PM',
@@ -269,10 +387,10 @@ function extractPermitOfficesFromSearchResults(searchResults: SearchResult[], lo
       zoning_permits: true,
       planning_review: true,
       inspections: true,
-      online_applications: false,
-      online_payments: false,
-      permit_tracking: false,
-      online_portal_url: null,
+      online_applications: result.snippet.toLowerCase().includes('online') || result.snippet.toLowerCase().includes('digital'),
+      online_payments: result.snippet.toLowerCase().includes('payment') || result.snippet.toLowerCase().includes('pay online'),
+      permit_tracking: result.snippet.toLowerCase().includes('track') || result.snippet.toLowerCase().includes('status'),
+      online_portal_url: result.snippet.toLowerCase().includes('portal') ? result.url : null,
       latitude: null,
       longitude: null,
       service_area_bounds: null,
@@ -286,6 +404,46 @@ function extractPermitOfficesFromSearchResults(searchResults: SearchResult[], lo
   }
   
   return offices
+}
+
+// Helper functions to extract information from search results
+function extractCityFromTitle(title: string, fallback: string): string {
+  const cityMatch = title.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*),?\s+(GA|Georgia)/i)
+  return cityMatch ? cityMatch[1] : fallback
+}
+
+function extractCountyFromTitle(title: string, fallback: string): string {
+  const countyMatch = title.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+County/i)
+  return countyMatch ? countyMatch[1] : fallback
+}
+
+function extractOfficeType(title: string, snippet: string): 'building' | 'planning' | 'zoning' | 'combined' | 'other' {
+  const text = `${title} ${snippet}`.toLowerCase()
+  
+  if (text.includes('planning') && text.includes('building')) return 'combined'
+  if (text.includes('planning department')) return 'planning'
+  if (text.includes('zoning office')) return 'zoning'
+  if (text.includes('building department')) return 'building'
+  
+  return 'combined'
+}
+
+function extractAddressFromSnippet(snippet: string): string {
+  // Look for address patterns
+  const addressMatch = snippet.match(/(\d+\s+[A-Za-z\s]+(?:Street|St|Avenue|Ave|Road|Rd|Drive|Dr|Boulevard|Blvd|Way|Lane|Ln),?\s+[A-Za-z\s]+,?\s+[A-Z]{2}\s+\d{5})/i)
+  return addressMatch ? addressMatch[1] : ''
+}
+
+function extractPhoneFromSnippet(snippet: string): string {
+  // Look for phone number patterns
+  const phoneMatch = snippet.match(/(\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4})/i)
+  return phoneMatch ? phoneMatch[1] : ''
+}
+
+function extractEmailFromSnippet(snippet: string): string {
+  // Look for email patterns
+  const emailMatch = snippet.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i)
+  return emailMatch ? emailMatch[1] : ''
 }
 
 // Helper function to extract department name from search results
