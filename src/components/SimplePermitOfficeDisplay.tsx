@@ -1,10 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Phone, Mail, MapPin, Clock, Building,
   Zap, Droplets, Settings, CheckCircle, Globe,
-  FileText, DollarSign, Calendar, Download, AlertCircle
+  FileText, DollarSign, Calendar, Download, AlertCircle, Loader2
 } from 'lucide-react';
 
 interface PermitOffice {
@@ -78,11 +78,80 @@ interface PermitOffice {
   distance?: number;
 }
 
+interface ScrapedForm {
+  name: string;
+  url: string;
+  type: 'building' | 'electrical' | 'plumbing' | 'mechanical' | 'zoning' | 'general';
+  description?: string;
+  fileType?: string;
+}
+
+interface ScrapedForms {
+  building: ScrapedForm[];
+  electrical: ScrapedForm[];
+  plumbing: ScrapedForm[];
+  mechanical: ScrapedForm[];
+  zoning: ScrapedForm[];
+  general: ScrapedForm[];
+}
+
 interface SimplePermitOfficeDisplayProps {
   offices: PermitOffice[];
 }
 
 export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOfficeDisplayProps) {
+  const [scrapedForms, setScrapedForms] = useState<Record<string, ScrapedForms>>({});
+  const [loadingForms, setLoadingForms] = useState<Record<string, boolean>>({});
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  // Function to scrape forms for a specific office
+  const scrapeFormsForOffice = async (office: PermitOffice) => {
+    if (!office.website) return;
+
+    const officeKey = office.id || `${office.city}-${office.department_name}`;
+
+    if (scrapedForms[officeKey] || loadingForms[officeKey]) {
+      return; // Already loaded or loading
+    }
+
+    setLoadingForms(prev => ({ ...prev, [officeKey]: true }));
+    setFormErrors(prev => ({ ...prev, [officeKey]: '' }));
+
+    try {
+      const response = await fetch('/api/permit-forms', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          websiteUrl: office.website,
+          officeName: office.department_name
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setScrapedForms(prev => ({
+          ...prev,
+          [officeKey]: data.forms
+        }));
+      } else {
+        setFormErrors(prev => ({
+          ...prev,
+          [officeKey]: data.error || 'Failed to load forms'
+        }));
+      }
+    } catch {
+      setFormErrors(prev => ({
+        ...prev,
+        [officeKey]: 'Error loading forms'
+      }));
+    } finally {
+      setLoadingForms(prev => ({ ...prev, [officeKey]: false }));
+    }
+  };
+
   const formatFee = (fee: { amount?: number; description?: string; unit?: string } | undefined) => {
     if (!fee || !fee.amount) return fee?.description || 'Contact for pricing';
     return `$${fee.amount}${fee.unit ? ` per ${fee.unit}` : ''}${fee.description ? ` - ${fee.description}` : ''}`;
@@ -124,48 +193,81 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
   };
 
   const convertTo12HourFormat = (timeString: string): string => {
-    if (!timeString || timeString.toLowerCase() === 'closed') {
+    if (!timeString || timeString.toLowerCase().includes('closed') || timeString.toLowerCase().includes('n/a')) {
       return 'Closed';
     }
 
-    // Handle various time formats
-    const timePattern = /(\d{1,2}):?(\d{0,2})\s*(am|pm|a\.m\.|p\.m\.)?/gi;
+    // Handle special cases
+    if (timeString.toLowerCase().includes('24') || timeString.toLowerCase().includes('24/7')) {
+      return '24 Hours';
+    }
 
-    return timeString.replace(timePattern, (match, hours, minutes, period) => {
-      let hour = parseInt(hours);
-      const min = minutes || '00';
+    if (timeString.toLowerCase().includes('appointment') || timeString.toLowerCase().includes('by appt')) {
+      return 'By Appointment';
+    }
 
-      // If no period specified, determine based on hour
-      if (!period) {
-        if (hour >= 1 && hour <= 6) {
-          period = 'PM'; // Assume afternoon/evening for 1-6
-        } else if (hour >= 7 && hour <= 11) {
-          period = 'AM'; // Morning hours
-        } else if (hour === 12) {
-          period = 'PM'; // Noon
-        } else if (hour >= 13 && hour <= 23) {
-          // Convert 24-hour to 12-hour
-          hour = hour - 12;
-          period = 'PM';
-        } else if (hour === 0) {
-          hour = 12;
-          period = 'AM';
-        } else {
-          period = hour >= 12 ? 'PM' : 'AM';
-        }
-      }
+    // Handle time ranges with various separators (-, to, through, etc.)
+    const rangePattern = /(\d{1,2}):?(\d{0,2})\s*(am|pm|a\.m\.|p\.m\.)?\s*[-–—to\s]+\s*(\d{1,2}):?(\d{0,2})\s*(am|pm|a\.m\.|p\.m\.)?/gi;
 
-      // Convert to 12-hour format if needed
-      if (hour > 12) {
-        hour = hour - 12;
-        period = 'PM';
-      } else if (hour === 0) {
-        hour = 12;
-        period = 'AM';
-      }
+    if (rangePattern.test(timeString)) {
+      return timeString.replace(rangePattern, (match, startHour, startMin, startPeriod, endHour, endMin, endPeriod) => {
+        const startTime = convertSingleTime(parseInt(startHour), startMin || '00', startPeriod);
+        const endTime = convertSingleTime(parseInt(endHour), endMin || '00', endPeriod || startPeriod);
+        return `${startTime} - ${endTime}`;
+      });
+    }
 
-      return `${hour}:${min} ${period.toUpperCase()}`;
+    // Handle single times
+    const singleTimePattern = /(\d{1,2}):?(\d{0,2})\s*(am|pm|a\.m\.|p\.m\.)?/gi;
+    return timeString.replace(singleTimePattern, (match, hours, minutes, period) => {
+      return convertSingleTime(parseInt(hours), minutes || '00', period);
     });
+  };
+
+  const convertSingleTime = (hour: number, minutes: string, period?: string): string => {
+    let convertedHour = hour;
+    let finalPeriod = period?.replace(/\./g, '').toUpperCase();
+
+    // If no period specified, determine based on hour and context
+    if (!finalPeriod) {
+      if (hour >= 13 && hour <= 23) {
+        // Convert 24-hour to 12-hour
+        convertedHour = hour - 12;
+        finalPeriod = 'PM';
+      } else if (hour === 0) {
+        convertedHour = 12;
+        finalPeriod = 'AM';
+      } else if (hour === 12) {
+        finalPeriod = 'PM'; // Noon
+      } else if (hour >= 1 && hour <= 6) {
+        // Ambiguous hours - assume PM for business hours (1-6 PM is more common than 1-6 AM)
+        finalPeriod = 'PM';
+      } else if (hour >= 7 && hour <= 11) {
+        // Morning business hours
+        finalPeriod = 'AM';
+      } else {
+        finalPeriod = hour >= 12 ? 'PM' : 'AM';
+      }
+    } else {
+      // Handle cases where period is specified but hour might need conversion
+      if (hour > 12) {
+        convertedHour = hour - 12;
+        finalPeriod = 'PM';
+      } else if (hour === 0) {
+        convertedHour = 12;
+        finalPeriod = 'AM';
+      }
+    }
+
+    // Format minutes to always show 2 digits
+    const formattedMinutes = minutes.padEnd(2, '0');
+
+    // Return clean format
+    if (formattedMinutes === '00') {
+      return `${convertedHour} ${finalPeriod}`;
+    } else {
+      return `${convertedHour}:${formattedMinutes} ${finalPeriod}`;
+    }
   };
 
   if (offices.length === 0) {
@@ -559,133 +661,174 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
                 </div>
               )}
 
-              {/* Downloadable Applications Section */}
-              {office.downloadableApplications && (
-                <div className="border-t pt-6">
-                  <h4 className="text-sm font-semibold text-gray-900 mb-4 flex items-center">
+              {/* Real Downloadable Applications Section */}
+              <div className="border-t pt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-sm font-semibold text-gray-900 flex items-center">
                     <Download className="w-4 h-4 mr-2" />
-                    Downloadable Applications
+                    Permit Applications
                   </h4>
-                  <div className="bg-slate-50 rounded-lg p-4">
-                    <div className="space-y-3">
-                      {office.downloadableApplications.building && office.downloadableApplications.building.length > 0 && (
-                        <div>
-                          <h5 className="font-medium text-gray-900 mb-2">Building Permit Applications</h5>
-                          <div className="space-y-1">
-                            {office.downloadableApplications.building.map((url, idx) => (
-                              <a
-                                key={idx}
-                                href={url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center text-sm text-blue-600 hover:text-blue-800 hover:underline"
-                              >
-                                <FileText className="w-4 h-4 mr-2" />
-                                Building Permit Form {idx + 1}
-                              </a>
-                            ))}
-                          </div>
-                        </div>
+                  {office.website && (
+                    <button
+                      onClick={() => scrapeFormsForOffice(office)}
+                      disabled={loadingForms[office.id || `${office.city}-${office.department_name}`]}
+                      className="px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                      {loadingForms[office.id || `${office.city}-${office.department_name}`] ? (
+                        <>
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          Loading...
+                        </>
+                      ) : (
+                        <>
+                          <Download className="w-3 h-3" />
+                          Get Forms
+                        </>
                       )}
-                      {office.downloadableApplications.electrical && office.downloadableApplications.electrical.length > 0 && (
-                        <div>
-                          <h5 className="font-medium text-gray-900 mb-2">Electrical Permit Applications</h5>
-                          <div className="space-y-1">
-                            {office.downloadableApplications.electrical.map((url, idx) => (
-                              <a
-                                key={idx}
-                                href={url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center text-sm text-blue-600 hover:text-blue-800 hover:underline"
-                              >
-                                <FileText className="w-4 h-4 mr-2" />
-                                Electrical Permit Form {idx + 1}
-                              </a>
-                            ))}
+                    </button>
+                  )}
+                </div>
+
+                {(() => {
+                  const officeKey = office.id || `${office.city}-${office.department_name}`;
+                  const forms = scrapedForms[officeKey];
+                  const error = formErrors[officeKey];
+                  const loading = loadingForms[officeKey];
+
+                  if (error) {
+                    return (
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div className="flex items-center text-red-700 text-sm">
+                          <AlertCircle className="w-4 h-4 mr-2" />
+                          {error}
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  if (loading) {
+                    return (
+                      <div className="bg-gray-50 rounded-lg p-8 text-center">
+                        <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-600" />
+                        <p className="text-sm text-gray-600">Searching for permit forms...</p>
+                      </div>
+                    );
+                  }
+
+                  if (forms) {
+                    const hasAnyForms = Object.values(forms).some(formArray => formArray.length > 0);
+
+                    if (!hasAnyForms) {
+                      return (
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                          <div className="flex items-center text-yellow-700 text-sm">
+                            <AlertCircle className="w-4 h-4 mr-2" />
+                            No downloadable forms found on the website. Contact the office directly for applications.
                           </div>
                         </div>
-                      )}
-                      {office.downloadableApplications.plumbing && office.downloadableApplications.plumbing.length > 0 && (
-                        <div>
-                          <h5 className="font-medium text-gray-900 mb-2">Plumbing Permit Applications</h5>
-                          <div className="space-y-1">
-                            {office.downloadableApplications.plumbing.map((url, idx) => (
-                              <a
-                                key={idx}
-                                href={url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center text-sm text-blue-600 hover:text-blue-800 hover:underline"
-                              >
-                                <FileText className="w-4 h-4 mr-2" />
-                                Plumbing Permit Form {idx + 1}
-                              </a>
-                            ))}
-                          </div>
+                      );
+                    }
+
+                    return (
+                      <div className="bg-slate-50 rounded-lg p-4">
+                        <div className="space-y-4">
+                          {Object.entries(forms).map(([type, formArray]) => {
+                            if (formArray.length === 0) return null;
+
+                            return (
+                              <div key={type}>
+                                <h5 className="font-medium text-gray-900 mb-2 capitalize">
+                                  {type} Permit Applications
+                                </h5>
+                                <div className="space-y-2">
+                                  {formArray.map((form: ScrapedForm, idx: number) => (
+                                    <a
+                                      key={idx}
+                                      href={form.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors group"
+                                    >
+                                      <div className="flex items-center">
+                                        <FileText className="w-4 h-4 mr-3 text-gray-400 group-hover:text-blue-600" />
+                                        <div>
+                                          <div className="text-sm font-medium text-gray-900 group-hover:text-blue-900">
+                                            {form.name}
+                                          </div>
+                                          {form.description && (
+                                            <div className="text-xs text-gray-500">
+                                              {form.description}
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center text-xs text-gray-500">
+                                        {form.fileType && (
+                                          <span className="px-2 py-1 bg-gray-100 rounded text-xs font-medium mr-2">
+                                            {form.fileType}
+                                          </span>
+                                        )}
+                                        <Download className="w-3 h-3" />
+                                      </div>
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
-                      )}
-                      {office.downloadableApplications.mechanical && office.downloadableApplications.mechanical.length > 0 && (
-                        <div>
-                          <h5 className="font-medium text-gray-900 mb-2">Mechanical Permit Applications</h5>
-                          <div className="space-y-1">
-                            {office.downloadableApplications.mechanical.map((url, idx) => (
-                              <a
-                                key={idx}
-                                href={url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center text-sm text-blue-600 hover:text-blue-800 hover:underline"
-                              >
-                                <FileText className="w-4 h-4 mr-2" />
-                                Mechanical Permit Form {idx + 1}
-                              </a>
-                            ))}
-                          </div>
+                      </div>
+                    );
+                  }
+
+                  // Default state - show static forms if available, or encourage form scraping
+                  if (office.downloadableApplications) {
+                    return (
+                      <div className="bg-slate-50 rounded-lg p-4">
+                        <div className="space-y-3">
+                          {office.downloadableApplications.building && office.downloadableApplications.building.length > 0 && (
+                            <div>
+                              <h5 className="font-medium text-gray-900 mb-2">Building Permit Applications</h5>
+                              <div className="space-y-1">
+                                {office.downloadableApplications.building.map((url, idx) => (
+                                  <a
+                                    key={idx}
+                                    href={url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                                  >
+                                    <FileText className="w-4 h-4 mr-2" />
+                                    Building Permit Form {idx + 1}
+                                  </a>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {/* Add other static form types here if needed */}
                         </div>
-                      )}
-                      {office.downloadableApplications.zoning && office.downloadableApplications.zoning.length > 0 && (
-                        <div>
-                          <h5 className="font-medium text-gray-900 mb-2">Zoning Applications</h5>
-                          <div className="space-y-1">
-                            {office.downloadableApplications.zoning.map((url, idx) => (
-                              <a
-                                key={idx}
-                                href={url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center text-sm text-blue-600 hover:text-blue-800 hover:underline"
-                              >
-                                <FileText className="w-4 h-4 mr-2" />
-                                Zoning Application Form {idx + 1}
-                              </a>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      {office.downloadableApplications.general && office.downloadableApplications.general.length > 0 && (
-                        <div>
-                          <h5 className="font-medium text-gray-900 mb-2">General Applications</h5>
-                          <div className="space-y-1">
-                            {office.downloadableApplications.general.map((url, idx) => (
-                              <a
-                                key={idx}
-                                href={url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center text-sm text-blue-600 hover:text-blue-800 hover:underline"
-                              >
-                                <FileText className="w-4 h-4 mr-2" />
-                                General Application Form {idx + 1}
-                              </a>
-                            ))}
-                          </div>
-                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="bg-gray-50 rounded-lg p-6 text-center">
+                      <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-600 mb-3">
+                        {office.website
+                          ? "Click 'Get Forms' to search for downloadable permit applications"
+                          : "No website available for this office"
+                        }
+                      </p>
+                      {!office.website && (
+                        <p className="text-xs text-gray-500">
+                          Contact the office directly for permit applications
+                        </p>
                       )}
                     </div>
-                  </div>
-                </div>
-              )}
+                  );
+                })()}
+              </div>
 
               {/* Additional Metadata */}
               <div className="border-t pt-6 mt-6">
