@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { DetailedOfficeInfo } from '@/lib/enhanced-web-scraper'
+import { georgiaPermitOffices } from '@/lib/georgia-permit-data'
 import { getDetailedOfficeInfo } from '@/lib/scraper-manager'
 import { sql } from '@/lib/neon'
 
@@ -127,6 +128,14 @@ export async function GET(request: NextRequest) {
       console.log(`Found ${offices.length} offices from database`)
     }
 
+    if (offices.length === 0) {
+      const fallbackOffices = getFallbackOffices(city, county, normalizedState)
+      if (fallbackOffices.length > 0) {
+        console.log(`Using fallback dataset with ${fallbackOffices.length} offices`)
+        offices = fallbackOffices
+      }
+    }
+
     // Calculate distances if coordinates provided
     let officesWithDistance = offices
     if (latitude && longitude) {
@@ -172,34 +181,38 @@ export async function GET(request: NextRequest) {
 // Database search function for permit offices
 async function searchPermitOfficesFromDatabase(city: string | null, county: string | null, state: string): Promise<PermitOffice[]> {
   try {
-    let query = 'SELECT * FROM permit_offices WHERE active = true'
-    const params: string[] = []
-    let paramCount = 1
-
-    if (city) {
-      query += ` AND (city ILIKE $${paramCount} OR city ILIKE $${paramCount + 1})`
-      params.push(`%${city}%`, city)
-      paramCount += 2
-    }
-
-    if (county) {
-      query += ` AND (county ILIKE $${paramCount} OR county ILIKE $${paramCount + 1})`
-      params.push(`%${county}%`, county)
-      paramCount += 2
-    }
-
-    if (state) {
-      query += ` AND state = $${paramCount}`
-      params.push(state)
-      paramCount += 1
-    }
-
-    query += ' ORDER BY city, county LIMIT 20'
-
-    console.log('Database query:', query, 'Params:', params)
+    console.log(`Searching database: city=${city}, county=${county}, state=${state}`)
     
-    const rawResults = await sql.unsafe(query);
-    const results = rawResults as unknown as PermitOfficeRow[];
+    // Build the query using Neon's template literal syntax
+    let query = sql`SELECT * FROM permit_offices WHERE active = true`
+    
+    if (city) {
+      query = sql`SELECT * FROM permit_offices WHERE active = true AND (city ILIKE ${`%${city}%`} OR city ILIKE ${city})`
+    }
+    
+    if (county) {
+      if (city) {
+        query = sql`SELECT * FROM permit_offices WHERE active = true AND (city ILIKE ${`%${city}%`} OR city ILIKE ${city}) AND (county ILIKE ${`%${county}%`} OR county ILIKE ${county})`
+      } else {
+        query = sql`SELECT * FROM permit_offices WHERE active = true AND (county ILIKE ${`%${county}%`} OR county ILIKE ${county})`
+      }
+    }
+    
+    if (state) {
+      if (city && county) {
+        query = sql`SELECT * FROM permit_offices WHERE active = true AND (city ILIKE ${`%${city}%`} OR city ILIKE ${city}) AND (county ILIKE ${`%${county}%`} OR county ILIKE ${county}) AND state = ${state}`
+      } else if (city) {
+        query = sql`SELECT * FROM permit_offices WHERE active = true AND (city ILIKE ${`%${city}%`} OR city ILIKE ${city}) AND state = ${state}`
+      } else if (county) {
+        query = sql`SELECT * FROM permit_offices WHERE active = true AND (county ILIKE ${`%${county}%`} OR county ILIKE ${county}) AND state = ${state}`
+      } else {
+        query = sql`SELECT * FROM permit_offices WHERE active = true AND state = ${state}`
+      }
+    }
+    
+    query = sql`${query} ORDER BY city, county LIMIT 20`
+    
+    const results = await query as PermitOfficeRow[];
 
     return results.map(row => ({
       id: row.id,
@@ -982,4 +995,61 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
     Math.sin(dLon/2) * Math.sin(dLon/2)
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
   return R * c
+}
+
+function getFallbackOffices(city: string | null, county: string | null, state: string): PermitOffice[] {
+  if (state !== 'GA') {
+    return []
+  }
+
+  const normalizedCity = city?.toLowerCase().trim()
+  const normalizedCounty = county?.toLowerCase().trim()
+
+  return georgiaPermitOffices
+    .filter(office => {
+      if (office.state !== 'GA') return false
+      if (normalizedCity && office.city.toLowerCase() !== normalizedCity) return false
+      if (normalizedCounty && office.county.toLowerCase() !== normalizedCounty) return false
+      return true
+    })
+    .map(office => ({
+      id: generateId(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      city: office.city,
+      county: office.county,
+      state: office.state,
+      jurisdiction_type: office.jurisdiction_type,
+      department_name: office.department_name,
+      office_type: office.office_type,
+      address: office.address,
+      phone: office.phone ?? null,
+      email: office.email ?? null,
+      website: office.website ?? null,
+      hours_monday: office.hours_monday ?? null,
+      hours_tuesday: office.hours_tuesday ?? null,
+      hours_wednesday: office.hours_wednesday ?? null,
+      hours_thursday: office.hours_thursday ?? null,
+      hours_friday: office.hours_friday ?? null,
+      hours_saturday: office.hours_saturday ?? null,
+      hours_sunday: office.hours_sunday ?? null,
+      building_permits: office.building_permits ?? false,
+      electrical_permits: office.electrical_permits ?? false,
+      plumbing_permits: office.plumbing_permits ?? false,
+      mechanical_permits: office.mechanical_permits ?? false,
+      zoning_permits: office.zoning_permits ?? false,
+      planning_review: office.planning_review ?? false,
+      inspections: office.inspections ?? false,
+      online_applications: office.online_applications ?? false,
+      online_payments: office.online_payments ?? false,
+      permit_tracking: office.permit_tracking ?? false,
+      online_portal_url: office.online_portal_url ?? null,
+      latitude: office.latitude ?? null,
+      longitude: office.longitude ?? null,
+      service_area_bounds: office.service_area_bounds ?? null,
+      data_source: 'manual',
+      last_verified: office.last_verified ?? null,
+      crawl_frequency: office.crawl_frequency ?? 'monthly',
+      active: office.active ?? true
+    }))
 }
