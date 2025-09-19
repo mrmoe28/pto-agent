@@ -220,10 +220,10 @@ interface SearchResult {
   snippet: string
   detailedInfo?: DetailedOfficeInfo
   structuredData?: {
-    organization?: any
-    localBusiness?: any
-    contactPoint?: any
-    postalAddress?: any
+    organization?: Record<string, unknown>
+    localBusiness?: Record<string, unknown>
+    contactPoint?: Record<string, unknown>
+    postalAddress?: Record<string, unknown>
   }
 }
 
@@ -568,7 +568,7 @@ function extractPermitOfficesFromSearchResults(searchResults: SearchResult[], lo
       // Location information (prefer detailed info, fallback to extracted)
       city: detailedInfo?.city ||
             (jurisdictionType === 'city' ? location : extractCityFromTitle(result.title, location)) ||
-            structuredData?.postalAddress?.addressLocality || '',
+            (structuredData?.postalAddress?.addressLocality as string) || '',
       county: detailedInfo?.county ||
               (jurisdictionType === 'county' ? location : extractCountyFromTitle(result.title, location)) || '',
       state: detailedInfo?.state || state,
@@ -580,7 +580,7 @@ function extractPermitOfficesFromSearchResults(searchResults: SearchResult[], lo
       department_name: detailedInfo?.department ||
                       detailedInfo?.officeName ||
                       extractDepartmentName(result.title, result.snippet) ||
-                      structuredData?.organization?.name || '',
+                      (structuredData?.organization?.name as string) || '',
 
       office_type: extractOfficeTypeFromDetailed(detailedInfo) ||
                    extractOfficeType(result.title, result.snippet),
@@ -592,11 +592,11 @@ function extractPermitOfficesFromSearchResults(searchResults: SearchResult[], lo
 
       phone: detailedInfo?.phone ||
              extractPhoneFromSnippet(result.snippet) ||
-             structuredData?.contactPoint?.telephone || '',
+             (structuredData?.contactPoint?.telephone as string) || '',
 
       email: detailedInfo?.email ||
              extractEmailFromSnippet(result.snippet) ||
-             structuredData?.contactPoint?.email || '',
+             (structuredData?.contactPoint?.email as string) || '',
 
       website: result.url,
 
@@ -650,7 +650,7 @@ function extractPermitOfficesFromSearchResults(searchResults: SearchResult[], lo
 
     // Add enhanced properties for API response (not in database schema)
     if (detailedInfo) {
-      (office as any).enhancedData = {
+      (office as PermitOffice & { enhancedData?: Record<string, unknown> }).enhancedData = {
         dataCompleteness: detailedInfo.metadata.dataCompleteness,
         sourceReliability: detailedInfo.metadata.sourceReliability,
         totalForms: Object.values(detailedInfo.forms).reduce((sum, arr) => sum + arr.length, 0),
@@ -700,7 +700,7 @@ function extractOfficeTypeFromDetailed(detailedInfo?: DetailedOfficeInfo): 'buil
   return 'other'
 }
 
-function formatStructuredAddress(postalAddress?: any): string {
+function formatStructuredAddress(postalAddress?: Record<string, unknown>): string {
   if (!postalAddress) return ''
 
   const parts = [
