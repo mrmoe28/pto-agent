@@ -74,7 +74,7 @@ export default function ExportButton({
 }: ExportButtonProps) {
   const { user, isLoaded } = useUser();
   const [isExporting, setIsExporting] = useState(false);
-  const [exportFormat, setExportFormat] = useState<string>('');
+  const [, setExportFormat] = useState<string>('');
 
   // Don't show button if user is not loaded or not authenticated
   if (!isLoaded || !user) {

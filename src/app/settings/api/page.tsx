@@ -245,7 +245,7 @@ export default function ApiSettingsPage() {
                   <h4 className="font-medium text-blue-900 mb-2">Search Endpoints</h4>
                   <ul className="text-sm text-blue-700 space-y-1">
                     <li>• GET /search/offices</li>
-                    <li>• GET /search/offices/{id}</li>
+                    <li>• GET /search/offices/&#123;id&#125;</li>
                     <li>• POST /search/offices</li>
                   </ul>
                 </div>

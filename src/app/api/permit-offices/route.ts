@@ -212,8 +212,15 @@ async function searchGeneralPermitOffices(state: string): Promise<PermitOffice[]
   return offices
 }
 
+// Type definition for search results
+interface SearchResult {
+  title: string
+  url: string
+  snippet: string
+}
+
 // Perform web search using a search API
-async function performWebSearch(query: string): Promise<any[]> {
+async function performWebSearch(query: string): Promise<SearchResult[]> {
   // For now, we'll use a mock search result
   // In production, you would integrate with Google Custom Search API, Bing Search API, or similar
   console.log(`Searching web for: ${query}`)
@@ -229,7 +236,7 @@ async function performWebSearch(query: string): Promise<any[]> {
 }
 
 // Extract permit office information from search results
-function extractPermitOfficesFromSearchResults(searchResults: any[], location: string, state: string, jurisdictionType: string): PermitOffice[] {
+function extractPermitOfficesFromSearchResults(searchResults: SearchResult[], location: string, state: string, jurisdictionType: string): PermitOffice[] {
   const offices: PermitOffice[] = []
   
   for (const result of searchResults) {
