@@ -1,6 +1,8 @@
 import * as cheerio from 'cheerio';
 import { GovernmentPatternMatcher, COMMON_GOV_PATHS } from './government-patterns';
 
+type PlaywrightChromium = typeof import('playwright')['chromium'];
+
 export interface DetailedOfficeInfo {
   // Basic Information
   officeName: string;
