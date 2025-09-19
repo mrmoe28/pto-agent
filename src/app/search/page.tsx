@@ -8,7 +8,7 @@ import GeorgiaCountySelector from '@/components/GeorgiaCountySelector';
 import SimplePermitOfficeDisplay from '@/components/SimplePermitOfficeDisplay';
 import UpgradeModal from '@/components/UpgradeModal';
 import { extractAddressComponents, getCoordinates } from '@/lib/google-apis';
-import { type PlanType } from '@/lib/subscription-utils';
+import { type PlanType } from '@/lib/subscription-types';
 
 interface PermitOffice {
   id?: string;
