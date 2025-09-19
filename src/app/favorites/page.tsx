@@ -4,7 +4,8 @@ import { useUser } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import EnhancedPermitOfficeTable from '@/components/EnhancedPermitOfficeTable';
-import { canUserAccessFeature, type PlanType } from '@/lib/subscription-utils';
+import { type PlanType } from '@/lib/subscription-types';
+import { canUserAccessFeature } from '@/lib/subscription-utils';
 
 interface UserFavorite {
   id: string;

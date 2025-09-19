@@ -1,44 +1,17 @@
+'use server';
+
 import { currentUser } from '@clerk/nextjs/server';
 import { db } from './db';
 import { userSubscriptions, type UserSubscription } from './db/schema';
 import { eq } from 'drizzle-orm';
-
-export type PlanType = 'free' | 'pro' | 'enterprise';
-
-export interface PlanLimits {
-  searchesLimit: number | null; // null means unlimited
-  canSaveFavorites: boolean;
-  canExportResults: boolean;
-  hasPrioritySupport: boolean;
-}
-
-export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
-  free: {
-    searchesLimit: 1,
-    canSaveFavorites: false,
-    canExportResults: false,
-    hasPrioritySupport: false,
-  },
-  pro: {
-    searchesLimit: 40,
-    canSaveFavorites: false,
-    canExportResults: false,
-    hasPrioritySupport: false,
-  },
-  enterprise: {
-    searchesLimit: null, // unlimited
-    canSaveFavorites: true,
-    canExportResults: true,
-    hasPrioritySupport: true,
-  },
-};
+import { PLAN_LIMITS, type PlanType, type PlanLimits } from './subscription-types';
 
 // Get user's subscription plan from Clerk metadata
 export async function getUserPlanFromClerk(): Promise<PlanType> {
   try {
     const user = await currentUser();
     if (!user) return 'free';
-    
+
     // Check if user has subscription metadata from Clerk
     const subscriptionPlan = user.publicMetadata?.subscriptionPlan as PlanType;
     return subscriptionPlan || 'free';
@@ -87,19 +60,19 @@ export async function getUserSearchUsage(userId: string): Promise<{ searchesUsed
 }
 
 // Check if user can perform a search based on their plan and usage
-export async function canUserSearch(userId: string): Promise<{ 
-  canSearch: boolean; 
-  plan: PlanType; 
-  usage: { used: number; limit: number | null; remaining: number | null } 
+export async function canUserSearch(userId: string): Promise<{
+  canSearch: boolean;
+  plan: PlanType;
+  usage: { used: number; limit: number | null; remaining: number | null }
 }> {
   try {
     const plan = await getUserPlanFromClerk();
     const { searchesUsed } = await getUserSearchUsage(userId);
     const limits = PLAN_LIMITS[plan];
-    
+
     const canSearch = limits.searchesLimit === null || searchesUsed < limits.searchesLimit;
     const remaining = limits.searchesLimit === null ? null : Math.max(0, limits.searchesLimit - searchesUsed);
-    
+
     return {
       canSearch,
       plan,
@@ -120,14 +93,14 @@ export async function canUserSearch(userId: string): Promise<{
 }
 
 // Increment search usage for a user
-export async function incrementSearchUsage(userId: string): Promise<{ 
-  success: boolean; 
-  canSearch: boolean; 
-  usage: { used: number; limit: number | null; remaining: number | null } 
+export async function incrementSearchUsage(userId: string): Promise<{
+  success: boolean;
+  canSearch: boolean;
+  usage: { used: number; limit: number | null; remaining: number | null }
 }> {
   try {
     const { canSearch, plan, usage } = await canUserSearch(userId);
-    
+
     if (!canSearch) {
       return {
         success: false,
