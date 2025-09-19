@@ -68,12 +68,17 @@ The **Permit Office Search Application** is a Next.js 15-based web application d
 #### **`GET /api/permit-offices`**
 Search for permit offices with multiple filter options:
 - **Query Parameters**:
-  - `lat` & `lng`: GPS coordinates for distance-based search
-  - `city`: Filter by city name
+  - `state` *(required)*: Two-letter code or full state name
+  - `city`: Filter by city name (matched in both database and web search)
   - `county`: Filter by county name
-  - `state`: Filter by state (defaults to GA)
-- **Returns**: Up to 10 offices with calculated distances
-- **Features**: Automatic fallback to static data if database fails
+  - `lat` & `lng`: Optional GPS coordinates to return distance information when offices include geocodes
+- **Response Behaviour**:
+  - Checks the hosted database first and falls back to web search when no active offices are stored for the area
+  - Returns up to 10 offices with metadata reflecting the actual source (`database` or `web_search`)
+  - Service flags and operating hours remain null unless supported by scraped or stored data (no more blanket “true” defaults)
+- **Failure Modes**:
+  - Missing `state` yields `400` with a descriptive validation error
+  - Unexpected errors still respond with `500` but log detailed diagnostics server-side
 
 #### **`POST /api/permit-offices`**
 Seed database with Georgia permit office data:

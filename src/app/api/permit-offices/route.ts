@@ -45,6 +45,48 @@ interface PermitOffice {
   distance?: number
 }
 
+// Database row representation for permit offices table
+interface PermitOfficeRow {
+  id: string
+  created_at: string
+  updated_at: string
+  city: string
+  county: string
+  state: string
+  jurisdiction_type: string
+  department_name: string
+  office_type: string
+  address: string
+  phone: string | null
+  email: string | null
+  website: string | null
+  hours_monday: string | null
+  hours_tuesday: string | null
+  hours_wednesday: string | null
+  hours_thursday: string | null
+  hours_friday: string | null
+  hours_saturday: string | null
+  hours_sunday: string | null
+  building_permits: boolean
+  electrical_permits: boolean
+  plumbing_permits: boolean
+  mechanical_permits: boolean
+  zoning_permits: boolean
+  planning_review: boolean
+  inspections: boolean
+  online_applications: boolean
+  online_payments: boolean
+  permit_tracking: boolean
+  online_portal_url: string | null
+  latitude: number | null
+  longitude: number | null
+  service_area_bounds: Record<string, unknown> | null
+  data_source: 'crawled' | 'api' | 'manual'
+  last_verified: string | null
+  crawl_frequency: 'daily' | 'weekly' | 'monthly'
+  active: boolean
+}
+
 // Search for permit offices by location using database first, then web search
 export async function GET(request: NextRequest) {
   try {
@@ -130,7 +172,7 @@ export async function GET(request: NextRequest) {
 async function searchPermitOfficesFromDatabase(city: string | null, county: string | null, state: string): Promise<PermitOffice[]> {
   try {
     let query = 'SELECT * FROM permit_offices WHERE active = true'
-    const params: any[] = []
+    const params: string[] = []
     let paramCount = 1
 
     if (city) {
@@ -155,9 +197,9 @@ async function searchPermitOfficesFromDatabase(city: string | null, county: stri
 
     console.log('Database query:', query, 'Params:', params)
     
-    const results = await sql.unsafe(query, params)
-    
-    return results.map((row: any) => ({
+    const results = await sql.unsafe(query, params) as PermitOfficeRow[]
+
+    return results.map(row => ({
       id: row.id,
       created_at: row.created_at,
       updated_at: row.updated_at,
