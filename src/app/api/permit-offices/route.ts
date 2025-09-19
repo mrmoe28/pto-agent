@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { EnhancedWebScraper, DetailedOfficeInfo } from '@/lib/enhanced-web-scraper'
+import { sql } from '@/lib/neon'
 
 // Type definitions for permit office data
 interface PermitOffice {
@@ -44,20 +45,44 @@ interface PermitOffice {
   distance?: number
 }
 
-// Search for permit offices by location using web search
+// Search for permit offices by location using database first, then web search
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const latitude = searchParams.get('lat')
     const longitude = searchParams.get('lng')
-    const city = searchParams.get('city')
-    const county = searchParams.get('county')
-    const state = searchParams.get('state') || 'GA'
+    const city = searchParams.get('city')?.trim() || null
+    const county = searchParams.get('county')?.trim() || null
+    const stateParam = searchParams.get('state')
 
-    console.log(`Searching for permit offices: city=${city}, county=${county}, state=${state}`)
+    const state = stateParam?.trim()
+    if (!state) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Missing required state parameter',
+          offices: [],
+          count: 0,
+          source: 'validation'
+        },
+        { status: 400 }
+      )
+    }
 
-    // Perform web search for permit offices
-    const offices = await searchPermitOfficesWeb(city, county, state)
+    const normalizedState = state.length === 2 ? state.toUpperCase() : state
+
+    console.log(`Searching for permit offices: city=${city}, county=${county}, state=${normalizedState}`)
+
+    // First, try to get offices from database
+    let offices = await searchPermitOfficesFromDatabase(city, county, normalizedState)
+    
+    // If no results from database, perform web search
+    if (offices.length === 0) {
+      console.log('No database results found, performing web search...')
+      offices = await searchPermitOfficesWeb(city, county, normalizedState)
+    } else {
+      console.log(`Found ${offices.length} offices from database`)
+    }
 
     // Calculate distances if coordinates provided
     let officesWithDistance = offices
@@ -98,6 +123,84 @@ export async function GET(request: NextRequest) {
       },
       { status: 500 }
     )
+  }
+}
+
+// Database search function for permit offices
+async function searchPermitOfficesFromDatabase(city: string | null, county: string | null, state: string): Promise<PermitOffice[]> {
+  try {
+    let query = 'SELECT * FROM permit_offices WHERE active = true'
+    const params: any[] = []
+    let paramCount = 1
+
+    if (city) {
+      query += ` AND (city ILIKE $${paramCount} OR city ILIKE $${paramCount + 1})`
+      params.push(`%${city}%`, city)
+      paramCount += 2
+    }
+
+    if (county) {
+      query += ` AND (county ILIKE $${paramCount} OR county ILIKE $${paramCount + 1})`
+      params.push(`%${county}%`, county)
+      paramCount += 2
+    }
+
+    if (state) {
+      query += ` AND state = $${paramCount}`
+      params.push(state)
+      paramCount += 1
+    }
+
+    query += ' ORDER BY city, county LIMIT 20'
+
+    console.log('Database query:', query, 'Params:', params)
+    
+    const results = await sql.unsafe(query, params)
+    
+    return results.map((row: any) => ({
+      id: row.id,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+      city: row.city,
+      county: row.county,
+      state: row.state,
+      jurisdiction_type: row.jurisdiction_type,
+      department_name: row.department_name,
+      office_type: row.office_type,
+      address: row.address,
+      phone: row.phone,
+      email: row.email,
+      website: row.website,
+      hours_monday: row.hours_monday,
+      hours_tuesday: row.hours_tuesday,
+      hours_wednesday: row.hours_wednesday,
+      hours_thursday: row.hours_thursday,
+      hours_friday: row.hours_friday,
+      hours_saturday: row.hours_saturday,
+      hours_sunday: row.hours_sunday,
+      building_permits: row.building_permits,
+      electrical_permits: row.electrical_permits,
+      plumbing_permits: row.plumbing_permits,
+      mechanical_permits: row.mechanical_permits,
+      zoning_permits: row.zoning_permits,
+      planning_review: row.planning_review,
+      inspections: row.inspections,
+      online_applications: row.online_applications,
+      online_payments: row.online_payments,
+      permit_tracking: row.permit_tracking,
+      online_portal_url: row.online_portal_url,
+      latitude: row.latitude,
+      longitude: row.longitude,
+      service_area_bounds: row.service_area_bounds,
+      data_source: row.data_source,
+      last_verified: row.last_verified,
+      crawl_frequency: row.crawl_frequency,
+      active: row.active
+    }))
+
+  } catch (error) {
+    console.error('Database search error:', error)
+    return []
   }
 }
 
@@ -503,19 +606,30 @@ async function searchKnownPatterns(query: string): Promise<SearchResult[]> {
   
   try {
     // Extract city and state from query
-    const cityMatch = query.match(/([A-Za-z\s]+),?\s+(GA|Georgia)/i)
+    const cityMatch = query.match(/([A-Za-z\s]+),?\s+([A-Za-z]{2}|[A-Za-z]+)/i)
     if (cityMatch) {
       const city = cityMatch[1].trim()
-      const state = 'GA'
-      
+      const rawState = cityMatch[2].trim()
+      const normalizedState = rawState.length === 2
+        ? rawState.toLowerCase()
+        : rawState.toLowerCase() === 'georgia'
+          ? 'ga'
+          : rawState.toLowerCase()
+      const stateLabel = rawState.toUpperCase()
+
+      const citySlug = city.toLowerCase().replace(/\s+/g, '')
+
       // Try common government website patterns
-      const patterns = [
-        `https://www.${city.toLowerCase().replace(/\s+/g, '')}.gov`,
-        `https://www.${city.toLowerCase().replace(/\s+/g, '')}.ga.gov`,
-        `https://${city.toLowerCase().replace(/\s+/g, '')}.gov`,
-        `https://${city.toLowerCase().replace(/\s+/g, '')}.ga.gov`
-      ]
-      
+      const patterns = new Set<string>([
+        `https://www.${citySlug}.gov`,
+        `https://${citySlug}.gov`
+      ])
+
+      if (normalizedState.length === 2) {
+        patterns.add(`https://www.${citySlug}.${normalizedState}.gov`)
+        patterns.add(`https://${citySlug}.${normalizedState}.gov`)
+      }
+
       for (const pattern of patterns) {
         try {
           const response = await fetch(pattern, {
@@ -528,7 +642,7 @@ async function searchKnownPatterns(query: string): Promise<SearchResult[]> {
             results.push({
               title: `${city} Government Website`,
               url: pattern,
-              snippet: `Official government website for ${city}, ${state}`
+              snippet: `Official government website for ${city}, ${stateLabel}`
             })
             break // Use first working URL
           }
@@ -586,6 +700,8 @@ function extractPermitOfficesFromSearchResults(searchResults: SearchResult[], lo
     // Use detailed information if available from enhanced scraping
     const detailedInfo = result.detailedInfo
     const structuredData = result.structuredData
+    const combinedText = `${result.title} ${result.snippet}`.toLowerCase()
+    const includesAny = (keywords: string[]) => keywords.some(keyword => combinedText.includes(keyword))
 
     // Extract enhanced office information
     const office: PermitOffice = {
@@ -629,22 +745,22 @@ function extractPermitOfficesFromSearchResults(searchResults: SearchResult[], lo
       website: result.url,
 
       // Enhanced business hours from detailed scraping
-      hours_monday: detailedInfo?.businessHours?.monday || '8:00 AM - 5:00 PM',
-      hours_tuesday: detailedInfo?.businessHours?.tuesday || '8:00 AM - 5:00 PM',
-      hours_wednesday: detailedInfo?.businessHours?.wednesday || '8:00 AM - 5:00 PM',
-      hours_thursday: detailedInfo?.businessHours?.thursday || '8:00 AM - 5:00 PM',
-      hours_friday: detailedInfo?.businessHours?.friday || '8:00 AM - 5:00 PM',
-      hours_saturday: detailedInfo?.businessHours?.saturday || null,
-      hours_sunday: detailedInfo?.businessHours?.sunday || null,
+      hours_monday: detailedInfo?.businessHours?.monday ?? null,
+      hours_tuesday: detailedInfo?.businessHours?.tuesday ?? null,
+      hours_wednesday: detailedInfo?.businessHours?.wednesday ?? null,
+      hours_thursday: detailedInfo?.businessHours?.thursday ?? null,
+      hours_friday: detailedInfo?.businessHours?.friday ?? null,
+      hours_saturday: detailedInfo?.businessHours?.saturday ?? null,
+      hours_sunday: detailedInfo?.businessHours?.sunday ?? null,
 
       // Enhanced service information from detailed scraping
-      building_permits: detailedInfo?.services?.buildingPermits ?? true,
-      electrical_permits: detailedInfo?.services?.electricalPermits ?? true,
-      plumbing_permits: detailedInfo?.services?.plumbingPermits ?? true,
-      mechanical_permits: detailedInfo?.services?.mechanicalPermits ?? true,
-      zoning_permits: detailedInfo?.services?.zoningPermits ?? true,
-      planning_review: detailedInfo?.services?.planningReview ?? true,
-      inspections: detailedInfo?.services?.inspections ?? true,
+      building_permits: detailedInfo?.services?.buildingPermits ?? includesAny(['building permit', 'permit center', 'building department']),
+      electrical_permits: detailedInfo?.services?.electricalPermits ?? includesAny(['electrical permit', 'electrical inspections']),
+      plumbing_permits: detailedInfo?.services?.plumbingPermits ?? includesAny(['plumbing permit', 'plumbing inspections']),
+      mechanical_permits: detailedInfo?.services?.mechanicalPermits ?? includesAny(['mechanical permit', 'mechanical inspection', 'hvac permit']),
+      zoning_permits: detailedInfo?.services?.zoningPermits ?? includesAny(['zoning permit', 'zoning application', 'zoning department']),
+      planning_review: detailedInfo?.services?.planningReview ?? includesAny(['planning review', 'development review', 'site plan']),
+      inspections: detailedInfo?.services?.inspections ?? includesAny(['inspection', 'inspections department', 'inspection scheduling']),
 
       // Enhanced online services information
       online_applications: detailedInfo?.onlineServices?.onlineApplications ??
