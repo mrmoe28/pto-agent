@@ -103,16 +103,9 @@ export default function TeamDetailPage({ params }: TeamPageProps) {
         setSharedFavorites(favoritesData.favorites || []);
       }
 
-      // For now, we'll create a mock team object since we don't have a specific team endpoint
-      setTeam({
-        id: teamId,
-        name: 'Team Name', // This would come from the API
-        description: 'Team description',
-        ownerId: user?.id || '',
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+      // TODO: Implement real team data fetching from API
+      // For production, this should fetch actual team data from the database
+      setTeam(null);
 
     } catch (error) {
       console.error('Error fetching team data:', error);
