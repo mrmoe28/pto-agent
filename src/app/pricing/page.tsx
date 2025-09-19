@@ -33,7 +33,7 @@ const pricingPlans: PricingPlan[] = [
     id: 'free',
     name: 'Free',
     price: 0,
-    period: 'forever',
+    period: '',
     description: 'Perfect for getting started with permit office searches',
     icon: <Building2 className="h-8 w-8" />,
     color: 'from-gray-500 to-gray-600',
@@ -238,7 +238,7 @@ export default function PricingPage() {
                 </CardDescription>
                 <div className="mt-4">
                   <span className="text-4xl font-bold text-gray-900">${plan.price}</span>
-                  <span className="text-gray-600 ml-2">/{plan.period}</span>
+                  {plan.period && <span className="text-gray-600 ml-2">/{plan.period}</span>}
                 </div>
               </CardHeader>
 
