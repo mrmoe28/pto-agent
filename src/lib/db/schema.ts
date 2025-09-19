@@ -199,6 +199,27 @@ export const teamInvitations = pgTable('team_invitations', {
   tokenIdx: index('team_invitations_token_idx').on(table.token),
 }));
 
+export type ScrapeJobStatus = 'pending' | 'processing' | 'completed' | 'failed';
+
+export const scrapeJobs = pgTable('scrape_jobs', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  city: text('city').notNull(),
+  county: text('county'),
+  state: text('state').notNull(),
+  latitude: text('latitude'),
+  longitude: text('longitude'),
+  status: text('status').notNull().default('pending'),
+  attempts: integer('attempts').notNull().default(0),
+  lastError: text('last_error'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow(),
+  completedAt: timestamp('completed_at', { mode: 'date' }),
+}, (table) => ({
+  locationIdx: index('scrape_jobs_location_idx').on(table.state, table.city, table.county),
+  statusIdx: index('scrape_jobs_status_idx').on(table.status),
+}));
+
 export const sharedSearches = pgTable('shared_searches', {
   id: uuid('id').defaultRandom().primaryKey(),
   teamId: uuid('team_id').notNull().references(() => teams.id, { onDelete: 'cascade' }),
