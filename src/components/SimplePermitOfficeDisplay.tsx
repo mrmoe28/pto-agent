@@ -4,7 +4,7 @@ import React from 'react';
 import {
   Phone, Mail, MapPin, Clock, Building,
   Zap, Droplets, Settings, CheckCircle, Globe,
-  FileText, DollarSign, Calendar
+  FileText, DollarSign, Calendar, Download, AlertCircle
 } from 'lucide-react';
 
 interface PermitOffice {
@@ -63,6 +63,18 @@ interface PermitOffice {
     zoning?: { min?: number; max?: number; unit?: string; description?: string };
     general?: { min?: number; max?: number; unit?: string; description?: string };
   } | null;
+  downloadableApplications?: {
+    building?: string[];
+    electrical?: string[];
+    plumbing?: string[];
+    mechanical?: string[];
+    zoning?: string[];
+    general?: string[];
+  } | null;
+  latitude?: string | null;
+  longitude?: string | null;
+  dataSource?: string;
+  lastVerified?: string | null;
   distance?: number;
 }
 
@@ -290,37 +302,49 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
                 </div>
               )}
 
-              {/* Fees Section */}
+              {/* Fees Section - Complete Display */}
               {office.permitFees && (
                 <div>
                   <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
                     <DollarSign className="w-4 h-4 mr-2" />
-                    Sample Permit Fees
+                    Permit Fees
                   </h4>
                   <div className="bg-blue-50 rounded-lg p-4">
-                    <div className="grid md:grid-cols-2 gap-3">
+                    <div className="space-y-3">
                       {office.permitFees.building && (
-                        <div className="text-sm">
-                          <span className="font-medium text-gray-700">Building:</span>
-                          <span className="ml-2 text-gray-600">{formatFee(office.permitFees.building)}</span>
+                        <div className="pb-3 border-b border-blue-100 last:border-0">
+                          <div className="font-medium text-gray-900 mb-1">Building Permit</div>
+                          <div className="text-sm text-gray-700">{formatFee(office.permitFees.building)}</div>
                         </div>
                       )}
                       {office.permitFees.electrical && (
-                        <div className="text-sm">
-                          <span className="font-medium text-gray-700">Electrical:</span>
-                          <span className="ml-2 text-gray-600">{formatFee(office.permitFees.electrical)}</span>
+                        <div className="pb-3 border-b border-blue-100 last:border-0">
+                          <div className="font-medium text-gray-900 mb-1">Electrical Permit</div>
+                          <div className="text-sm text-gray-700">{formatFee(office.permitFees.electrical)}</div>
                         </div>
                       )}
                       {office.permitFees.plumbing && (
-                        <div className="text-sm">
-                          <span className="font-medium text-gray-700">Plumbing:</span>
-                          <span className="ml-2 text-gray-600">{formatFee(office.permitFees.plumbing)}</span>
+                        <div className="pb-3 border-b border-blue-100 last:border-0">
+                          <div className="font-medium text-gray-900 mb-1">Plumbing Permit</div>
+                          <div className="text-sm text-gray-700">{formatFee(office.permitFees.plumbing)}</div>
                         </div>
                       )}
                       {office.permitFees.mechanical && (
-                        <div className="text-sm">
-                          <span className="font-medium text-gray-700">Mechanical:</span>
-                          <span className="ml-2 text-gray-600">{formatFee(office.permitFees.mechanical)}</span>
+                        <div className="pb-3 border-b border-blue-100 last:border-0">
+                          <div className="font-medium text-gray-900 mb-1">Mechanical Permit</div>
+                          <div className="text-sm text-gray-700">{formatFee(office.permitFees.mechanical)}</div>
+                        </div>
+                      )}
+                      {office.permitFees.zoning && (
+                        <div className="pb-3 border-b border-blue-100 last:border-0">
+                          <div className="font-medium text-gray-900 mb-1">Zoning Permit</div>
+                          <div className="text-sm text-gray-700">{formatFee(office.permitFees.zoning)}</div>
+                        </div>
+                      )}
+                      {office.permitFees.general && (
+                        <div className="pb-3 border-b border-blue-100 last:border-0">
+                          <div className="font-medium text-gray-900 mb-1">General Fees</div>
+                          <div className="text-sm text-gray-700">{formatFee(office.permitFees.general)}</div>
                         </div>
                       )}
                     </div>
@@ -328,55 +352,323 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
                 </div>
               )}
 
-              {/* Processing Times */}
+              {/* Processing Times - Complete Display */}
               {office.processingTimes && (
                 <div>
                   <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
                     <Calendar className="w-4 h-4 mr-2" />
                     Processing Times
                   </h4>
-                  <div className="grid md:grid-cols-2 gap-3">
-                    {Object.entries(office.processingTimes).map(([type, time]) => (
-                      time && (
-                        <div key={type} className="flex justify-between p-3 bg-gray-50 rounded-lg">
-                          <span className="font-medium text-gray-700 capitalize text-sm">{type}:</span>
-                          <span className="text-gray-600 text-sm">{formatProcessingTime(time)}</span>
+                  <div className="bg-amber-50 rounded-lg p-4">
+                    <div className="space-y-3">
+                      {office.processingTimes.building && (
+                        <div className="flex justify-between items-start pb-3 border-b border-amber-100 last:border-0">
+                          <div>
+                            <div className="font-medium text-gray-900">Building Permits</div>
+                            {office.processingTimes.building.description && (
+                              <div className="text-xs text-gray-600 mt-1">{office.processingTimes.building.description}</div>
+                            )}
+                          </div>
+                          <span className="text-sm font-medium text-amber-700">{formatProcessingTime(office.processingTimes.building)}</span>
                         </div>
-                      )
-                    ))}
+                      )}
+                      {office.processingTimes.electrical && (
+                        <div className="flex justify-between items-start pb-3 border-b border-amber-100 last:border-0">
+                          <div>
+                            <div className="font-medium text-gray-900">Electrical Permits</div>
+                            {office.processingTimes.electrical.description && (
+                              <div className="text-xs text-gray-600 mt-1">{office.processingTimes.electrical.description}</div>
+                            )}
+                          </div>
+                          <span className="text-sm font-medium text-amber-700">{formatProcessingTime(office.processingTimes.electrical)}</span>
+                        </div>
+                      )}
+                      {office.processingTimes.plumbing && (
+                        <div className="flex justify-between items-start pb-3 border-b border-amber-100 last:border-0">
+                          <div>
+                            <div className="font-medium text-gray-900">Plumbing Permits</div>
+                            {office.processingTimes.plumbing.description && (
+                              <div className="text-xs text-gray-600 mt-1">{office.processingTimes.plumbing.description}</div>
+                            )}
+                          </div>
+                          <span className="text-sm font-medium text-amber-700">{formatProcessingTime(office.processingTimes.plumbing)}</span>
+                        </div>
+                      )}
+                      {office.processingTimes.mechanical && (
+                        <div className="flex justify-between items-start pb-3 border-b border-amber-100 last:border-0">
+                          <div>
+                            <div className="font-medium text-gray-900">Mechanical Permits</div>
+                            {office.processingTimes.mechanical.description && (
+                              <div className="text-xs text-gray-600 mt-1">{office.processingTimes.mechanical.description}</div>
+                            )}
+                          </div>
+                          <span className="text-sm font-medium text-amber-700">{formatProcessingTime(office.processingTimes.mechanical)}</span>
+                        </div>
+                      )}
+                      {office.processingTimes.zoning && (
+                        <div className="flex justify-between items-start pb-3 border-b border-amber-100 last:border-0">
+                          <div>
+                            <div className="font-medium text-gray-900">Zoning Permits</div>
+                            {office.processingTimes.zoning.description && (
+                              <div className="text-xs text-gray-600 mt-1">{office.processingTimes.zoning.description}</div>
+                            )}
+                          </div>
+                          <span className="text-sm font-medium text-amber-700">{formatProcessingTime(office.processingTimes.zoning)}</span>
+                        </div>
+                      )}
+                      {office.processingTimes.general && (
+                        <div className="flex justify-between items-start pb-3 border-b border-amber-100 last:border-0">
+                          <div>
+                            <div className="font-medium text-gray-900">General Processing</div>
+                            {office.processingTimes.general.description && (
+                              <div className="text-xs text-gray-600 mt-1">{office.processingTimes.general.description}</div>
+                            )}
+                          </div>
+                          <span className="text-sm font-medium text-amber-700">{formatProcessingTime(office.processingTimes.general)}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* Instructions */}
+              {/* Detailed Instructions & Requirements - Complete Display */}
               {office.instructions && (
                 <div className="border-t pt-6">
-                  <h4 className="text-sm font-semibold text-gray-900 mb-3">Instructions & Requirements</h4>
+                  <h4 className="text-sm font-semibold text-gray-900 mb-4 flex items-center">
+                    <FileText className="w-4 h-4 mr-2" />
+                    Instructions & Requirements
+                  </h4>
                   <div className="space-y-4">
+                    {/* General Instructions */}
                     {office.instructions.general && (
                       <div className="bg-gray-50 rounded-lg p-4">
-                        <p className="text-sm text-gray-700">{office.instructions.general}</p>
+                        <h5 className="font-medium text-gray-900 mb-2">General Instructions</h5>
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{office.instructions.general}</p>
                       </div>
                     )}
+
+                    {/* Building Permit Instructions */}
+                    {office.instructions.building && (
+                      <div className="bg-blue-50 rounded-lg p-4 border-l-4 border-blue-400">
+                        <h5 className="font-medium text-gray-900 mb-2">Building Permit Instructions</h5>
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{office.instructions.building}</p>
+                      </div>
+                    )}
+
+                    {/* Electrical Permit Instructions */}
+                    {office.instructions.electrical && (
+                      <div className="bg-yellow-50 rounded-lg p-4 border-l-4 border-yellow-400">
+                        <h5 className="font-medium text-gray-900 mb-2">Electrical Permit Instructions</h5>
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{office.instructions.electrical}</p>
+                      </div>
+                    )}
+
+                    {/* Plumbing Permit Instructions */}
+                    {office.instructions.plumbing && (
+                      <div className="bg-cyan-50 rounded-lg p-4 border-l-4 border-cyan-400">
+                        <h5 className="font-medium text-gray-900 mb-2">Plumbing Permit Instructions</h5>
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{office.instructions.plumbing}</p>
+                      </div>
+                    )}
+
+                    {/* Mechanical Permit Instructions */}
+                    {office.instructions.mechanical && (
+                      <div className="bg-purple-50 rounded-lg p-4 border-l-4 border-purple-400">
+                        <h5 className="font-medium text-gray-900 mb-2">Mechanical Permit Instructions</h5>
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{office.instructions.mechanical}</p>
+                      </div>
+                    )}
+
+                    {/* Zoning Permit Instructions */}
+                    {office.instructions.zoning && (
+                      <div className="bg-green-50 rounded-lg p-4 border-l-4 border-green-400">
+                        <h5 className="font-medium text-gray-900 mb-2">Zoning Permit Instructions</h5>
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{office.instructions.zoning}</p>
+                      </div>
+                    )}
+
+                    {/* Required Documents */}
                     {office.instructions.requiredDocuments && office.instructions.requiredDocuments.length > 0 && (
-                      <div>
-                        <h5 className="text-sm font-medium text-gray-900 mb-2">Required Documents:</h5>
-                        <ul className="list-disc list-inside space-y-1 text-sm text-gray-600 ml-2">
+                      <div className="bg-indigo-50 rounded-lg p-4">
+                        <h5 className="font-medium text-gray-900 mb-3">📋 Required Documents</h5>
+                        <ul className="space-y-2">
                           {office.instructions.requiredDocuments.map((doc, idx) => (
-                            <li key={idx}>{doc}</li>
+                            <li key={idx} className="flex items-start">
+                              <CheckCircle className="w-4 h-4 text-indigo-600 mr-2 mt-0.5 flex-shrink-0" />
+                              <span className="text-sm text-gray-700">{doc}</span>
+                            </li>
                           ))}
                         </ul>
                       </div>
                     )}
+
+                    {/* Application Process */}
                     {office.instructions.applicationProcess && (
-                      <div>
-                        <h5 className="text-sm font-medium text-gray-900 mb-2">Application Process:</h5>
-                        <p className="text-sm text-gray-600">{office.instructions.applicationProcess}</p>
+                      <div className="bg-orange-50 rounded-lg p-4">
+                        <h5 className="font-medium text-gray-900 mb-2">📝 Application Process</h5>
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{office.instructions.applicationProcess}</p>
                       </div>
                     )}
                   </div>
                 </div>
               )}
+
+              {/* Downloadable Applications Section */}
+              {office.downloadableApplications && (
+                <div className="border-t pt-6">
+                  <h4 className="text-sm font-semibold text-gray-900 mb-4 flex items-center">
+                    <Download className="w-4 h-4 mr-2" />
+                    Downloadable Applications
+                  </h4>
+                  <div className="bg-slate-50 rounded-lg p-4">
+                    <div className="space-y-3">
+                      {office.downloadableApplications.building && office.downloadableApplications.building.length > 0 && (
+                        <div>
+                          <h5 className="font-medium text-gray-900 mb-2">Building Permit Applications</h5>
+                          <div className="space-y-1">
+                            {office.downloadableApplications.building.map((url, idx) => (
+                              <a
+                                key={idx}
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                              >
+                                <FileText className="w-4 h-4 mr-2" />
+                                Building Permit Form {idx + 1}
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {office.downloadableApplications.electrical && office.downloadableApplications.electrical.length > 0 && (
+                        <div>
+                          <h5 className="font-medium text-gray-900 mb-2">Electrical Permit Applications</h5>
+                          <div className="space-y-1">
+                            {office.downloadableApplications.electrical.map((url, idx) => (
+                              <a
+                                key={idx}
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                              >
+                                <FileText className="w-4 h-4 mr-2" />
+                                Electrical Permit Form {idx + 1}
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {office.downloadableApplications.plumbing && office.downloadableApplications.plumbing.length > 0 && (
+                        <div>
+                          <h5 className="font-medium text-gray-900 mb-2">Plumbing Permit Applications</h5>
+                          <div className="space-y-1">
+                            {office.downloadableApplications.plumbing.map((url, idx) => (
+                              <a
+                                key={idx}
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                              >
+                                <FileText className="w-4 h-4 mr-2" />
+                                Plumbing Permit Form {idx + 1}
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {office.downloadableApplications.mechanical && office.downloadableApplications.mechanical.length > 0 && (
+                        <div>
+                          <h5 className="font-medium text-gray-900 mb-2">Mechanical Permit Applications</h5>
+                          <div className="space-y-1">
+                            {office.downloadableApplications.mechanical.map((url, idx) => (
+                              <a
+                                key={idx}
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                              >
+                                <FileText className="w-4 h-4 mr-2" />
+                                Mechanical Permit Form {idx + 1}
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {office.downloadableApplications.zoning && office.downloadableApplications.zoning.length > 0 && (
+                        <div>
+                          <h5 className="font-medium text-gray-900 mb-2">Zoning Applications</h5>
+                          <div className="space-y-1">
+                            {office.downloadableApplications.zoning.map((url, idx) => (
+                              <a
+                                key={idx}
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                              >
+                                <FileText className="w-4 h-4 mr-2" />
+                                Zoning Application Form {idx + 1}
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {office.downloadableApplications.general && office.downloadableApplications.general.length > 0 && (
+                        <div>
+                          <h5 className="font-medium text-gray-900 mb-2">General Applications</h5>
+                          <div className="space-y-1">
+                            {office.downloadableApplications.general.map((url, idx) => (
+                              <a
+                                key={idx}
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                              >
+                                <FileText className="w-4 h-4 mr-2" />
+                                General Application Form {idx + 1}
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Additional Metadata */}
+              <div className="border-t pt-6 mt-6">
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <div className="flex items-center gap-4">
+                    {office.dataSource && (
+                      <span className="flex items-center">
+                        <AlertCircle className="w-3 h-3 mr-1" />
+                        Source: {office.dataSource}
+                      </span>
+                    )}
+                    {office.lastVerified && (
+                      <span>Last verified: {new Date(office.lastVerified).toLocaleDateString()}</span>
+                    )}
+                  </div>
+                  {office.latitude && office.longitude && (
+                    <a
+                      href={`https://maps.google.com/?q=${office.latitude},${office.longitude}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 flex items-center"
+                    >
+                      <MapPin className="w-3 h-3 mr-1" />
+                      View on Map
+                    </a>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         );
