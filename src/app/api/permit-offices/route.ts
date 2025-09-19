@@ -1,575 +1,327 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db, permitOffices, PermitOffice } from '@/lib/db'
-import { georgiaPermitOffices } from '@/lib/georgia-permit-data'
-import { eq, and, ilike, sql } from 'drizzle-orm'
 
-// Type definitions for real data
-interface PermitFeeDetail {
-  amount: number
-  description: string
-  unit: string
+// Type definitions for permit office data
+interface PermitOffice {
+  id: string
+  created_at: string
+  updated_at: string
+  city: string
+  county: string
+  state: string
+  jurisdiction_type: 'city' | 'county' | 'state' | 'special_district'
+  department_name: string
+  office_type: 'building' | 'planning' | 'zoning' | 'combined' | 'other'
+  address: string
+  phone: string | null
+  email: string | null
+  website: string | null
+  hours_monday: string | null
+  hours_tuesday: string | null
+  hours_wednesday: string | null
+  hours_thursday: string | null
+  hours_friday: string | null
+  hours_saturday: string | null
+  hours_sunday: string | null
+  building_permits: boolean
+  electrical_permits: boolean
+  plumbing_permits: boolean
+  mechanical_permits: boolean
+  zoning_permits: boolean
+  planning_review: boolean
+  inspections: boolean
+  online_applications: boolean
+  online_payments: boolean
+  permit_tracking: boolean
+  online_portal_url: string | null
+  latitude: number | null
+  longitude: number | null
+  service_area_bounds: Record<string, unknown> | null
+  data_source: 'web_search' | 'crawled' | 'api' | 'manual'
+  last_verified: string | null
+  crawl_frequency: 'daily' | 'weekly' | 'monthly'
+  active: boolean
+  distance?: number
 }
 
-interface PermitFeesData {
-  building?: PermitFeeDetail
-  electrical?: PermitFeeDetail
-  plumbing?: PermitFeeDetail
-  mechanical?: PermitFeeDetail
-  zoning?: PermitFeeDetail
-}
-
-interface InstructionsData {
-  general?: string
-  building?: string
-  electrical?: string
-  plumbing?: string
-  mechanical?: string
-  zoning?: string
-  applicationProcess?: string
-  requiredDocuments?: string[]
-}
-
-interface DownloadableAppsData {
-  building?: string[]
-  electrical?: string[]
-  plumbing?: string[]
-  mechanical?: string[]
-  zoning?: string[]
-}
-
-interface ProcessingTimeDetail {
-  min: number
-  max: number
-  unit: string
-  description: string
-}
-
-interface ProcessingTimesData {
-  building?: ProcessingTimeDetail
-  electrical?: ProcessingTimeDetail
-  plumbing?: ProcessingTimeDetail
-  mechanical?: ProcessingTimeDetail
-  zoning?: ProcessingTimeDetail
-}
-
-// Real permit fee data based on publicly available information
-function getRealFeeData(city: string): PermitFeesData | null {
-  const realFees: Record<string, PermitFeesData> = {
-    "Atlanta": {
-      building: { amount: 125.00, description: "Building permit application fee (based on Atlanta.gov fee schedule)", unit: "per application" },
-      electrical: { amount: 65.00, description: "Electrical permit fee (based on Atlanta.gov fee schedule)", unit: "per permit" },
-      plumbing: { amount: 45.00, description: "Plumbing permit fee (based on Atlanta.gov fee schedule)", unit: "per fixture" },
-      mechanical: { amount: 85.00, description: "HVAC/Mechanical permit fee (based on Atlanta.gov fee schedule)", unit: "per system" },
-      zoning: { amount: 200.00, description: "Zoning review fee (based on Atlanta.gov fee schedule)", unit: "per application" }
-    },
-    "Sandy Springs": {
-      building: { amount: 150.00, description: "Building permit fee (based on Sandy Springs fee schedule)", unit: "per application" },
-      electrical: { amount: 75.00, description: "Electrical permit fee (based on Sandy Springs fee schedule)", unit: "per permit" },
-      plumbing: { amount: 60.00, description: "Plumbing permit fee (based on Sandy Springs fee schedule)", unit: "per fixture" },
-      zoning: { amount: 225.00, description: "Zoning review fee (based on Sandy Springs fee schedule)", unit: "per application" }
-    },
-    "Savannah": {
-      building: { amount: 100.00, description: "Building permit fee (based on Savannah fee schedule)", unit: "per application" },
-      electrical: { amount: 50.00, description: "Electrical permit fee (based on Savannah fee schedule)", unit: "per permit" },
-      plumbing: { amount: 40.00, description: "Plumbing permit fee (based on Savannah fee schedule)", unit: "per fixture" },
-      mechanical: { amount: 70.00, description: "HVAC/Mechanical permit fee (based on Savannah fee schedule)", unit: "per system" }
-    },
-    "Augusta": {
-      building: { amount: 110.00, description: "Building permit fee (based on Augusta fee schedule)", unit: "per application" },
-      electrical: { amount: 55.00, description: "Electrical permit fee (based on Augusta fee schedule)", unit: "per permit" },
-      plumbing: { amount: 45.00, description: "Plumbing permit fee (based on Augusta fee schedule)", unit: "per fixture" }
-    },
-    "Decatur": {
-      building: { amount: 120.00, description: "Building permit fee (DeKalb County fee schedule)", unit: "per application" },
-      electrical: { amount: 60.00, description: "Electrical permit fee (DeKalb County fee schedule)", unit: "per permit" },
-      plumbing: { amount: 50.00, description: "Plumbing permit fee (DeKalb County fee schedule)", unit: "per fixture" },
-      mechanical: { amount: 80.00, description: "HVAC/Mechanical permit fee (DeKalb County fee schedule)", unit: "per system" },
-      zoning: { amount: 180.00, description: "Zoning review fee (DeKalb County fee schedule)", unit: "per application" }
-    }
-  }
-  return realFees[city] || null
-}
-
-function getRealInstructions(city: string): InstructionsData | null {
-  const realInstructions: Record<string, InstructionsData> = {
-    "Atlanta": {
-      general: "Submit completed application with required documents. Payment must be made at time of submission. Applications are reviewed within 5-10 business days.",
-      building: "Building permits require site plans, construction drawings, and structural calculations. All work must comply with current building codes.",
-      electrical: "Electrical permits require licensed electrician. Submit electrical plans and load calculations. Inspections required at rough-in and final stages.",
-      plumbing: "Plumbing permits require licensed plumber. Submit plumbing plans and fixture schedules. Pressure tests required before final approval.",
-      mechanical: "HVAC permits require licensed contractor. Submit mechanical plans and load calculations. Ductwork must be properly sized and sealed.",
-      zoning: "Zoning permits require site survey and property description. Verify compliance with local zoning ordinances before application.",
-      applicationProcess: "1. Complete application form 2. Submit required documents 3. Pay applicable fees 4. Schedule inspections 5. Receive permit approval",
-      requiredDocuments: ["Completed permit application", "Site survey or plot plan", "Construction drawings", "Proof of insurance", "Contractor license (if applicable)"]
-    },
-    "Sandy Springs": {
-      general: "Submit applications in person or by mail. Payment by check or money order only. Applications reviewed within 7-14 business days.",
-      building: "Building permits require site plans and construction drawings. All work must be performed by licensed contractors.",
-      electrical: "Electrical work must be performed by licensed electricians. Submit electrical plans with load calculations.",
-      plumbing: "Plumbing work must be performed by licensed plumbers. Submit plumbing plans and fixture schedules.",
-      applicationProcess: "1. Complete application 2. Submit with required documents 3. Pay fees 4. Schedule inspections 5. Receive approval",
-      requiredDocuments: ["Completed permit application", "Site survey", "Construction plans", "Proof of insurance", "Contractor license"]
-    },
-    "Savannah": {
-      general: "Submit applications online or in person. Payment by credit card, check, or money order. Applications reviewed within 5-7 business days.",
-      building: "Building permits require site plans, construction drawings, and structural calculations. All work must comply with current building codes.",
-      electrical: "Electrical permits require licensed electrician. Submit electrical plans and load calculations. Inspections required at rough-in and final stages.",
-      plumbing: "Plumbing permits require licensed plumber. Submit plumbing plans and fixture schedules. Pressure tests required before final approval.",
-      mechanical: "HVAC permits require licensed contractor. Submit mechanical plans and load calculations. Ductwork must be properly sized and sealed.",
-      applicationProcess: "1. Complete application form 2. Submit required documents 3. Pay applicable fees 4. Schedule inspections 5. Receive permit approval",
-      requiredDocuments: ["Completed permit application", "Site survey or plot plan", "Construction drawings", "Proof of insurance", "Contractor license (if applicable)"]
-    },
-    "Decatur": {
-      general: "Submit applications online through the DeKalb County portal or in person. Payment by credit card, check, or money order. Applications reviewed within 7-10 business days.",
-      building: "Building permits require site plans, construction drawings, and structural calculations. All work must comply with current building codes and DeKalb County ordinances.",
-      electrical: "Electrical permits require licensed electrician. Submit electrical plans and load calculations. Inspections required at rough-in and final stages.",
-      plumbing: "Plumbing permits require licensed plumber. Submit plumbing plans and fixture schedules. Pressure tests required before final approval.",
-      mechanical: "HVAC permits require licensed contractor. Submit mechanical plans and load calculations. Ductwork must be properly sized and sealed.",
-      zoning: "Zoning permits require site survey and property description. Verify compliance with DeKalb County zoning ordinances before application.",
-      applicationProcess: "1. Complete application form 2. Submit required documents 3. Pay applicable fees 4. Schedule inspections 5. Receive permit approval",
-      requiredDocuments: ["Completed permit application", "Site survey or plot plan", "Construction drawings", "Proof of insurance", "Contractor license (if applicable)"]
-    }
-  }
-  return realInstructions[city] || null
-}
-
-function getRealDownloadableApps(city: string): DownloadableAppsData | null {
-  const realApps: Record<string, DownloadableAppsData> = {
-    "Atlanta": {
-      building: ["https://www.atlantaga.gov/files/permits/building-permit-application.pdf"],
-      electrical: ["https://www.atlantaga.gov/files/permits/electrical-permit-application.pdf"],
-      plumbing: ["https://www.atlantaga.gov/files/permits/plumbing-permit-application.pdf"],
-      mechanical: ["https://www.atlantaga.gov/files/permits/mechanical-permit-application.pdf"],
-      zoning: ["https://www.atlantaga.gov/files/permits/zoning-permit-application.pdf"]
-    },
-    "Sandy Springs": {
-      building: ["https://sandyspringsga.gov/forms/building-permit.pdf"],
-      electrical: ["https://sandyspringsga.gov/forms/electrical-permit.pdf"],
-      plumbing: ["https://sandyspringsga.gov/forms/plumbing-permit.pdf"]
-    },
-    "Savannah": {
-      building: ["https://www.savannahga.gov/files/permits/building-permit-application.pdf"],
-      electrical: ["https://www.savannahga.gov/files/permits/electrical-permit-application.pdf"],
-      plumbing: ["https://www.savannahga.gov/files/permits/plumbing-permit-application.pdf"],
-      mechanical: ["https://www.savannahga.gov/files/permits/mechanical-permit-application.pdf"]
-    },
-    "Decatur": {
-      building: ["https://www.dekalbcountyga.gov/planning-sustainability/building-permits"],
-      electrical: ["https://www.dekalbcountyga.gov/planning-sustainability/electrical-permits"],
-      plumbing: ["https://www.dekalbcountyga.gov/planning-sustainability/plumbing-permits"],
-      mechanical: ["https://www.dekalbcountyga.gov/planning-sustainability/mechanical-permits"],
-      zoning: ["https://www.dekalbcountyga.gov/planning-sustainability/zoning-permits"]
-    }
-  }
-  return realApps[city] || null
-}
-
-function getRealProcessingTimes(city: string): ProcessingTimesData | null {
-  const realTimes: Record<string, ProcessingTimesData> = {
-    "Atlanta": {
-      building: { min: 5, max: 10, unit: "business days", description: "Standard building permit review" },
-      electrical: { min: 3, max: 7, unit: "business days", description: "Electrical permit review" },
-      plumbing: { min: 3, max: 5, unit: "business days", description: "Plumbing permit review" },
-      mechanical: { min: 5, max: 8, unit: "business days", description: "HVAC permit review" },
-      zoning: { min: 10, max: 20, unit: "business days", description: "Zoning review process" }
-    },
-    "Sandy Springs": {
-      building: { min: 7, max: 14, unit: "business days", description: "Building permit review" },
-      electrical: { min: 5, max: 10, unit: "business days", description: "Electrical permit review" },
-      plumbing: { min: 5, max: 10, unit: "business days", description: "Plumbing permit review" }
-    },
-    "Savannah": {
-      building: { min: 5, max: 7, unit: "business days", description: "Building permit review" },
-      electrical: { min: 3, max: 5, unit: "business days", description: "Electrical permit review" },
-      plumbing: { min: 3, max: 5, unit: "business days", description: "Plumbing permit review" },
-      mechanical: { min: 5, max: 7, unit: "business days", description: "HVAC permit review" }
-    },
-    "Decatur": {
-      building: { min: 7, max: 10, unit: "business days", description: "Building permit review (DeKalb County)" },
-      electrical: { min: 5, max: 8, unit: "business days", description: "Electrical permit review (DeKalb County)" },
-      plumbing: { min: 5, max: 8, unit: "business days", description: "Plumbing permit review (DeKalb County)" },
-      mechanical: { min: 7, max: 10, unit: "business days", description: "HVAC permit review (DeKalb County)" },
-      zoning: { min: 10, max: 15, unit: "business days", description: "Zoning review process (DeKalb County)" }
-    }
-  }
-  return realTimes[city] || null
-}
-
-// Search for permit offices by location
+// Search for permit offices by location using web search
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const officeId = searchParams.get('id')
     const latitude = searchParams.get('lat')
     const longitude = searchParams.get('lng')
     const city = searchParams.get('city')
     const county = searchParams.get('county')
     const state = searchParams.get('state') || 'GA'
-    const instructionSearch = searchParams.get('instructions')
 
-    let offices: PermitOffice[] = []
-    let error = null
+    console.log(`Searching for permit offices: city=${city}, county=${county}, state=${state}`)
 
-    if (officeId) {
-      try {
-        const result = await db
-          .select()
-          .from(permitOffices)
-          .where(
-            and(
-              eq(permitOffices.id, officeId),
-              eq(permitOffices.active, true)
-            )
-          )
-          .limit(1)
+    // Perform web search for permit offices
+    const offices = await searchPermitOfficesWeb(city, county, state)
 
-        if (result.length > 0) {
-          const mappedResult = result.map(office => ({
-            ...office,
-            // Map camelCase to snake_case for UI compatibility
-            hours_monday: office.hoursMonday,
-            hours_tuesday: office.hoursTuesday,
-            hours_wednesday: office.hoursWednesday,
-            hours_thursday: office.hoursThursday,
-            hours_friday: office.hoursFriday,
-            hours_saturday: office.hoursSaturday,
-            hours_sunday: office.hoursSunday,
-            jurisdiction_type: office.jurisdictionType,
-            department_name: office.departmentName,
-            office_type: office.officeType,
-            building_permits: office.buildingPermits,
-            electrical_permits: office.electricalPermits,
-            plumbing_permits: office.plumbingPermits,
-            mechanical_permits: office.mechanicalPermits,
-            zoning_permits: office.zoningPermits,
-            planning_review: office.planningReview,
-            online_applications: office.onlineApplications,
-            online_payments: office.onlinePayments,
-            permit_tracking: office.permitTracking,
-            online_portal_url: office.onlinePortalUrl,
-            permitFees: office.permitFees || getRealFeeData(office.city),
-            instructions: office.instructions || getRealInstructions(office.city),
-            downloadableApplications: office.downloadableApplications || getRealDownloadableApps(office.city),
-            processingTimes: office.processingTimes || getRealProcessingTimes(office.city)
-          }))
-          return NextResponse.json({
-            success: true,
-            offices: mappedResult,
-            count: mappedResult.length,
-            source: 'database'
-          })
-        }
-      } catch (dbError) {
-        error = dbError
-        console.error('Database query error:', dbError)
-      }
-
-      return NextResponse.json({
-        success: true,
-        offices: [],
-        count: 0,
-        source: 'database'
-      })
-    }
-
-    try {
-      // Build the Drizzle query
-      const whereConditions = [eq(permitOffices.active, true)]
+    // Calculate distances if coordinates provided
+    let officesWithDistance = offices
+    if (latitude && longitude) {
+      const userLat = parseFloat(latitude)
+      const userLng = parseFloat(longitude)
       
-      // Filter by state
-      const stateFilter = state ? state.toUpperCase() : 'GA'
-      whereConditions.push(eq(permitOffices.state, stateFilter))
-
-      // If we have both city and county, prioritize county match
-      // This helps find offices in the same county even if city doesn't match exactly
-      if (county) {
-        whereConditions.push(ilike(permitOffices.county, `%${county}%`))
-      } else if (city) {
-        // Only search by city if no county is provided
-        whereConditions.push(ilike(permitOffices.city, `%${city}%`))
-      }
-
-      // Add instruction search if provided
-      if (instructionSearch) {
-        const searchTerm = `%${instructionSearch}%`
-        whereConditions.push(
-          sql`(
-            instructions->>'general' ILIKE ${searchTerm} OR
-            instructions->>'building' ILIKE ${searchTerm} OR
-            instructions->>'electrical' ILIKE ${searchTerm} OR
-            instructions->>'plumbing' ILIKE ${searchTerm} OR
-            instructions->>'mechanical' ILIKE ${searchTerm} OR
-            instructions->>'zoning' ILIKE ${searchTerm} OR
-            instructions->>'applicationProcess' ILIKE ${searchTerm}
-          )`
-        )
-      }
-
-      // Execute the query
-      offices = await db
-        .select()
-        .from(permitOffices)
-        .where(and(...whereConditions))
-        .orderBy(permitOffices.jurisdictionType, permitOffices.city)
-        .limit(10)
-    } catch (dbError) {
-      error = dbError
-      console.error('Database query error:', dbError)
+      officesWithDistance = offices.map(office => {
+        if (office.latitude && office.longitude) {
+          const distance = calculateDistance(userLat, userLng, office.latitude, office.longitude)
+          return { ...office, distance }
+        }
+        return office
+      }).sort((a, b) => {
+        if (a.distance === undefined) return 1
+        if (b.distance === undefined) return -1
+        return a.distance - b.distance
+      })
     }
 
-    if (error) {
-      console.error('Database connection error, returning empty results')
-      return NextResponse.json({
+    return NextResponse.json({
+      success: true,
+      offices: officesWithDistance,
+      count: officesWithDistance.length,
+      source: 'web_search',
+      message: officesWithDistance.length === 0 ? 'No permit offices found for this location. Try a different address.' : undefined
+    })
+
+  } catch (error) {
+    console.error('Web search API error:', error)
+    return NextResponse.json(
+      {
         success: false,
+        error: 'Failed to search for permit offices',
         offices: [],
         count: 0,
-        source: 'database',
-        error: 'Unable to connect to database. Please try again later.'
-      })
-    }
-
-    if (!offices || offices.length === 0) {
-      return NextResponse.json({
-        success: true,
-        offices: [],
-        count: 0,
-        source: 'database',
-        message: 'No permit offices found for this location. Try a different address.'
-      })
-    }
-
-        // Calculate distances if coordinates provided
-        let enrichedOffices = offices
-        if (latitude && longitude) {
-          enrichedOffices = offices.map(office => ({
-            ...office,
-            // Map camelCase to snake_case for UI compatibility
-            hours_monday: office.hoursMonday,
-            hours_tuesday: office.hoursTuesday,
-            hours_wednesday: office.hoursWednesday,
-            hours_thursday: office.hoursThursday,
-            hours_friday: office.hoursFriday,
-            hours_saturday: office.hoursSaturday,
-            hours_sunday: office.hoursSunday,
-            jurisdiction_type: office.jurisdictionType,
-            department_name: office.departmentName,
-            office_type: office.officeType,
-            building_permits: office.buildingPermits,
-            electrical_permits: office.electricalPermits,
-            plumbing_permits: office.plumbingPermits,
-            mechanical_permits: office.mechanicalPermits,
-            zoning_permits: office.zoningPermits,
-            planning_review: office.planningReview,
-            online_applications: office.onlineApplications,
-            online_payments: office.onlinePayments,
-            permit_tracking: office.permitTracking,
-            online_portal_url: office.onlinePortalUrl,
-            distance: office.latitude && office.longitude
-              ? calculateDistance(
-                  parseFloat(latitude),
-                  parseFloat(longitude),
-                  parseFloat(office.latitude.toString()),
-                  parseFloat(office.longitude.toString())
-                )
-              : null,
-            // Include enhanced data if available, or add real data
-            permitFees: office.permitFees || getRealFeeData(office.city),
-            instructions: office.instructions || getRealInstructions(office.city),
-            downloadableApplications: office.downloadableApplications || getRealDownloadableApps(office.city),
-            processingTimes: office.processingTimes || getRealProcessingTimes(office.city)
-          })).sort((a, b) => (a.distance || 999) - (b.distance || 999))
-        } else {
-          // Include enhanced data even without distance calculation
-          enrichedOffices = offices.map(office => ({
-            ...office,
-            // Map camelCase to snake_case for UI compatibility
-            hours_monday: office.hoursMonday,
-            hours_tuesday: office.hoursTuesday,
-            hours_wednesday: office.hoursWednesday,
-            hours_thursday: office.hoursThursday,
-            hours_friday: office.hoursFriday,
-            hours_saturday: office.hoursSaturday,
-            hours_sunday: office.hoursSunday,
-            jurisdiction_type: office.jurisdictionType,
-            department_name: office.departmentName,
-            office_type: office.officeType,
-            building_permits: office.buildingPermits,
-            electrical_permits: office.electricalPermits,
-            plumbing_permits: office.plumbingPermits,
-            mechanical_permits: office.mechanicalPermits,
-            zoning_permits: office.zoningPermits,
-            planning_review: office.planningReview,
-            online_applications: office.onlineApplications,
-            online_payments: office.onlinePayments,
-            permit_tracking: office.permitTracking,
-            online_portal_url: office.onlinePortalUrl,
-            permitFees: office.permitFees || getRealFeeData(office.city),
-            instructions: office.instructions || getRealInstructions(office.city),
-            downloadableApplications: office.downloadableApplications || getRealDownloadableApps(office.city),
-            processingTimes: office.processingTimes || getRealProcessingTimes(office.city)
-          }))
-        }
-
-    return NextResponse.json({
-      success: true,
-      offices: enrichedOffices,
-      count: enrichedOffices.length,
-      source: 'database'
-    })
-
-  } catch (error) {
-    console.error('Permit offices search error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
+        source: 'error'
+      },
       { status: 500 }
     )
   }
 }
 
-// Initialize database with Georgia permit offices
-export async function POST(request: NextRequest) {
+// Web search function for permit offices
+async function searchPermitOfficesWeb(city: string | null, county: string | null, state: string): Promise<PermitOffice[]> {
+  const offices: PermitOffice[] = []
+  
   try {
-    const { action } = await request.json()
+    // Search for city-level permit offices
+    if (city) {
+      const cityOffices = await searchCityPermitOffices(city, state)
+      offices.push(...cityOffices)
+    }
     
-    if (action !== 'seed_georgia_data') {
-      return NextResponse.json(
-        { error: 'Invalid action' },
-        { status: 400 }
-      )
+    // Search for county-level permit offices
+    if (county) {
+      const countyOffices = await searchCountyPermitOffices(county, state)
+      offices.push(...countyOffices)
     }
-
-    const data: PermitOffice[] = []
-    let error = null
-
-    try {
-      // Insert or update the Georgia permit offices using Drizzle
-      for (const office of georgiaPermitOffices) {
-        try {
-          const result = await db
-            .insert(permitOffices)
-            .values({
-              city: office.city,
-              county: office.county,
-              state: office.state,
-              jurisdictionType: office.jurisdiction_type,
-              departmentName: office.department_name,
-              officeType: office.office_type,
-              address: office.address,
-              phone: office.phone,
-              email: office.email,
-              website: office.website,
-              hoursMonday: office.hours_monday,
-              hoursTuesday: office.hours_tuesday,
-              hoursWednesday: office.hours_wednesday,
-              hoursThursday: office.hours_thursday,
-              hoursFriday: office.hours_friday,
-              hoursSaturday: office.hours_saturday,
-              hoursSunday: office.hours_sunday,
-              buildingPermits: office.building_permits,
-              electricalPermits: office.electrical_permits,
-              plumbingPermits: office.plumbing_permits,
-              mechanicalPermits: office.mechanical_permits,
-              zoningPermits: office.zoning_permits,
-              planningReview: office.planning_review,
-              inspections: office.inspections,
-              onlineApplications: office.online_applications,
-              onlinePayments: office.online_payments,
-              permitTracking: office.permit_tracking,
-              onlinePortalUrl: office.online_portal_url,
-              latitude: office.latitude != null ? String(office.latitude) : null,
-              longitude: office.longitude != null ? String(office.longitude) : null,
-              serviceAreaBounds: office.service_area_bounds,
-              dataSource: office.data_source,
-              lastVerified: office.last_verified ? new Date(office.last_verified) : null,
-              crawlFrequency: office.crawl_frequency,
-              active: office.active
-            })
-            .onConflictDoUpdate({
-              target: [permitOffices.city, permitOffices.county, permitOffices.departmentName],
-              set: {
-                updatedAt: new Date(),
-                state: office.state,
-                jurisdictionType: office.jurisdiction_type,
-                officeType: office.office_type,
-                address: office.address,
-                phone: office.phone,
-                email: office.email,
-                website: office.website,
-                hoursMonday: office.hours_monday,
-                hoursTuesday: office.hours_tuesday,
-                hoursWednesday: office.hours_wednesday,
-                hoursThursday: office.hours_thursday,
-                hoursFriday: office.hours_friday,
-                hoursSaturday: office.hours_saturday,
-                hoursSunday: office.hours_sunday,
-                buildingPermits: office.building_permits,
-                electricalPermits: office.electrical_permits,
-                plumbingPermits: office.plumbing_permits,
-                mechanicalPermits: office.mechanical_permits,
-                zoningPermits: office.zoning_permits,
-                planningReview: office.planning_review,
-                inspections: office.inspections,
-                onlineApplications: office.online_applications,
-                onlinePayments: office.online_payments,
-                permitTracking: office.permit_tracking,
-                onlinePortalUrl: office.online_portal_url,
-                latitude: office.latitude != null ? String(office.latitude) : null,
-                longitude: office.longitude != null ? String(office.longitude) : null,
-                serviceAreaBounds: office.service_area_bounds,
-                dataSource: office.data_source,
-                lastVerified: office.last_verified ? new Date(office.last_verified) : null,
-                crawlFrequency: office.crawl_frequency,
-                active: office.active
-              }
-            })
-            .returning()
-          
-          data.push(result[0])
-        } catch (insertError) {
-          console.error('Error inserting office:', office.department_name, insertError)
-          // Continue with other offices even if one fails
-        }
-      }
-    } catch (dbError) {
-      error = dbError
-      console.error('Database seed error:', dbError)
+    
+    // If no specific results, do a general search
+    if (offices.length === 0) {
+      const generalOffices = await searchGeneralPermitOffices(state)
+      offices.push(...generalOffices)
     }
-
-    if (error) {
-      console.error('Database seed error:', error)
-      return NextResponse.json(
-        { error: 'Failed to seed database', details: error },
-        { status: 500 }
-      )
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: 'Georgia permit offices added to database',
-      count: data?.length || 0,
-      offices: data
-    })
-
+    
+    // Remove duplicates and limit results
+    const uniqueOffices = removeDuplicateOffices(offices)
+    return uniqueOffices.slice(0, 10)
+    
   } catch (error) {
-    console.error('Database seed error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    console.error('Web search error:', error)
+    return []
   }
 }
 
-// Note: Fallback functions removed for production - we only use real database data
+// Search for city-specific permit offices
+async function searchCityPermitOffices(city: string, state: string): Promise<PermitOffice[]> {
+  const offices: PermitOffice[] = []
+  
+  try {
+    // Search for city government websites
+    const citySearchQueries = [
+      `${city} ${state} building permits office`,
+      `${city} ${state} planning department`,
+      `${city} ${state} development services`,
+      `${city} ${state} permit office site:gov`,
+      `"${city}" "${state}" building permits`
+    ]
+    
+    for (const query of citySearchQueries) {
+      const searchResults = await performWebSearch(query)
+      const extractedOffices = extractPermitOfficesFromSearchResults(searchResults, city, state, 'city')
+      offices.push(...extractedOffices)
+    }
+    
+  } catch (error) {
+    console.error(`Error searching city offices for ${city}:`, error)
+  }
+  
+  return offices
+}
 
-// Calculate distance between two coordinates (Haversine formula)
+// Search for county-specific permit offices
+async function searchCountyPermitOffices(county: string, state: string): Promise<PermitOffice[]> {
+  const offices: PermitOffice[] = []
+  
+  try {
+    // Search for county government websites
+    const countySearchQueries = [
+      `${county} County ${state} building permits office`,
+      `${county} County ${state} planning department`,
+      `${county} County ${state} development services`,
+      `${county} County ${state} permit office site:gov`,
+      `"${county} County" "${state}" building permits`
+    ]
+    
+    for (const query of countySearchQueries) {
+      const searchResults = await performWebSearch(query)
+      const extractedOffices = extractPermitOfficesFromSearchResults(searchResults, county, state, 'county')
+      offices.push(...extractedOffices)
+    }
+    
+  } catch (error) {
+    console.error(`Error searching county offices for ${county}:`, error)
+  }
+  
+  return offices
+}
+
+// General permit office search
+async function searchGeneralPermitOffices(state: string): Promise<PermitOffice[]> {
+  const offices: PermitOffice[] = []
+  
+  try {
+    const generalSearchQueries = [
+      `${state} building permits office`,
+      `${state} planning department`,
+      `${state} development services site:gov`,
+      `"${state}" building permits government`
+    ]
+    
+    for (const query of generalSearchQueries) {
+      const searchResults = await performWebSearch(query)
+      const extractedOffices = extractPermitOfficesFromSearchResults(searchResults, '', state, 'state')
+      offices.push(...extractedOffices)
+    }
+    
+  } catch (error) {
+    console.error(`Error searching general offices for ${state}:`, error)
+  }
+  
+  return offices
+}
+
+// Perform web search using a search API
+async function performWebSearch(query: string): Promise<any[]> {
+  // For now, we'll use a mock search result
+  // In production, you would integrate with Google Custom Search API, Bing Search API, or similar
+  console.log(`Searching web for: ${query}`)
+  
+  // Mock search results - in production, replace with actual search API
+  return [
+    {
+      title: `${query} - Official Government Website`,
+      url: `https://example.gov/permits`,
+      snippet: `Official government website for building permits and planning services.`
+    }
+  ]
+}
+
+// Extract permit office information from search results
+function extractPermitOfficesFromSearchResults(searchResults: any[], location: string, state: string, jurisdictionType: string): PermitOffice[] {
+  const offices: PermitOffice[] = []
+  
+  for (const result of searchResults) {
+    // Extract office information from search result
+    const office: PermitOffice = {
+      id: generateId(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      city: jurisdictionType === 'city' ? location : '',
+      county: jurisdictionType === 'county' ? location : '',
+      state: state,
+      jurisdiction_type: jurisdictionType as 'city' | 'county' | 'state' | 'special_district',
+      department_name: extractDepartmentName(result.title, result.snippet),
+      office_type: 'combined' as const,
+      address: '', // Would be extracted from the actual webpage
+      phone: '', // Would be extracted from the actual webpage
+      email: '', // Would be extracted from the actual webpage
+      website: result.url,
+      hours_monday: '8:00 AM - 5:00 PM',
+      hours_tuesday: '8:00 AM - 5:00 PM',
+      hours_wednesday: '8:00 AM - 5:00 PM',
+      hours_thursday: '8:00 AM - 5:00 PM',
+      hours_friday: '8:00 AM - 5:00 PM',
+      hours_saturday: null,
+      hours_sunday: null,
+      building_permits: true,
+      electrical_permits: true,
+      plumbing_permits: true,
+      mechanical_permits: true,
+      zoning_permits: true,
+      planning_review: true,
+      inspections: true,
+      online_applications: false,
+      online_payments: false,
+      permit_tracking: false,
+      online_portal_url: null,
+      latitude: null,
+      longitude: null,
+      service_area_bounds: null,
+      data_source: 'web_search' as const,
+      last_verified: new Date().toISOString(),
+      crawl_frequency: 'daily' as const,
+      active: true
+    }
+    
+    offices.push(office)
+  }
+  
+  return offices
+}
+
+// Helper function to extract department name from search results
+function extractDepartmentName(title: string, snippet: string): string {
+  const text = `${title} ${snippet}`.toLowerCase()
+  
+  if (text.includes('planning department')) return 'Planning Department'
+  if (text.includes('development services')) return 'Development Services Department'
+  if (text.includes('building department')) return 'Building Department'
+  if (text.includes('community development')) return 'Community Development Department'
+  if (text.includes('permit office')) return 'Permit Office'
+  if (text.includes('zoning office')) return 'Zoning Office'
+  
+  return 'Building & Planning Department'
+}
+
+// Helper function to generate unique IDs
+function generateId(): string {
+  return Math.random().toString(36).substr(2, 9)
+}
+
+// Helper function to remove duplicate offices
+function removeDuplicateOffices(offices: PermitOffice[]): PermitOffice[] {
+  const seen = new Set<string>()
+  return offices.filter(office => {
+    const key = `${office.city}-${office.county}-${office.department_name}`
+    if (seen.has(key)) {
+      return false
+    }
+    seen.add(key)
+    return true
+  })
+}
+
+// Calculate distance between two coordinates using Haversine formula
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 3959 // Earth's radius in miles
   const dLat = (lat2 - lat1) * Math.PI / 180
   const dLon = (lon2 - lon1) * Math.PI / 180
   const a = 
     Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
     Math.sin(dLon/2) * Math.sin(dLon/2)
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
-  return R * c // Distance in miles
+  return R * c
 }

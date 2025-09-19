@@ -149,6 +149,106 @@ export const permitOffices = pgTable('permit_offices', {
   active: boolean('active').default(true),
 });
 
+// Team collaboration tables
+export const teams = pgTable('teams', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  name: text('name').notNull(),
+  description: text('description'),
+  ownerId: text('owner_id').notNull(), // Clerk user ID of team owner
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow(),
+}, (table) => ({
+  ownerIdIdx: index('teams_owner_id_idx').on(table.ownerId),
+}));
+
+export const teamMembers = pgTable('team_members', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  teamId: uuid('team_id').notNull().references(() => teams.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull(), // Clerk user ID
+  role: text('role').notNull().default('member'), // 'owner', 'admin', 'member'
+  status: text('status').notNull().default('pending'), // 'pending', 'active', 'inactive'
+  invitedBy: text('invited_by'), // Clerk user ID of who invited this member
+  joinedAt: timestamp('joined_at', { mode: 'date' }),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow(),
+}, (table) => ({
+  // Add unique constraint to prevent duplicate team memberships
+  uniqueTeamUser: unique('unique_team_user').on(table.teamId, table.userId),
+  // Add indexes for better query performance
+  teamIdIdx: index('team_members_team_id_idx').on(table.teamId),
+  userIdIdx: index('team_members_user_id_idx').on(table.userId),
+}));
+
+export const teamInvitations = pgTable('team_invitations', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  teamId: uuid('team_id').notNull().references(() => teams.id, { onDelete: 'cascade' }),
+  email: text('email').notNull(),
+  role: text('role').notNull().default('member'), // 'admin', 'member'
+  invitedBy: text('invited_by').notNull(), // Clerk user ID
+  token: text('token').notNull().unique(), // Unique invitation token
+  status: text('status').notNull().default('pending'), // 'pending', 'accepted', 'expired', 'cancelled'
+  expiresAt: timestamp('expires_at', { mode: 'date' }).notNull(),
+  acceptedAt: timestamp('accepted_at', { mode: 'date' }),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow(),
+}, (table) => ({
+  // Add indexes for better query performance
+  teamIdIdx: index('team_invitations_team_id_idx').on(table.teamId),
+  emailIdx: index('team_invitations_email_idx').on(table.email),
+  tokenIdx: index('team_invitations_token_idx').on(table.token),
+}));
+
+export const sharedSearches = pgTable('shared_searches', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  teamId: uuid('team_id').notNull().references(() => teams.id, { onDelete: 'cascade' }),
+  sharedBy: text('shared_by').notNull(), // Clerk user ID
+  searchQuery: text('search_query').notNull(),
+  searchResults: jsonb('search_results').notNull(), // Store the search results as JSON
+  title: text('title').notNull(),
+  description: text('description'),
+  isPublic: boolean('is_public').default(false), // Whether search is visible to all team members
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow(),
+}, (table) => ({
+  // Add indexes for better query performance
+  teamIdIdx: index('shared_searches_team_id_idx').on(table.teamId),
+  sharedByIdx: index('shared_searches_shared_by_idx').on(table.sharedBy),
+}));
+
+export const sharedFavorites = pgTable('shared_favorites', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  teamId: uuid('team_id').notNull().references(() => teams.id, { onDelete: 'cascade' }),
+  permitOfficeId: uuid('permit_office_id').notNull(),
+  addedBy: text('added_by').notNull(), // Clerk user ID
+  notes: text('notes'),
+  tags: text('tags'), // Comma-separated tags
+  isPublic: boolean('is_public').default(true), // Whether favorite is visible to all team members
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow(),
+}, (table) => ({
+  // Add unique constraint to prevent duplicate shared favorites
+  uniqueTeamOffice: unique('unique_team_office').on(table.teamId, table.permitOfficeId),
+  // Add indexes for better query performance
+  teamIdIdx: index('shared_favorites_team_id_idx').on(table.teamId),
+  addedByIdx: index('shared_favorites_added_by_idx').on(table.addedBy),
+}));
+
+export const teamActivity = pgTable('team_activity', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  teamId: uuid('team_id').notNull().references(() => teams.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull(), // Clerk user ID
+  action: text('action').notNull(), // 'search', 'favorite', 'export', 'invite', 'join', 'leave'
+  description: text('description').notNull(),
+  metadata: jsonb('metadata'), // Additional data about the action
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
+}, (table) => ({
+  // Add indexes for better query performance
+  teamIdIdx: index('team_activity_team_id_idx').on(table.teamId),
+  userIdIdx: index('team_activity_user_id_idx').on(table.userId),
+  createdAtIdx: index('team_activity_created_at_idx').on(table.createdAt),
+}));
+
 // Type exports for TypeScript
 export type UserProfile = typeof userProfiles.$inferSelect;
 export type NewUserProfile = typeof userProfiles.$inferInsert;
@@ -160,3 +260,17 @@ export type UserSubscription = typeof userSubscriptions.$inferSelect;
 export type NewUserSubscription = typeof userSubscriptions.$inferInsert;
 export type PermitOffice = typeof permitOffices.$inferSelect;
 export type NewPermitOffice = typeof permitOffices.$inferInsert;
+
+// Team collaboration types
+export type Team = typeof teams.$inferSelect;
+export type NewTeam = typeof teams.$inferInsert;
+export type TeamMember = typeof teamMembers.$inferSelect;
+export type NewTeamMember = typeof teamMembers.$inferInsert;
+export type TeamInvitation = typeof teamInvitations.$inferSelect;
+export type NewTeamInvitation = typeof teamInvitations.$inferInsert;
+export type SharedSearch = typeof sharedSearches.$inferSelect;
+export type NewSharedSearch = typeof sharedSearches.$inferInsert;
+export type SharedFavorite = typeof sharedFavorites.$inferSelect;
+export type NewSharedFavorite = typeof sharedFavorites.$inferInsert;
+export type TeamActivity = typeof teamActivity.$inferSelect;
+export type NewTeamActivity = typeof teamActivity.$inferInsert;
