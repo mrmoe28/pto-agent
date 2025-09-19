@@ -198,7 +198,8 @@ async function searchPermitOfficesFromDatabase(city: string | null, county: stri
 
     console.log('Database query:', query, 'Params:', params)
     
-    const results = await sql.unsafe(query, params) as PermitOfficeRow[]
+    const rawResults = await sql.unsafe(query);
+    const results = rawResults as unknown as PermitOfficeRow[];
 
     return results.map(row => ({
       id: row.id,
@@ -207,9 +208,9 @@ async function searchPermitOfficesFromDatabase(city: string | null, county: stri
       city: row.city,
       county: row.county,
       state: row.state,
-      jurisdiction_type: row.jurisdiction_type,
+      jurisdiction_type: row.jurisdiction_type as 'city' | 'county' | 'state' | 'special_district',
       department_name: row.department_name,
-      office_type: row.office_type,
+      office_type: row.office_type as 'building' | 'planning' | 'zoning' | 'combined' | 'other',
       address: row.address,
       phone: row.phone,
       email: row.email,
