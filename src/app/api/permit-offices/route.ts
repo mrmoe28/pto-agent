@@ -224,59 +224,134 @@ async function performWebSearch(query: string): Promise<SearchResult[]> {
   console.log(`Searching web for: ${query}`)
   
   try {
-    // Use DuckDuckGo Instant Answer API for real search results
-    const searchUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`
-    
-    const response = await fetch(searchUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; PermitOfficeBot/1.0)'
-      }
-    })
-    
-    if (!response.ok) {
-      throw new Error(`Search API error: ${response.status}`)
-    }
-    
-    const data = await response.json()
-    
-    // Extract relevant results
+    // Try multiple search strategies in order of preference
     const results: SearchResult[] = []
     
-    // Add abstract if available (often contains government info)
-    if (data.Abstract) {
-      results.push({
-        title: data.Heading || query,
-        url: data.AbstractURL || '',
-        snippet: data.Abstract
-      })
+    // Strategy 1: Google Custom Search API (best for government sites)
+    const googleResults = await searchGoogleCustomSearch(query)
+    results.push(...googleResults)
+    
+    // Strategy 2: Bing Search API (good fallback)
+    if (results.length === 0) {
+      const bingResults = await searchBingAPI(query)
+      results.push(...bingResults)
     }
     
-    // Add related topics
-    if (data.RelatedTopics) {
-      for (const topic of data.RelatedTopics.slice(0, 3)) {
-        if (topic.Text && topic.FirstURL) {
-          results.push({
-            title: topic.Text.split(' - ')[0] || topic.Text,
-            url: topic.FirstURL,
-            snippet: topic.Text
-          })
-        }
-      }
-    }
-    
-    // If no results from DuckDuckGo, try a direct government website search
+    // Strategy 3: Direct government website search
     if (results.length === 0) {
       const govResults = await searchGovernmentWebsites(query)
       results.push(...govResults)
+    }
+    
+    // Strategy 4: Known government website patterns
+    if (results.length === 0) {
+      const patternResults = await searchKnownPatterns(query)
+      results.push(...patternResults)
     }
     
     return results.slice(0, 5) // Limit to 5 results
     
   } catch (error) {
     console.error('Web search error:', error)
-    // Fallback to government website search
-    return await searchGovernmentWebsites(query)
+    return []
   }
+}
+
+// Google Custom Search API (best for government websites)
+async function searchGoogleCustomSearch(query: string): Promise<SearchResult[]> {
+  const results: SearchResult[] = []
+  
+  try {
+    const GOOGLE_API_KEY = process.env.GOOGLE_CUSTOM_SEARCH_API_KEY
+    const GOOGLE_SEARCH_ENGINE_ID = process.env.GOOGLE_CUSTOM_SEARCH_ENGINE_ID
+    
+    if (!GOOGLE_API_KEY || !GOOGLE_SEARCH_ENGINE_ID) {
+      console.log('Google Custom Search API not configured, skipping...')
+      return results
+    }
+    
+    // Search for government websites specifically
+    const searchQueries = [
+      `${query} site:gov`,
+      `${query} "building permits" site:gov`,
+      `${query} "planning department" site:gov`,
+      `${query} "development services" site:gov`
+    ]
+    
+    for (const searchQuery of searchQueries) {
+      const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${GOOGLE_SEARCH_ENGINE_ID}&q=${encodeURIComponent(searchQuery)}&num=3`
+      
+      const response = await fetch(searchUrl)
+      
+      if (response.ok) {
+        const data = await response.json()
+        
+        if (data.items) {
+          for (const item of data.items) {
+            results.push({
+              title: item.title,
+              url: item.link,
+              snippet: item.snippet
+            })
+          }
+        }
+      }
+    }
+    
+  } catch (error) {
+    console.error('Google Custom Search error:', error)
+  }
+  
+  return results.slice(0, 3)
+}
+
+// Bing Search API (good fallback)
+async function searchBingAPI(query: string): Promise<SearchResult[]> {
+  const results: SearchResult[] = []
+  
+  try {
+    const BING_API_KEY = process.env.BING_SEARCH_API_KEY
+    
+    if (!BING_API_KEY) {
+      console.log('Bing Search API not configured, skipping...')
+      return results
+    }
+    
+    const searchQueries = [
+      `${query} site:gov`,
+      `${query} "building permits" site:gov`,
+      `${query} "planning department" site:gov`
+    ]
+    
+    for (const searchQuery of searchQueries) {
+      const searchUrl = `https://api.bing.microsoft.com/v7.0/search?q=${encodeURIComponent(searchQuery)}&count=3`
+      
+      const response = await fetch(searchUrl, {
+        headers: {
+          'Ocp-Apim-Subscription-Key': BING_API_KEY
+        }
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        
+        if (data.webPages && data.webPages.value) {
+          for (const item of data.webPages.value) {
+            results.push({
+              title: item.name,
+              url: item.url,
+              snippet: item.snippet
+            })
+          }
+        }
+      }
+    }
+    
+  } catch (error) {
+    console.error('Bing Search API error:', error)
+  }
+  
+  return results.slice(0, 3)
 }
 
 // Search for government websites directly
@@ -317,6 +392,77 @@ async function searchGovernmentWebsites(query: string): Promise<SearchResult[]> 
   }
   
   return results.slice(0, 3) // Limit to 3 results
+}
+
+// Search using DuckDuckGo HTML (more comprehensive)
+async function searchDuckDuckGoHTML(query: string): Promise<SearchResult[]> {
+  const results: SearchResult[] = []
+  
+  try {
+    const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`
+    const response = await fetch(searchUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; PermitOfficeBot/1.0)'
+      }
+    })
+    
+    if (response.ok) {
+      const html = await response.text()
+      const matches = extractGovernmentLinks(html, query)
+      results.push(...matches)
+    }
+  } catch (error) {
+    console.error('DuckDuckGo HTML search error:', error)
+  }
+  
+  return results.slice(0, 3)
+}
+
+// Search using known government website patterns
+async function searchKnownPatterns(query: string): Promise<SearchResult[]> {
+  const results: SearchResult[] = []
+  
+  try {
+    // Extract city and state from query
+    const cityMatch = query.match(/([A-Za-z\s]+),?\s+(GA|Georgia)/i)
+    if (cityMatch) {
+      const city = cityMatch[1].trim()
+      const state = 'GA'
+      
+      // Try common government website patterns
+      const patterns = [
+        `https://www.${city.toLowerCase().replace(/\s+/g, '')}.gov`,
+        `https://www.${city.toLowerCase().replace(/\s+/g, '')}.ga.gov`,
+        `https://${city.toLowerCase().replace(/\s+/g, '')}.gov`,
+        `https://${city.toLowerCase().replace(/\s+/g, '')}.ga.gov`
+      ]
+      
+      for (const pattern of patterns) {
+        try {
+          const response = await fetch(pattern, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (compatible; PermitOfficeBot/1.0)'
+            }
+          })
+          
+          if (response.ok) {
+            results.push({
+              title: `${city} Government Website`,
+              url: pattern,
+              snippet: `Official government website for ${city}, ${state}`
+            })
+            break // Use first working URL
+          }
+        } catch (err) {
+          // Continue to next pattern
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Known patterns search error:', error)
+  }
+  
+  return results
 }
 
 // Extract government links from HTML
