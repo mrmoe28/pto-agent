@@ -2,12 +2,23 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { and, eq } from 'drizzle-orm'
 import { db, userFavorites } from '@/lib/db'
+import { canUserAccessFeature, getUserPlanFromClerk } from '@/lib/subscription-utils'
 
 export async function GET() {
   const { userId } = await auth()
 
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Check if user has Enterprise plan access
+  const userPlan = await getUserPlanFromClerk()
+  const hasAccess = canUserAccessFeature(userPlan, 'canSaveFavorites')
+  if (!hasAccess) {
+    return NextResponse.json({ 
+      error: 'Favorites feature requires Enterprise plan',
+      code: 'UPGRADE_REQUIRED'
+    }, { status: 403 })
   }
 
   try {
@@ -28,6 +39,16 @@ export async function POST(request: NextRequest) {
 
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Check if user has Enterprise plan access
+  const userPlan = await getUserPlanFromClerk()
+  const hasAccess = canUserAccessFeature(userPlan, 'canSaveFavorites')
+  if (!hasAccess) {
+    return NextResponse.json({ 
+      error: 'Favorites feature requires Enterprise plan',
+      code: 'UPGRADE_REQUIRED'
+    }, { status: 403 })
   }
 
   try {

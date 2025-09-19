@@ -152,3 +152,18 @@ export async function resetMonthlyUsage(userId: string): Promise<void> {
   }
 }
 
+// Check if user can access a specific feature
+export function canUserAccessFeature(userPlan: PlanType, feature: keyof PlanLimits): boolean {
+  const limits = PLAN_LIMITS[userPlan];
+  return limits[feature] === true;
+}
+
+// Get remaining searches for a user
+export function getRemainingSearches(userPlan: PlanType, searchesUsed: number): number | null {
+  const limits = PLAN_LIMITS[userPlan];
+  if (limits.searchesLimit === null) {
+    return null; // unlimited
+  }
+  return Math.max(0, limits.searchesLimit - searchesUsed);
+}
+
