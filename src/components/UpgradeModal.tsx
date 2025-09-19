@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Check, Zap, Crown, X } from 'lucide-react';
+import { Check, Zap, Crown } from 'lucide-react';
 
 interface UpgradeModalProps {
   isOpen: boolean;

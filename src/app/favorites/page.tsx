@@ -101,7 +101,7 @@ export default function FavoritesPage() {
   const [offices, setOffices] = useState<Record<string, PermitOffice>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [userPlan, setUserPlan] = useState<PlanType>('free');
+  const [, setUserPlan] = useState<PlanType>('free');
   const [canAccessFavorites, setCanAccessFavorites] = useState(false);
 
   useEffect(() => {

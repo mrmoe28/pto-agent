@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { canUserAccessFeature, getUserPlanFromClerk } from '@/lib/subscription-utils';
-import { db, teams, teamMembers, teamInvitations } from '@/lib/db';
+import { db, teamMembers, teamInvitations } from '@/lib/db';
 import { eq, and } from 'drizzle-orm';
 import { randomBytes } from 'crypto';
 

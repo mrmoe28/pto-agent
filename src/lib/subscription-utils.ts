@@ -1,6 +1,6 @@
 import { currentUser } from '@clerk/nextjs/server';
 import { db } from './db';
-import { userSubscriptions, type UserSubscription } from './db/schema';
+import { userSubscriptions } from './db/schema';
 import { eq } from 'drizzle-orm';
 import { PLAN_LIMITS, type PlanType, type PlanLimits } from './subscription-types';
 
@@ -97,7 +97,7 @@ export async function incrementSearchUsage(userId: string): Promise<{
   usage: { used: number; limit: number | null; remaining: number | null }
 }> {
   try {
-    const { canSearch, plan, usage } = await canUserSearch(userId);
+    const { canSearch, usage } = await canUserSearch(userId);
 
     if (!canSearch) {
       return {

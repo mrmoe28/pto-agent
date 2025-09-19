@@ -120,7 +120,7 @@ export default function Navigation() {
                           {user?.emailAddresses[0]?.emailAddress}
                         </p>
                         <Badge variant="secondary" className="w-fit text-xs">
-                          {user?.publicMetadata?.subscriptionPlan || 'free'}
+                          {String(user?.publicMetadata?.subscriptionPlan || 'free')}
                         </Badge>
                       </div>
                     </DropdownMenuLabel>
