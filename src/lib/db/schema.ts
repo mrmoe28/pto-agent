@@ -47,6 +47,19 @@ export const userFavorites = pgTable('user_favorites', {
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
 });
 
+export const userSubscriptions = pgTable('user_subscriptions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: text('user_id').unique().notNull(), // Clerk user ID (string)
+  plan: text('plan').notNull().default('free'), // 'free', 'pro', 'enterprise'
+  status: text('status').notNull().default('active'), // 'active', 'cancelled', 'expired'
+  currentPeriodStart: timestamp('current_period_start', { mode: 'date' }).defaultNow(),
+  currentPeriodEnd: timestamp('current_period_end', { mode: 'date' }),
+  searchesUsed: integer('searches_used').default(0),
+  searchesLimit: integer('searches_limit').default(1), // 1 for free, 40 for pro, null for enterprise
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow(),
+});
+
 // Existing permit offices table (from your current schema)
 export const permitOffices = pgTable('permit_offices', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -136,5 +149,7 @@ export type UserPermitSearch = typeof userPermitSearches.$inferSelect;
 export type NewUserPermitSearch = typeof userPermitSearches.$inferInsert;
 export type UserFavorite = typeof userFavorites.$inferSelect;
 export type NewUserFavorite = typeof userFavorites.$inferInsert;
+export type UserSubscription = typeof userSubscriptions.$inferSelect;
+export type NewUserSubscription = typeof userSubscriptions.$inferInsert;
 export type PermitOffice = typeof permitOffices.$inferSelect;
 export type NewPermitOffice = typeof permitOffices.$inferInsert;

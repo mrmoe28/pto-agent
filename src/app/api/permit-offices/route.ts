@@ -289,10 +289,25 @@ export async function GET(request: NextRequest) {
       console.error('Database query error:', dbError)
     }
 
-    if (error || !offices || offices.length === 0) {
-      console.log('Using fallback data')
-      // Fallback to static data if database fails or no results
-      return getFallbackGeorgiaOffices(city, county)
+    if (error) {
+      console.error('Database connection error, returning empty results')
+      return NextResponse.json({
+        success: false,
+        offices: [],
+        count: 0,
+        source: 'database',
+        error: 'Unable to connect to database. Please try again later.'
+      })
+    }
+
+    if (!offices || offices.length === 0) {
+      return NextResponse.json({
+        success: true,
+        offices: [],
+        count: 0,
+        source: 'database',
+        message: 'No permit offices found for this location. Try a different address.'
+      })
     }
 
         // Calculate distances if coordinates provided
@@ -474,30 +489,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Fallback to static Georgia data
-function getFallbackGeorgiaOffices(city?: string | null, county?: string | null) {
-  let offices = georgiaPermitOffices
-
-  // If we have both city and county, prioritize county match
-  // This helps find offices in the same county even if city doesn't match exactly
-  if (county) {
-    offices = offices.filter(office => 
-      office.county.toLowerCase().includes(county.toLowerCase())
-    )
-  } else if (city) {
-    // Only search by city if no county is provided
-    offices = offices.filter(office => 
-      office.city.toLowerCase().includes(city.toLowerCase())
-    )
-  }
-
-  return NextResponse.json({
-    success: true,
-    offices: offices,
-    count: offices.length,
-    source: 'fallback'
-  })
-}
+// Note: Fallback functions removed for production - we only use real database data
 
 // Calculate distance between two coordinates (Haversine formula)
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
