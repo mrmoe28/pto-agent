@@ -1,4 +1,5 @@
 // Enhanced government website patterns and specialized scrapers for different types of permit offices
+import * as cheerio from 'cheerio';
 
 export interface GovernmentPattern {
   type: 'city' | 'county' | 'state' | 'special_district'
@@ -187,29 +188,22 @@ export class GovernmentPatternMatcher {
   }
 
   // Extract specialized information based on government type
-  extractSpecializedInfo(pattern: GovernmentPattern, $: any, url: string): any {
-    const specializedInfo: any = {
+  extractSpecializedInfo(pattern: GovernmentPattern, $: cheerio.CheerioAPI, url: string): Record<string, unknown> {
+    const specializedInfo = {
       governmentType: pattern.type,
-      extractedData: {}
+      extractedData: {
+        contacts: this.extractContactsByPattern(pattern, $),
+        forms: this.extractFormsByPattern(pattern, $, url),
+        hours: this.extractHoursByPattern(pattern, $),
+        services: this.extractServicesByType(pattern.type, $)
+      }
     }
-
-    // Extract contact information using pattern-specific selectors
-    specializedInfo.extractedData.contacts = this.extractContactsByPattern(pattern, $)
-
-    // Extract forms using pattern-specific selectors
-    specializedInfo.extractedData.forms = this.extractFormsByPattern(pattern, $, url)
-
-    // Extract hours using pattern-specific selectors
-    specializedInfo.extractedData.hours = this.extractHoursByPattern(pattern, $)
-
-    // Extract services based on government type
-    specializedInfo.extractedData.services = this.extractServicesByType(pattern.type, $)
 
     return specializedInfo
   }
 
-  private extractContactsByPattern(pattern: GovernmentPattern, $: any): any {
-    const contacts: any = {}
+  private extractContactsByPattern(pattern: GovernmentPattern, $: cheerio.CheerioAPI): Record<string, string> {
+    const contacts: Record<string, string> = {}
 
     for (const selector of pattern.contactSelectors) {
       try {
@@ -237,8 +231,8 @@ export class GovernmentPatternMatcher {
     return contacts
   }
 
-  private extractFormsByPattern(pattern: GovernmentPattern, $: any, baseUrl: string): any[] {
-    const forms: any[] = []
+  private extractFormsByPattern(pattern: GovernmentPattern, $: cheerio.CheerioAPI, baseUrl: string): Array<Record<string, string>> {
+    const forms: Array<Record<string, string>> = []
 
     for (const selector of pattern.formSelectors) {
       try {
@@ -265,8 +259,8 @@ export class GovernmentPatternMatcher {
     return forms
   }
 
-  private extractHoursByPattern(pattern: GovernmentPattern, $: any): any {
-    const hours: any = {}
+  private extractHoursByPattern(pattern: GovernmentPattern, $: cheerio.CheerioAPI): Record<string, string> {
+    const hours: Record<string, string> = {}
 
     for (const selector of pattern.hoursSelectors) {
       try {
@@ -284,7 +278,7 @@ export class GovernmentPatternMatcher {
     return hours
   }
 
-  private extractServicesByType(type: string, $: any): string[] {
+  private extractServicesByType(type: string, $: cheerio.CheerioAPI): string[] {
     const services: string[] = []
     const bodyText = $('body').text().toLowerCase()
 
@@ -355,8 +349,8 @@ export class GovernmentPatternMatcher {
     return 'other'
   }
 
-  private parseBusinessHours(text: string): any {
-    const hours: any = {}
+  private parseBusinessHours(text: string): Record<string, string> {
+    const hours: Record<string, string> = {}
     const lines = text.split('\n')
 
     const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']

@@ -240,6 +240,8 @@ export class EnhancedWebScraper {
         processInfo: this.extractProcessInfo($),
         additionalInfo: this.extractAdditionalInfo($),
         metadata: {
+          lastScraped: new Date().toISOString(),
+          dataCompleteness: 0,
           scrapingMethod: 'static',
           sourceReliability: 'medium',
           validationStatus: 'unverified'
@@ -248,7 +250,7 @@ export class EnhancedWebScraper {
 
     } catch (error) {
       console.error('Static scraping failed:', error);
-      return { metadata: { scrapingMethod: 'static', sourceReliability: 'low', validationStatus: 'unverified' } };
+      return { metadata: { lastScraped: new Date().toISOString(), dataCompleteness: 0, scrapingMethod: 'static', sourceReliability: 'low', validationStatus: 'unverified' } };
     }
   }
 
@@ -261,7 +263,9 @@ export class EnhancedWebScraper {
       });
 
       const page = await browser.newPage();
-      await page.setUserAgent('Mozilla/5.0 (compatible; PermitOfficeBot/2.0; +https://permitoffices.com/bot)');
+      await page.setExtraHTTPHeaders({
+        'User-Agent': 'Mozilla/5.0 (compatible; PermitOfficeBot/2.0; +https://permitoffices.com/bot)'
+      });
 
       // Navigate and wait for content
       await page.goto(websiteUrl, {
@@ -274,7 +278,7 @@ export class EnhancedWebScraper {
 
       // Extract comprehensive information
       const dynamicData = await page.evaluate(() => {
-        const data: any = {};
+        const data: Record<string, unknown> = {};
 
         // Extract all text content
         data.fullText = document.body.innerText;
@@ -306,10 +310,10 @@ export class EnhancedWebScraper {
           action: form.action,
           method: form.method,
           inputs: Array.from(form.querySelectorAll('input, select, textarea')).map(input => ({
-            name: input.name,
-            type: input.type,
-            value: input.value,
-            placeholder: input.placeholder
+            name: (input as HTMLInputElement).name,
+            type: (input as HTMLInputElement).type,
+            value: (input as HTMLInputElement).value,
+            placeholder: (input as HTMLInputElement).placeholder
           }))
         }));
 
@@ -329,7 +333,7 @@ export class EnhancedWebScraper {
 
     } catch (error) {
       console.error('Dynamic scraping failed:', error);
-      return { metadata: { scrapingMethod: 'dynamic', sourceReliability: 'low', validationStatus: 'unverified' } };
+      return { metadata: { lastScraped: new Date().toISOString(), dataCompleteness: 0, scrapingMethod: 'dynamic', sourceReliability: 'low', validationStatus: 'unverified' } };
     } finally {
       if (browser) {
         await browser.close();
@@ -337,25 +341,27 @@ export class EnhancedWebScraper {
     }
   }
 
-  private processDynamicData(data: any, websiteUrl: string): Partial<DetailedOfficeInfo> {
-    const fullText = data.fullText?.toLowerCase() || '';
+  private processDynamicData(data: Record<string, unknown>, websiteUrl: string): Partial<DetailedOfficeInfo> {
+    const fullText = (data.fullText as string)?.toLowerCase() || '';
 
     return {
       website: websiteUrl,
-      officeName: this.extractOfficeNameFromText(data.fullText),
-      phone: this.extractPatternsFromText(data.fullText, this.PATTERNS.phone)[0] || '',
-      email: this.extractPatternsFromText(data.fullText, this.PATTERNS.email)[0] || '',
-      address: this.extractPatternsFromText(data.fullText, this.PATTERNS.address)[0] || '',
-      businessHours: this.extractHoursFromText(data.fullText),
+      officeName: this.extractOfficeNameFromText(data.fullText as string),
+      phone: this.extractPatternsFromText(data.fullText as string, this.PATTERNS.phone)[0] || '',
+      email: this.extractPatternsFromText(data.fullText as string, this.PATTERNS.email)[0] || '',
+      address: this.extractPatternsFromText(data.fullText as string, this.PATTERNS.address)[0] || '',
+      businessHours: this.extractHoursFromText(data.fullText as string),
       services: this.extractServicesFromText(fullText),
       onlineServices: this.extractOnlineServicesFromText(fullText),
-      portals: this.extractPortalsFromLinks(data.links),
-      forms: this.extractFormsFromLinks(data.links, websiteUrl),
-      feeStructure: this.extractFeesFromText(data.fullText),
-      processInfo: this.extractProcessInfoFromText(data.fullText),
-      staffContacts: this.extractStaffFromText(data.fullText),
-      additionalInfo: this.extractAdditionalInfoFromText(data.fullText),
+      portals: this.extractPortalsFromLinks(data.links as Array<{ href?: string; text?: string; title?: string }>),
+      forms: this.extractFormsFromLinks(data.links as Array<{ href?: string; text?: string; title?: string }>, websiteUrl),
+      feeStructure: this.extractFeesFromText(data.fullText as string),
+      processInfo: this.extractProcessInfoFromText(data.fullText as string),
+      staffContacts: this.extractStaffFromText(data.fullText as string),
+      additionalInfo: this.extractAdditionalInfoFromText(data.fullText as string),
       metadata: {
+        lastScraped: new Date().toISOString(),
+        dataCompleteness: 0,
         scrapingMethod: 'dynamic',
         sourceReliability: 'high',
         validationStatus: 'unverified'
@@ -366,7 +372,7 @@ export class EnhancedWebScraper {
   private async scrapeRelatedGovernmentPages(baseUrl: string): Promise<Partial<DetailedOfficeInfo>> {
     const relatedInfo: Partial<DetailedOfficeInfo> = {
       forms: { building: [], electrical: [], plumbing: [], mechanical: [], zoning: [], planning: [], other: [] },
-      metadata: { scrapingMethod: 'static', sourceReliability: 'medium', validationStatus: 'unverified' }
+      metadata: { lastScraped: new Date().toISOString(), dataCompleteness: 0, scrapingMethod: 'static', sourceReliability: 'medium', validationStatus: 'unverified' }
     };
 
     try {
@@ -643,7 +649,7 @@ export class EnhancedWebScraper {
     return onlineServices;
   }
 
-  private extractPortalsFromLinks(links: any[]): DetailedOfficeInfo['portals'] {
+  private extractPortalsFromLinks(links: Array<{ href?: string; text?: string; title?: string }>): DetailedOfficeInfo['portals'] {
     const portals: DetailedOfficeInfo['portals'] = {};
 
     for (const link of links) {
@@ -666,7 +672,7 @@ export class EnhancedWebScraper {
     return portals;
   }
 
-  private extractFormsFromLinks(links: any[], baseUrl: string): DetailedOfficeInfo['forms'] {
+  private extractFormsFromLinks(links: Array<{ href?: string; text?: string; title?: string }>, baseUrl: string): DetailedOfficeInfo['forms'] {
     const forms: DetailedOfficeInfo['forms'] = {
       building: [],
       electrical: [],
@@ -845,42 +851,73 @@ export class EnhancedWebScraper {
     }
   }
 
-  private mergeOfficeInfo(static: Partial<DetailedOfficeInfo>, dynamic: Partial<DetailedOfficeInfo>, related?: Partial<DetailedOfficeInfo>): DetailedOfficeInfo {
+  private mergeOfficeInfo(staticInfo: Partial<DetailedOfficeInfo>, dynamic: Partial<DetailedOfficeInfo>, related?: Partial<DetailedOfficeInfo>): DetailedOfficeInfo {
     // Merge the two data sources, preferring more complete data
     const merged: DetailedOfficeInfo = {
-      officeName: dynamic.officeName || static.officeName || '',
-      department: dynamic.department || static.department || '',
+      officeName: dynamic.officeName || staticInfo.officeName || '',
+      department: dynamic.department || staticInfo.department || '',
       jurisdiction: 'city', // This should be determined by the search context
-      address: dynamic.address || static.address || related?.address || '',
-      phone: dynamic.phone || static.phone || related?.phone || '',
-      email: dynamic.email || static.email || related?.email || '',
-      website: static.website || dynamic.website || '',
+      address: dynamic.address || staticInfo.address || related?.address || '',
+      phone: dynamic.phone || staticInfo.phone || related?.phone || '',
+      email: dynamic.email || staticInfo.email || related?.email || '',
+      website: staticInfo.website || dynamic.website || '',
       city: '', // This should be set from search context
       county: '', // This should be set from search context
       state: 'GA', // Default to GA for now
-      businessHours: { ...static.businessHours, ...dynamic.businessHours, ...related?.businessHours },
-      services: { ...static.services, ...dynamic.services },
-      onlineServices: { ...static.onlineServices, ...dynamic.onlineServices },
-      portals: { ...static.portals, ...dynamic.portals },
-      feeStructure: { ...static.feeStructure, ...dynamic.feeStructure },
-      staffContacts: { ...static.staffContacts, ...dynamic.staffContacts },
-      forms: {
-        building: [...(static.forms?.building || []), ...(dynamic.forms?.building || []), ...(related?.forms?.building || [])],
-        electrical: [...(static.forms?.electrical || []), ...(dynamic.forms?.electrical || []), ...(related?.forms?.electrical || [])],
-        plumbing: [...(static.forms?.plumbing || []), ...(dynamic.forms?.plumbing || []), ...(related?.forms?.plumbing || [])],
-        mechanical: [...(static.forms?.mechanical || []), ...(dynamic.forms?.mechanical || []), ...(related?.forms?.mechanical || [])],
-        zoning: [...(static.forms?.zoning || []), ...(dynamic.forms?.zoning || []), ...(related?.forms?.zoning || [])],
-        planning: [...(static.forms?.planning || []), ...(dynamic.forms?.planning || []), ...(related?.forms?.planning || [])],
-        other: [...(static.forms?.other || []), ...(dynamic.forms?.other || []), ...(related?.forms?.other || [])]
+      businessHours: { ...staticInfo.businessHours, ...dynamic.businessHours, ...related?.businessHours },
+      services: {
+        buildingPermits: false,
+        electricalPermits: false,
+        plumbingPermits: false,
+        mechanicalPermits: false,
+        zoningPermits: false,
+        planningReview: false,
+        inspections: false,
+        siteInspections: false,
+        landDevelopment: false,
+        subdivisionReview: false,
+        varianceApplications: false,
+        specialEventPermits: false,
+        signPermits: false,
+        demolitionPermits: false,
+        fireDepartmentReview: false,
+        healthDepartmentReview: false,
+        environmentalReview: false,
+        ...staticInfo.services,
+        ...dynamic.services
       },
-      processInfo: { ...static.processInfo, ...dynamic.processInfo },
-      additionalInfo: { ...static.additionalInfo, ...dynamic.additionalInfo },
+      onlineServices: {
+        onlineApplications: false,
+        onlinePayments: false,
+        permitTracking: false,
+        schedulingInspections: false,
+        documentSubmission: false,
+        statusUpdates: false,
+        renewals: false,
+        appeals: false,
+        ...staticInfo.onlineServices,
+        ...dynamic.onlineServices
+      },
+      portals: { ...staticInfo.portals, ...dynamic.portals },
+      feeStructure: { ...staticInfo.feeStructure, ...dynamic.feeStructure },
+      staffContacts: { ...staticInfo.staffContacts, ...dynamic.staffContacts },
+      forms: {
+        building: [...(staticInfo.forms?.building || []), ...(dynamic.forms?.building || []), ...(related?.forms?.building || [])],
+        electrical: [...(staticInfo.forms?.electrical || []), ...(dynamic.forms?.electrical || []), ...(related?.forms?.electrical || [])],
+        plumbing: [...(staticInfo.forms?.plumbing || []), ...(dynamic.forms?.plumbing || []), ...(related?.forms?.plumbing || [])],
+        mechanical: [...(staticInfo.forms?.mechanical || []), ...(dynamic.forms?.mechanical || []), ...(related?.forms?.mechanical || [])],
+        zoning: [...(staticInfo.forms?.zoning || []), ...(dynamic.forms?.zoning || []), ...(related?.forms?.zoning || [])],
+        planning: [...(staticInfo.forms?.planning || []), ...(dynamic.forms?.planning || []), ...(related?.forms?.planning || [])],
+        other: [...(staticInfo.forms?.other || []), ...(dynamic.forms?.other || []), ...(related?.forms?.other || [])]
+      },
+      processInfo: { ...staticInfo.processInfo, ...dynamic.processInfo },
+      additionalInfo: { ...staticInfo.additionalInfo, ...dynamic.additionalInfo },
       metadata: {
         lastScraped: new Date().toISOString(),
         dataCompleteness: 0, // Will be calculated
-        sourceReliability: dynamic.metadata?.sourceReliability || static.metadata?.sourceReliability || 'medium',
+        sourceReliability: dynamic.metadata?.sourceReliability || staticInfo.metadata?.sourceReliability || 'medium',
         validationStatus: 'unverified',
-        scrapingMethod: dynamic.metadata?.scrapingMethod || static.metadata?.scrapingMethod || 'static'
+        scrapingMethod: dynamic.metadata?.scrapingMethod || staticInfo.metadata?.scrapingMethod || 'static'
       }
     };
 
