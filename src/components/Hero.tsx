@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import GooglePlacesAutocomplete from './GooglePlacesAutocomplete'
-import EnhancedPermitOfficeTable from './EnhancedPermitOfficeTable'
+import SimplePermitOfficeDisplay from './SimplePermitOfficeDisplay'
 import { extractAddressComponents, getCoordinates } from '@/lib/google-apis'
 
 interface PermitFeeDetail {
@@ -256,7 +256,7 @@ export default function Hero() {
             <h2 className="text-2xl font-bold text-gray-900 mb-6">
               Found {results.length} Permit Office{results.length !== 1 ? 's' : ''}
             </h2>
-            <EnhancedPermitOfficeTable offices={results} />
+            <SimplePermitOfficeDisplay offices={results} />
           </div>
         )}
 
