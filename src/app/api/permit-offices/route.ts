@@ -118,21 +118,25 @@ export async function GET(request: NextRequest) {
     console.log(`Searching for permit offices: city=${city}, county=${county}, state=${normalizedState}`)
 
     // First, try to get offices from database
+    let source: 'database' | 'fallback' | 'web_search' = 'web_search'
     let offices = await searchPermitOfficesFromDatabase(city, county, normalizedState)
     
-    // If no results from database, perform web search
-    if (offices.length === 0) {
-      console.log('No database results found, performing web search...')
-      offices = await searchPermitOfficesWeb(city, county, normalizedState)
-    } else {
+    if (offices.length > 0) {
       console.log(`Found ${offices.length} offices from database`)
-    }
-
-    if (offices.length === 0) {
+      source = 'database'
+    } else {
       const fallbackOffices = getFallbackOffices(city, county, normalizedState)
       if (fallbackOffices.length > 0) {
         console.log(`Using fallback dataset with ${fallbackOffices.length} offices`)
         offices = fallbackOffices
+        source = 'fallback'
+      } else if (shouldUseWebSearch()) {
+        console.log('No database or fallback results found, performing web search...')
+        offices = await searchPermitOfficesWeb(city, county, normalizedState)
+        source = 'web_search'
+      } else {
+        console.log('Web search disabled and no fallback available; returning empty results')
+        offices = []
       }
     }
 
@@ -159,7 +163,7 @@ export async function GET(request: NextRequest) {
       success: true,
       offices: officesWithDistance,
       count: officesWithDistance.length,
-      source: 'web_search',
+      source,
       message: officesWithDistance.length === 0 ? 'No permit offices found for this location. Try a different address.' : undefined
     })
 
@@ -995,6 +999,18 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
     Math.sin(dLon/2) * Math.sin(dLon/2)
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
   return R * c
+}
+
+function shouldUseWebSearch(): boolean {
+  const allowEnv = process.env.ENABLE_WEB_SEARCH
+  if (allowEnv === 'false') {
+    return false
+  }
+
+  const hasGoogleKeys = Boolean(process.env.GOOGLE_CUSTOM_SEARCH_API_KEY && process.env.GOOGLE_CUSTOM_SEARCH_ENGINE_ID)
+  const hasBingKey = Boolean(process.env.BING_SEARCH_API_KEY)
+
+  return hasGoogleKeys || hasBingKey
 }
 
 function convertStateNameToAbbreviation(state: string): string {
