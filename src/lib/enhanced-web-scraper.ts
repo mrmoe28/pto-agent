@@ -1,5 +1,4 @@
 import * as cheerio from 'cheerio';
-import { chromium } from 'playwright';
 import { GovernmentPatternMatcher, COMMON_GOV_PATHS } from './government-patterns';
 
 export interface DetailedOfficeInfo {
@@ -135,6 +134,9 @@ export class EnhancedWebScraper {
   private readonly MAX_RETRIES = 3;
   private readonly TIMEOUT = 30000;
   private readonly patternMatcher = new GovernmentPatternMatcher();
+  private playwrightChromium: PlaywrightChromium | null = null;
+  private warnedAboutChromium = false;
+  private dynamicDisabledLogged = false;
 
   // Enhanced patterns for data extraction
   private readonly PATTERNS = {
@@ -178,15 +180,28 @@ export class EnhancedWebScraper {
     appeals: ['appeal', 'appeal process', 'hearing', 'board of appeals']
   };
 
-  async scrapeDetailedOfficeInfo(websiteUrl: string): Promise<DetailedOfficeInfo | null> {
+  async scrapeDetailedOfficeInfo(
+    websiteUrl: string,
+    options?: { allowDynamic?: boolean }
+  ): Promise<DetailedOfficeInfo | null> {
     try {
       console.log(`Enhanced scraping started for: ${websiteUrl}`);
 
       // Try static scraping first
       const staticInfo = await this.scrapeStaticContent(websiteUrl);
 
-      // Then enhance with dynamic scraping
-      const dynamicInfo = await this.scrapeDynamicContent(websiteUrl);
+      // Determine whether dynamic scraping should run
+      const shouldRunDynamic = options?.allowDynamic ?? process.env.ENABLE_DYNAMIC_SCRAPER === 'true';
+
+      let dynamicInfo: Partial<DetailedOfficeInfo> = {};
+      if (shouldRunDynamic) {
+        dynamicInfo = await this.scrapeDynamicContent(websiteUrl);
+      } else {
+        if (!this.dynamicDisabledLogged) {
+          console.log('Dynamic scraping disabled via configuration. Skipping Playwright run.');
+          this.dynamicDisabledLogged = true;
+        }
+      }
 
       // Crawl related government pages for more comprehensive data
       const relatedPagesInfo = await this.scrapeRelatedGovernmentPages(websiteUrl);
@@ -257,6 +272,11 @@ export class EnhancedWebScraper {
   private async scrapeDynamicContent(websiteUrl: string): Promise<Partial<DetailedOfficeInfo>> {
     let browser;
     try {
+      const chromium = await this.getChromium();
+      if (!chromium) {
+        return {};
+      }
+
       browser = await chromium.launch({
         headless: true,
         timeout: this.TIMEOUT
@@ -333,11 +353,29 @@ export class EnhancedWebScraper {
 
     } catch (error) {
       console.error('Dynamic scraping failed:', error);
-      return { metadata: { lastScraped: new Date().toISOString(), dataCompleteness: 0, scrapingMethod: 'dynamic', sourceReliability: 'low', validationStatus: 'unverified' } };
+      return {};
     } finally {
       if (browser) {
         await browser.close();
       }
+    }
+  }
+
+  private async getChromium(): Promise<PlaywrightChromium | null> {
+    if (this.playwrightChromium) {
+      return this.playwrightChromium;
+    }
+
+    try {
+      const playwright = await import('playwright');
+      this.playwrightChromium = playwright.chromium;
+      return this.playwrightChromium;
+    } catch (error) {
+      if (!this.warnedAboutChromium) {
+        console.warn('Playwright not available; skipping dynamic scraping.', error);
+        this.warnedAboutChromium = true;
+      }
+      return null;
     }
   }
 
