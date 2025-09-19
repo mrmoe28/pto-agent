@@ -304,7 +304,20 @@ async function searchGoogleCustomSearch(query: string): Promise<SearchResult[]> 
         })
 
         if (response.ok) {
-          const data = await response.json()
+          const responseText = await response.text()
+          if (!responseText.trim()) {
+            console.log(`Empty response for query: ${searchQuery}`)
+            continue
+          }
+          
+          let data
+          try {
+            data = JSON.parse(responseText)
+          } catch (parseError) {
+            console.error(`JSON parse error for query "${searchQuery}":`, parseError)
+            console.error('Response text:', responseText.substring(0, 200))
+            continue
+          }
 
           if (data.items) {
             // Process each search result with enhanced data extraction
@@ -384,7 +397,20 @@ async function searchBingAPI(query: string): Promise<SearchResult[]> {
       })
       
       if (response.ok) {
-        const data = await response.json()
+        const responseText = await response.text()
+        if (!responseText.trim()) {
+          console.log(`Empty response for Bing query: ${searchQuery}`)
+          continue
+        }
+        
+        let data
+        try {
+          data = JSON.parse(responseText)
+        } catch (parseError) {
+          console.error(`Bing JSON parse error for query "${searchQuery}":`, parseError)
+          console.error('Response text:', responseText.substring(0, 200))
+          continue
+        }
         
         if (data.webPages && data.webPages.value) {
           for (const item of data.webPages.value) {
