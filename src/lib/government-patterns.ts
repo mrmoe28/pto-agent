@@ -236,7 +236,7 @@ export class GovernmentPatternMatcher {
 
     for (const selector of pattern.formSelectors) {
       try {
-        $(selector).each((index: number, element: any) => {
+        $(selector).each((index: number, element) => {
           const href = $(element).attr('href')
           const text = $(element).text().trim()
 
