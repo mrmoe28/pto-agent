@@ -4,59 +4,63 @@ import { chromium } from 'playwright';
 interface PermitForm {
   name: string;
   url: string;
-  type: 'building' | 'electrical' | 'plumbing' | 'mechanical' | 'zoning' | 'general';
+  type: 'building' | 'electrical' | 'plumbing';
   description?: string;
   fileType?: string;
+}
+
+interface BusinessHours {
+  monday?: string;
+  tuesday?: string;
+  wednesday?: string;
+  thursday?: string;
+  friday?: string;
+  saturday?: string;
+  sunday?: string;
 }
 
 interface ScrapedForms {
   building: PermitForm[];
   electrical: PermitForm[];
   plumbing: PermitForm[];
-  mechanical: PermitForm[];
-  zoning: PermitForm[];
-  general: PermitForm[];
+  businessHours?: BusinessHours;
 }
 
-// Common permit form keywords to search for
+// Common permit form keywords to search for (only electrical, building, and plumbing)
 const FORM_KEYWORDS = {
   building: [
     'building permit', 'construction permit', 'residential permit',
-    'commercial permit', 'building application', 'construction application'
+    'commercial permit', 'building application', 'construction application',
+    'new construction', 'renovation permit', 'remodel permit'
   ],
   electrical: [
     'electrical permit', 'electrical application', 'electrical work',
-    'wiring permit', 'electrical inspection'
+    'wiring permit', 'electrical inspection', 'electrical installation',
+    'electrical service', 'electrical upgrade'
   ],
   plumbing: [
     'plumbing permit', 'plumbing application', 'water heater',
-    'sewer permit', 'plumbing inspection'
-  ],
-  mechanical: [
-    'mechanical permit', 'hvac permit', 'heating permit',
-    'cooling permit', 'mechanical application', 'hvac application'
-  ],
-  zoning: [
-    'zoning permit', 'zoning application', 'land use',
-    'zoning variance', 'special use permit', 'rezoning'
-  ],
-  general: [
-    'permit application', 'general application', 'permit form',
-    'application form', 'permit request'
+    'sewer permit', 'plumbing inspection', 'plumbing installation',
+    'water line', 'sewer line', 'plumbing repair'
   ]
 };
 
 // File extensions that indicate downloadable forms
 const FORM_EXTENSIONS = ['.pdf', '.doc', '.docx', '.xlsx', '.xls'];
 
+// Keywords that indicate business hours information (used in dynamic scraping)
+const HOURS_KEYWORDS = [
+  'hours', 'office hours', 'business hours', 'operating hours', 'open hours',
+  'hours of operation', 'office schedule', 'business schedule', 'open',
+  'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
+  'weekday', 'weekend', 'schedule', 'availability', 'contact hours'
+];
+
 export async function scrapePermitForms(websiteUrl: string): Promise<ScrapedForms> {
   const forms: ScrapedForms = {
     building: [],
     electrical: [],
-    plumbing: [],
-    mechanical: [],
-    zoning: [],
-    general: []
+    plumbing: []
   };
 
   try {
@@ -108,10 +112,7 @@ async function scrapeDynamicContent(websiteUrl: string): Promise<ScrapedForms> {
   const forms: ScrapedForms = {
     building: [],
     electrical: [],
-    plumbing: [],
-    mechanical: [],
-    zoning: [],
-    general: []
+    plumbing: []
   };
 
   try {
@@ -146,6 +147,53 @@ async function scrapeDynamicContent(websiteUrl: string): Promise<ScrapedForms> {
       }
     }
 
+    // Extract business hours from the page content
+    try {
+      const businessHours = await page.evaluate(() => {
+        const text = document.body.innerText.toLowerCase();
+        const lines = text.split('\n');
+        const hoursData: Record<string, string> = {};
+
+        // Look for common business hours patterns
+        const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        const dayAbbrevs = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
+        for (const line of lines) {
+          // Skip lines that are too long (probably not hours)
+          if (line.length > 200) continue;
+
+          // Look for lines that contain day names and time patterns
+          const hasDay = days.some(day => line.includes(day)) || dayAbbrevs.some(abbrev => line.includes(abbrev));
+          const hasTime = /\d{1,2}:\d{2}|\d{1,2}\s*(am|pm)/i.test(line);
+          const hasHoursKeyword = HOURS_KEYWORDS.some(keyword => line.includes(keyword));
+
+          if ((hasDay && hasTime) || (hasHoursKeyword && hasTime)) {
+            // Try to extract day-specific hours
+            for (let i = 0; i < days.length; i++) {
+              const day = days[i];
+              const abbrev = dayAbbrevs[i];
+
+              if (line.includes(day) || line.includes(abbrev)) {
+                // Extract time from the line
+                const timeMatch = line.match(/(\d{1,2}:\d{2}\s*(?:am|pm)?(?:\s*-\s*\d{1,2}:\d{2}\s*(?:am|pm)?)?)/i);
+                if (timeMatch) {
+                  hoursData[day] = timeMatch[1].trim();
+                }
+              }
+            }
+          }
+        }
+
+        return hoursData;
+      });
+
+      if (Object.keys(businessHours).length > 0) {
+        forms.businessHours = businessHours;
+      }
+    } catch (hoursError) {
+      console.error('Error extracting business hours:', hoursError);
+    }
+
     await browser.close();
   } catch (dynamicError) {
     console.error('Error with dynamic scraping:', dynamicError);
@@ -158,10 +206,7 @@ async function scrapeCommonPermitPages(baseUrl: string): Promise<ScrapedForms> {
   const forms: ScrapedForms = {
     building: [],
     electrical: [],
-    plumbing: [],
-    mechanical: [],
-    zoning: [],
-    general: []
+    plumbing: []
   };
 
   // Common permit page paths
@@ -238,20 +283,24 @@ function isLikelyFormLink(href: string, text: string, title: string): boolean {
   return hasFormExtension && hasFormKeyword;
 }
 
-function determineFormType(text: string, title: string, href: string): 'building' | 'electrical' | 'plumbing' | 'mechanical' | 'zoning' | 'general' {
+function determineFormType(text: string, title: string, href: string): 'building' | 'electrical' | 'plumbing' {
   const combinedText = `${text} ${title} ${href}`.toLowerCase();
 
-  // Check each category's keywords
-  for (const [type, keywords] of Object.entries(FORM_KEYWORDS)) {
-    for (const keyword of keywords) {
-      if (combinedText.includes(keyword)) {
-        return type as keyof ScrapedForms;
-      }
-    }
+  // Check each category's keywords (prioritize electrical and plumbing first for specificity)
+  if (FORM_KEYWORDS.electrical.some(keyword => combinedText.includes(keyword))) {
+    return 'electrical';
   }
 
-  // Default to general if no specific type is found
-  return 'general';
+  if (FORM_KEYWORDS.plumbing.some(keyword => combinedText.includes(keyword))) {
+    return 'plumbing';
+  }
+
+  if (FORM_KEYWORDS.building.some(keyword => combinedText.includes(keyword))) {
+    return 'building';
+  }
+
+  // Default to building if no specific type is found (since it's the most general)
+  return 'building';
 }
 
 function resolveUrl(href: string, baseUrl: string): string {
@@ -293,8 +342,17 @@ function getTotalFormsCount(forms: ScrapedForms): number {
 }
 
 function mergeForms(target: ScrapedForms, source: ScrapedForms): void {
-  for (const [type, sourceForms] of Object.entries(source)) {
-    const targetForms = target[type as keyof ScrapedForms];
+  // Merge business hours if available
+  if (source.businessHours && !target.businessHours) {
+    target.businessHours = source.businessHours;
+  }
+
+  // Merge form arrays
+  const formTypes: (keyof Omit<ScrapedForms, 'businessHours'>)[] = ['building', 'electrical', 'plumbing'];
+
+  for (const type of formTypes) {
+    const sourceForms = source[type];
+    const targetForms = target[type];
 
     for (const form of sourceForms) {
       // Check if form URL already exists
