@@ -1,5 +1,3 @@
-'use server';
-
 import { currentUser } from '@clerk/nextjs/server';
 import { db } from './db';
 import { userSubscriptions, type UserSubscription } from './db/schema';
@@ -32,8 +30,8 @@ export async function getUserSearchUsage(userId: string): Promise<{ searchesUsed
 
     if (subscription[0]) {
       return {
-        searchesUsed: subscription[0].searchesUsed,
-        lastReset: subscription[0].currentPeriodStart,
+        searchesUsed: subscription[0].searchesUsed || 0,
+        lastReset: subscription[0].currentPeriodStart || new Date(),
       };
     }
 
@@ -50,8 +48,8 @@ export async function getUserSearchUsage(userId: string): Promise<{ searchesUsed
       .returning();
 
     return {
-      searchesUsed: newSubscription.searchesUsed,
-      lastReset: newSubscription.currentPeriodStart,
+      searchesUsed: newSubscription.searchesUsed || 0,
+      lastReset: newSubscription.currentPeriodStart || new Date(),
     };
   } catch (error) {
     console.error('Error getting user search usage:', error);
@@ -154,17 +152,3 @@ export async function resetMonthlyUsage(userId: string): Promise<void> {
   }
 }
 
-// Check if user can access a specific feature
-export function canUserAccessFeature(userPlan: PlanType, feature: keyof PlanLimits): boolean {
-  const limits = PLAN_LIMITS[userPlan];
-  return limits[feature] === true;
-}
-
-// Get remaining searches for a user
-export function getRemainingSearches(userPlan: PlanType, searchesUsed: number): number | null {
-  const limits = PLAN_LIMITS[userPlan];
-  if (limits.searchesLimit === null) {
-    return null; // unlimited
-  }
-  return Math.max(0, limits.searchesLimit - searchesUsed);
-}
