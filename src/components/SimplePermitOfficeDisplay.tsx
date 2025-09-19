@@ -86,13 +86,21 @@ interface ScrapedForm {
   fileType?: string;
 }
 
+interface BusinessHours {
+  monday?: string;
+  tuesday?: string;
+  wednesday?: string;
+  thursday?: string;
+  friday?: string;
+  saturday?: string;
+  sunday?: string;
+}
+
 interface ScrapedForms {
   building: ScrapedForm[];
   electrical: ScrapedForm[];
   plumbing: ScrapedForm[];
-  mechanical: ScrapedForm[];
-  zoning: ScrapedForm[];
-  general: ScrapedForm[];
+  businessHours?: BusinessHours;
 }
 
 interface SimplePermitOfficeDisplayProps {
