@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { EnhancedWebScraper, DetailedOfficeInfo } from '@/lib/enhanced-web-scraper'
 
 // Type definitions for permit office data
 interface PermitOffice {
@@ -212,11 +213,18 @@ async function searchGeneralPermitOffices(state: string): Promise<PermitOffice[]
   return offices
 }
 
-// Type definition for search results
+// Enhanced type definition for search results with detailed office information
 interface SearchResult {
   title: string
   url: string
   snippet: string
+  detailedInfo?: DetailedOfficeInfo
+  structuredData?: {
+    organization?: any
+    localBusiness?: any
+    contactPoint?: any
+    postalAddress?: any
+  }
 }
 
 // Perform web search using a search API
@@ -257,52 +265,95 @@ async function performWebSearch(query: string): Promise<SearchResult[]> {
   }
 }
 
-// Google Custom Search API (best for government websites)
+// Enhanced Google Custom Search API with comprehensive data extraction
 async function searchGoogleCustomSearch(query: string): Promise<SearchResult[]> {
   const results: SearchResult[] = []
-  
+
   try {
     const GOOGLE_API_KEY = process.env.GOOGLE_CUSTOM_SEARCH_API_KEY
     const GOOGLE_SEARCH_ENGINE_ID = process.env.GOOGLE_CUSTOM_SEARCH_ENGINE_ID
-    
+
     if (!GOOGLE_API_KEY || !GOOGLE_SEARCH_ENGINE_ID) {
       console.log('Google Custom Search API not configured, skipping...')
       return results
     }
-    
-    // Search for government websites specifically
+
+    // Enhanced search queries with more specific targeting
     const searchQueries = [
       `${query} site:gov`,
-      `${query} "building permits" site:gov`,
-      `${query} "planning department" site:gov`,
-      `${query} "development services" site:gov`
+      `${query} "building permits" OR "building department" site:gov`,
+      `${query} "planning department" OR "development services" site:gov`,
+      `${query} "permit office" OR "permit center" site:gov`,
+      `${query} "zoning" OR "code enforcement" site:gov`,
+      `${query} "building inspection" OR "permit application" site:gov`,
+      `${query} intitle:"permits" site:gov`,
+      `${query} intitle:"building" OR intitle:"planning" site:gov`
     ]
-    
+
+    const scraper = new EnhancedWebScraper()
+    const processedUrls = new Set<string>() // Avoid scraping the same URL multiple times
+
     for (const searchQuery of searchQueries) {
-      const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${GOOGLE_SEARCH_ENGINE_ID}&q=${encodeURIComponent(searchQuery)}&num=3`
-      
-      const response = await fetch(searchUrl)
-      
-      if (response.ok) {
-        const data = await response.json()
-        
-        if (data.items) {
-          for (const item of data.items) {
-            results.push({
-              title: item.title,
-              url: item.link,
-              snippet: item.snippet
-            })
+      try {
+        const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${GOOGLE_SEARCH_ENGINE_ID}&q=${encodeURIComponent(searchQuery)}&num=5&fields=items(title,link,snippet,pagemap)`
+
+        const response = await fetch(searchUrl, {
+          headers: {
+            'User-Agent': 'PermitOfficeSearchBot/2.0 (+https://permitoffices.com/bot)'
+          }
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+
+          if (data.items) {
+            // Process each search result with enhanced data extraction
+            for (const item of data.items) {
+              if (!processedUrls.has(item.link)) {
+                processedUrls.add(item.link)
+
+                // Extract detailed information from the website
+                console.log(`Enhanced scraping: ${item.link}`)
+                const detailedInfo = await scraper.scrapeDetailedOfficeInfo(item.link)
+
+                // Create enhanced search result with extracted data
+                const enhancedResult: SearchResult & { detailedInfo?: DetailedOfficeInfo } = {
+                  title: item.title,
+                  url: item.link,
+                  snippet: item.snippet,
+                  detailedInfo: detailedInfo || undefined
+                }
+
+                // Extract additional metadata from Google's structured data if available
+                if (item.pagemap) {
+                  enhancedResult.structuredData = {
+                    organization: item.pagemap.organization?.[0],
+                    localBusiness: item.pagemap.localbusiness?.[0],
+                    contactPoint: item.pagemap.contactpoint?.[0],
+                    postalAddress: item.pagemap.postaladdress?.[0]
+                  }
+                }
+
+                results.push(enhancedResult)
+              }
+            }
           }
         }
+
+        // Rate limiting to be respectful
+        await new Promise(resolve => setTimeout(resolve, 100))
+
+      } catch (queryError) {
+        console.error(`Error with search query "${searchQuery}":`, queryError)
+        continue
       }
     }
-    
+
   } catch (error) {
-    console.error('Google Custom Search error:', error)
+    console.error('Enhanced Google Custom Search error:', error)
   }
-  
-  return results.slice(0, 3)
+
+  return results.slice(0, 5) // Return more results since we have better data
 }
 
 // Bing Search API (good fallback)
@@ -494,65 +545,174 @@ function extractGovernmentLinks(html: string, query: string): SearchResult[] {
   return results
 }
 
-// Extract permit office information from search results
+// Enhanced extraction of permit office information from search results with detailed data
 function extractPermitOfficesFromSearchResults(searchResults: SearchResult[], location: string, state: string, jurisdictionType: string): PermitOffice[] {
   const offices: PermitOffice[] = []
-  
+
   for (const result of searchResults) {
     // Skip if not a government website
     if (!result.url.includes('.gov')) {
       continue
     }
-    
-    // Extract office information from search result
+
+    // Use detailed information if available from enhanced scraping
+    const detailedInfo = result.detailedInfo
+    const structuredData = result.structuredData
+
+    // Extract enhanced office information
     const office: PermitOffice = {
       id: generateId(),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      city: jurisdictionType === 'city' ? location : extractCityFromTitle(result.title, location),
-      county: jurisdictionType === 'county' ? location : extractCountyFromTitle(result.title, location),
-      state: state,
-      jurisdiction_type: jurisdictionType as 'city' | 'county' | 'state' | 'special_district',
-      department_name: extractDepartmentName(result.title, result.snippet),
-      office_type: extractOfficeType(result.title, result.snippet),
-      address: extractAddressFromSnippet(result.snippet),
-      phone: extractPhoneFromSnippet(result.snippet),
-      email: extractEmailFromSnippet(result.snippet),
+
+      // Location information (prefer detailed info, fallback to extracted)
+      city: detailedInfo?.city ||
+            (jurisdictionType === 'city' ? location : extractCityFromTitle(result.title, location)) ||
+            structuredData?.postalAddress?.addressLocality || '',
+      county: detailedInfo?.county ||
+              (jurisdictionType === 'county' ? location : extractCountyFromTitle(result.title, location)) || '',
+      state: detailedInfo?.state || state,
+
+      jurisdiction_type: detailedInfo?.jurisdiction ||
+                        (jurisdictionType as 'city' | 'county' | 'state' | 'special_district'),
+
+      // Office details (prefer detailed info)
+      department_name: detailedInfo?.department ||
+                      detailedInfo?.officeName ||
+                      extractDepartmentName(result.title, result.snippet) ||
+                      structuredData?.organization?.name || '',
+
+      office_type: extractOfficeTypeFromDetailed(detailedInfo) ||
+                   extractOfficeType(result.title, result.snippet),
+
+      // Contact information (comprehensive from detailed scraping)
+      address: detailedInfo?.address ||
+               extractAddressFromSnippet(result.snippet) ||
+               formatStructuredAddress(structuredData?.postalAddress) || '',
+
+      phone: detailedInfo?.phone ||
+             extractPhoneFromSnippet(result.snippet) ||
+             structuredData?.contactPoint?.telephone || '',
+
+      email: detailedInfo?.email ||
+             extractEmailFromSnippet(result.snippet) ||
+             structuredData?.contactPoint?.email || '',
+
       website: result.url,
-      hours_monday: '8:00 AM - 5:00 PM',
-      hours_tuesday: '8:00 AM - 5:00 PM',
-      hours_wednesday: '8:00 AM - 5:00 PM',
-      hours_thursday: '8:00 AM - 5:00 PM',
-      hours_friday: '8:00 AM - 5:00 PM',
-      hours_saturday: null,
-      hours_sunday: null,
-      building_permits: true,
-      electrical_permits: true,
-      plumbing_permits: true,
-      mechanical_permits: true,
-      zoning_permits: true,
-      planning_review: true,
-      inspections: true,
-      online_applications: result.snippet.toLowerCase().includes('online') || result.snippet.toLowerCase().includes('digital'),
-      online_payments: result.snippet.toLowerCase().includes('payment') || result.snippet.toLowerCase().includes('pay online'),
-      permit_tracking: result.snippet.toLowerCase().includes('track') || result.snippet.toLowerCase().includes('status'),
-      online_portal_url: result.snippet.toLowerCase().includes('portal') ? result.url : null,
+
+      // Enhanced business hours from detailed scraping
+      hours_monday: detailedInfo?.businessHours?.monday || '8:00 AM - 5:00 PM',
+      hours_tuesday: detailedInfo?.businessHours?.tuesday || '8:00 AM - 5:00 PM',
+      hours_wednesday: detailedInfo?.businessHours?.wednesday || '8:00 AM - 5:00 PM',
+      hours_thursday: detailedInfo?.businessHours?.thursday || '8:00 AM - 5:00 PM',
+      hours_friday: detailedInfo?.businessHours?.friday || '8:00 AM - 5:00 PM',
+      hours_saturday: detailedInfo?.businessHours?.saturday || null,
+      hours_sunday: detailedInfo?.businessHours?.sunday || null,
+
+      // Enhanced service information from detailed scraping
+      building_permits: detailedInfo?.services?.buildingPermits ?? true,
+      electrical_permits: detailedInfo?.services?.electricalPermits ?? true,
+      plumbing_permits: detailedInfo?.services?.plumbingPermits ?? true,
+      mechanical_permits: detailedInfo?.services?.mechanicalPermits ?? true,
+      zoning_permits: detailedInfo?.services?.zoningPermits ?? true,
+      planning_review: detailedInfo?.services?.planningReview ?? true,
+      inspections: detailedInfo?.services?.inspections ?? true,
+
+      // Enhanced online services information
+      online_applications: detailedInfo?.onlineServices?.onlineApplications ??
+                          (result.snippet.toLowerCase().includes('online') ||
+                           result.snippet.toLowerCase().includes('digital')),
+
+      online_payments: detailedInfo?.onlineServices?.onlinePayments ??
+                      (result.snippet.toLowerCase().includes('payment') ||
+                       result.snippet.toLowerCase().includes('pay online')),
+
+      permit_tracking: detailedInfo?.onlineServices?.permitTracking ??
+                      (result.snippet.toLowerCase().includes('track') ||
+                       result.snippet.toLowerCase().includes('status')),
+
+      // Enhanced portal information
+      online_portal_url: detailedInfo?.portals?.permitsPortal ||
+                        detailedInfo?.portals?.citizenPortal ||
+                        (result.snippet.toLowerCase().includes('portal') ? result.url : null),
+
+      // Geographic coordinates (to be enhanced with geocoding)
       latitude: null,
       longitude: null,
       service_area_bounds: null,
+
+      // Enhanced metadata
       data_source: 'web_search' as const,
       last_verified: new Date().toISOString(),
       crawl_frequency: 'daily' as const,
       active: true
     }
-    
+
+    // Add enhanced properties for API response (not in database schema)
+    if (detailedInfo) {
+      (office as any).enhancedData = {
+        dataCompleteness: detailedInfo.metadata.dataCompleteness,
+        sourceReliability: detailedInfo.metadata.sourceReliability,
+        totalForms: Object.values(detailedInfo.forms).reduce((sum, arr) => sum + arr.length, 0),
+        staffContacts: Object.keys(detailedInfo.staffContacts).length,
+        specialServices: [
+          detailedInfo.services.landDevelopment && 'Land Development',
+          detailedInfo.services.subdivisionReview && 'Subdivision Review',
+          detailedInfo.services.varianceApplications && 'Variance Applications',
+          detailedInfo.services.specialEventPermits && 'Special Event Permits',
+          detailedInfo.services.signPermits && 'Sign Permits',
+          detailedInfo.services.demolitionPermits && 'Demolition Permits'
+        ].filter(Boolean),
+        onlineCapabilities: [
+          detailedInfo.onlineServices.documentSubmission && 'Document Submission',
+          detailedInfo.onlineServices.schedulingInspections && 'Inspection Scheduling',
+          detailedInfo.onlineServices.statusUpdates && 'Status Updates',
+          detailedInfo.onlineServices.renewals && 'Permit Renewals'
+        ].filter(Boolean),
+        availablePortals: Object.keys(detailedInfo.portals).filter(key => detailedInfo.portals[key as keyof typeof detailedInfo.portals]),
+        processInfo: detailedInfo.processInfo,
+        feeStructure: detailedInfo.feeStructure
+      }
+    }
+
     offices.push(office)
   }
-  
+
   return offices
 }
 
-// Helper functions to extract information from search results
+// Enhanced helper functions for extracting information from search results
+function extractOfficeTypeFromDetailed(detailedInfo?: DetailedOfficeInfo): 'building' | 'planning' | 'zoning' | 'combined' | 'other' {
+  if (!detailedInfo) return 'combined'
+
+  const services = detailedInfo.services
+  let serviceCount = 0
+
+  if (services.buildingPermits) serviceCount++
+  if (services.planningReview) serviceCount++
+  if (services.zoningPermits) serviceCount++
+
+  if (serviceCount >= 2) return 'combined'
+  if (services.planningReview) return 'planning'
+  if (services.zoningPermits) return 'zoning'
+  if (services.buildingPermits) return 'building'
+
+  return 'other'
+}
+
+function formatStructuredAddress(postalAddress?: any): string {
+  if (!postalAddress) return ''
+
+  const parts = [
+    postalAddress.streetAddress,
+    postalAddress.addressLocality,
+    postalAddress.addressRegion,
+    postalAddress.postalCode
+  ].filter(Boolean)
+
+  return parts.join(', ')
+}
+
 function extractCityFromTitle(title: string, fallback: string): string {
   const cityMatch = title.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*),?\s+(GA|Georgia)/i)
   return cityMatch ? cityMatch[1] : fallback
