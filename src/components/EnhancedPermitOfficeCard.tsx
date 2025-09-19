@@ -606,6 +606,57 @@ export default function EnhancedPermitOfficeCard({ office }: EnhancedPermitOffic
           </div>
         </div>
       )}
+
+      {/* Data Source & Verification Info */}
+      <div className="bg-gradient-to-br from-white via-gray-50/30 to-slate-50/50 rounded-2xl shadow-xl border border-gray-100 p-6 relative overflow-hidden">
+        {/* Decorative background elements */}
+        <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-gray-100/20 to-slate-100/20 rounded-full -translate-y-10 translate-x-10"></div>
+        <div className="absolute bottom-0 left-0 w-16 h-16 bg-gradient-to-tr from-blue-100/20 to-indigo-100/20 rounded-full translate-y-8 -translate-x-8"></div>
+        
+        <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center relative z-10">
+          <div className="p-1.5 bg-gray-100 rounded-lg mr-3">
+            <Eye className="h-4 w-4 text-gray-600" />
+          </div>
+          <span className="bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+            Data Information
+          </span>
+        </h4>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10">
+          {/* Data Source */}
+          <div className="p-3 bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-lg shadow-sm">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Source</span>
+            </div>
+            <span className="text-sm font-medium text-gray-800 capitalize">
+              {office.dataSource || 'Unknown'}
+            </span>
+          </div>
+
+          {/* Last Verified */}
+          <div className="p-3 bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-lg shadow-sm">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Last Updated</span>
+            </div>
+            <span className="text-sm font-medium text-gray-800">
+              {office.lastVerified ? new Date(office.lastVerified).toLocaleDateString() : 'Unknown'}
+            </span>
+          </div>
+
+          {/* Update Frequency */}
+          <div className="p-3 bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-lg shadow-sm">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+              <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Update Frequency</span>
+            </div>
+            <span className="text-sm font-medium text-gray-800 capitalize">
+              {office.crawlFrequency || 'Unknown'}
+            </span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
