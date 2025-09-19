@@ -247,11 +247,12 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
                     {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => {
                       const dayKey = `hours_${day.toLowerCase()}` as keyof PermitOffice;
                       const hours = office[dayKey];
+                      const hoursText = typeof hours === 'string' ? hours : 'Closed';
                       return (
                         <div key={day} className="flex justify-between text-sm">
                           <span className="font-medium text-gray-700">{day.slice(0, 3)}:</span>
                           <span className="text-gray-600">
-                            {hours || 'Closed'}
+                            {hoursText}
                           </span>
                         </div>
                       );
