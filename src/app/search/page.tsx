@@ -436,9 +436,7 @@ export default function SearchPage() {
           <p className="text-gray-600">Scroll down to view all information for each office</p>
         </div>
         <div className="space-y-12">
-          {results.map((office, index) => (
-            <SimplePermitOfficeDisplay key={office.id || index} office={office} />
-          ))}
+          <SimplePermitOfficeDisplay offices={results} />
         </div>
       </div>
     )}
