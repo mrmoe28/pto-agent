@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, boolean, integer, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, boolean, integer, jsonb, unique, index } from 'drizzle-orm/pg-core';
 
 // User profile and application-specific tables (using Clerk user IDs)
 export const userProfiles = pgTable('user_profiles', {
@@ -45,7 +45,14 @@ export const userFavorites = pgTable('user_favorites', {
   permitOfficeId: uuid('permit_office_id').notNull(),
   notes: text('notes'),
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
-});
+  updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow(),
+}, (table) => ({
+  // Add unique constraint to prevent duplicate favorites
+  uniqueUserOffice: unique('unique_user_office').on(table.userId, table.permitOfficeId),
+  // Add indexes for better query performance
+  userIdIdx: index('user_favorites_user_id_idx').on(table.userId),
+  permitOfficeIdIdx: index('user_favorites_permit_office_id_idx').on(table.permitOfficeId),
+}));
 
 export const userSubscriptions = pgTable('user_subscriptions', {
   id: uuid('id').defaultRandom().primaryKey(),

@@ -6,6 +6,7 @@ import {
   Zap, Droplets, Settings, CheckCircle, Globe,
   FileText, DollarSign, Calendar, Download, AlertCircle, Loader2
 } from 'lucide-react';
+import FavoriteButton from './FavoriteButton';
 
 interface PermitOffice {
   id?: string;
@@ -313,9 +314,18 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
             <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6">
               <div className="flex justify-between items-start">
                 <div className="flex-1">
-                  <h3 className="text-2xl font-bold text-white mb-2">
-                    {office.department_name}
-                  </h3>
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="text-2xl font-bold text-white">
+                      {office.department_name}
+                    </h3>
+                    {office.id && (
+                      <FavoriteButton 
+                        permitOfficeId={office.id} 
+                        size="sm"
+                        className="ml-4"
+                      />
+                    )}
+                  </div>
                   <div className="flex items-center text-blue-100 mb-3">
                     <MapPin className="h-5 w-5 mr-2 flex-shrink-0" />
                     <span className="text-sm">{office.address}</span>
