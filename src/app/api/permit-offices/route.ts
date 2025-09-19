@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { EnhancedWebScraper, DetailedOfficeInfo } from '@/lib/enhanced-web-scraper'
+import { DetailedOfficeInfo } from '@/lib/enhanced-web-scraper'
+import { getDetailedOfficeInfo } from '@/lib/scraper-manager'
 import { sql } from '@/lib/neon'
 
 // Type definitions for permit office data
@@ -435,7 +436,6 @@ async function searchGoogleCustomSearch(query: string): Promise<SearchResult[]> 
       `${query} intitle:"building" OR intitle:"planning" site:gov`
     ]
 
-    const scraper = new EnhancedWebScraper()
     const processedUrls = new Set<string>() // Avoid scraping the same URL multiple times
 
     for (const searchQuery of searchQueries) {
@@ -472,7 +472,7 @@ async function searchGoogleCustomSearch(query: string): Promise<SearchResult[]> 
 
                 // Extract detailed information from the website
                 console.log(`Enhanced scraping: ${item.link}`)
-                const detailedInfo = await scraper.scrapeDetailedOfficeInfo(item.link)
+                const detailedInfo = await getDetailedOfficeInfo(item.link)
 
                 // Create enhanced search result with extracted data
                 const enhancedResult: SearchResult & { detailedInfo?: DetailedOfficeInfo } = {
