@@ -1,6 +1,7 @@
 # DNS Configuration Fix Guide
 
 ## 🚨 **Problem Identified**
+
 Your domain `ptoagent.com` is not resolving because the DNS records are not properly configured in Namecheap.
 
 ## 🔧 **Solution: Configure DNS Records**
@@ -21,6 +22,7 @@ Your domain `ptoagent.com` is not resolving because the DNS records are not prop
 3. **Copy DNS Records**:
    - Copy the DNS records that Vercel provides
    - They will look something like:
+
      ```
      Type: A Record
      Name: @
@@ -42,6 +44,7 @@ If you prefer to configure manually, add these records in Namecheap:
    - Click "Advanced DNS" tab
 
 2. **Add These Records**:
+
    ```
    Type: A Record
    Host: @
@@ -65,6 +68,7 @@ If you prefer to configure manually, add these records in Namecheap:
 ## ⏰ **Wait for DNS Propagation**
 
 After adding the DNS records:
+
 - **Wait 5-60 minutes** for DNS propagation
 - **Maximum wait time**: 48 hours (usually much faster)
 
@@ -100,6 +104,7 @@ dig clerk.ptoagent.com CNAME
 ## 🚀 **Expected Results**
 
 After DNS propagation, you should see:
+
 - ✅ `dig ptoagent.com` returns an IP address
 - ✅ `curl -I https://www.ptoagent.com` returns HTTP 200
 - ✅ Website loads in browser
@@ -116,6 +121,7 @@ After DNS propagation, you should see:
 ## 📞 **Support**
 
 If you need help:
+
 1. Check Vercel Dashboard for any domain errors
 2. Verify all DNS records are exactly as shown
 3. Wait for full DNS propagation
@@ -124,6 +130,7 @@ If you need help:
 ## 🎯 **Next Steps After DNS Fix**
 
 Once your domain is working:
+
 1. ✅ Test website loads
 2. ✅ Test Clerk authentication
 3. ✅ Verify all features work
