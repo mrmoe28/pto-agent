@@ -7,6 +7,7 @@ import GooglePlacesAutocomplete from '@/components/GooglePlacesAutocomplete';
 import GeorgiaCountySelector from '@/components/GeorgiaCountySelector';
 import SimplePermitOfficeDisplay from '@/components/SimplePermitOfficeDisplay';
 import UpgradeModal from '@/components/UpgradeModal';
+import ExportButton from '@/components/ExportButton';
 import { extractAddressComponents, getCoordinates } from '@/lib/google-apis';
 import { type PlanType } from '@/lib/subscription-types';
 
@@ -99,6 +100,7 @@ export default function SearchPage() {
   const [results, setResults] = useState<PermitOffice[]>([]);
   const [error, setError] = useState('');
   const [selectedPlace, setSelectedPlace] = useState<google.maps.places.PlaceResult | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   
   // Subscription tracking state
   const [userPlan, setUserPlan] = useState<PlanType>('free');
@@ -145,6 +147,10 @@ export default function SearchPage() {
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!address.trim() && !selectedCounty) return;
+
+    // Set search query for export functionality
+    const query = address.trim() || selectedCounty;
+    setSearchQuery(query);
 
     // Check usage limits for authenticated users
     if (isAuthenticated && user) {
@@ -434,6 +440,13 @@ export default function SearchPage() {
             Found {results.length} Permit Office{results.length !== 1 ? 's' : ''}
           </h2>
           <p className="text-gray-600">Scroll down to view all information for each office</p>
+          <div className="mt-4">
+            <ExportButton 
+              searchResults={results} 
+              searchQuery={searchQuery}
+              size="default"
+            />
+          </div>
         </div>
         <div className="space-y-12">
           <SimplePermitOfficeDisplay offices={results} />

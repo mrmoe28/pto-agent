@@ -224,10 +224,38 @@ export async function GET(request: NextRequest) {
           .limit(1)
 
         if (result.length > 0) {
+          const mappedResult = result.map(office => ({
+            ...office,
+            // Map camelCase to snake_case for UI compatibility
+            hours_monday: office.hoursMonday,
+            hours_tuesday: office.hoursTuesday,
+            hours_wednesday: office.hoursWednesday,
+            hours_thursday: office.hoursThursday,
+            hours_friday: office.hoursFriday,
+            hours_saturday: office.hoursSaturday,
+            hours_sunday: office.hoursSunday,
+            jurisdiction_type: office.jurisdictionType,
+            department_name: office.departmentName,
+            office_type: office.officeType,
+            building_permits: office.buildingPermits,
+            electrical_permits: office.electricalPermits,
+            plumbing_permits: office.plumbingPermits,
+            mechanical_permits: office.mechanicalPermits,
+            zoning_permits: office.zoningPermits,
+            planning_review: office.planningReview,
+            online_applications: office.onlineApplications,
+            online_payments: office.onlinePayments,
+            permit_tracking: office.permitTracking,
+            online_portal_url: office.onlinePortalUrl,
+            permitFees: office.permitFees || getRealFeeData(office.city),
+            instructions: office.instructions || getRealInstructions(office.city),
+            downloadableApplications: office.downloadableApplications || getRealDownloadableApps(office.city),
+            processingTimes: office.processingTimes || getRealProcessingTimes(office.city)
+          }))
           return NextResponse.json({
             success: true,
-            offices: result,
-            count: result.length,
+            offices: mappedResult,
+            count: mappedResult.length,
             source: 'database'
           })
         }
@@ -315,9 +343,30 @@ export async function GET(request: NextRequest) {
         if (latitude && longitude) {
           enrichedOffices = offices.map(office => ({
             ...office,
-            distance: office.latitude && office.longitude 
+            // Map camelCase to snake_case for UI compatibility
+            hours_monday: office.hoursMonday,
+            hours_tuesday: office.hoursTuesday,
+            hours_wednesday: office.hoursWednesday,
+            hours_thursday: office.hoursThursday,
+            hours_friday: office.hoursFriday,
+            hours_saturday: office.hoursSaturday,
+            hours_sunday: office.hoursSunday,
+            jurisdiction_type: office.jurisdictionType,
+            department_name: office.departmentName,
+            office_type: office.officeType,
+            building_permits: office.buildingPermits,
+            electrical_permits: office.electricalPermits,
+            plumbing_permits: office.plumbingPermits,
+            mechanical_permits: office.mechanicalPermits,
+            zoning_permits: office.zoningPermits,
+            planning_review: office.planningReview,
+            online_applications: office.onlineApplications,
+            online_payments: office.onlinePayments,
+            permit_tracking: office.permitTracking,
+            online_portal_url: office.onlinePortalUrl,
+            distance: office.latitude && office.longitude
               ? calculateDistance(
-                  parseFloat(latitude), 
+                  parseFloat(latitude),
                   parseFloat(longitude),
                   parseFloat(office.latitude.toString()),
                   parseFloat(office.longitude.toString())
@@ -333,6 +382,27 @@ export async function GET(request: NextRequest) {
           // Include enhanced data even without distance calculation
           enrichedOffices = offices.map(office => ({
             ...office,
+            // Map camelCase to snake_case for UI compatibility
+            hours_monday: office.hoursMonday,
+            hours_tuesday: office.hoursTuesday,
+            hours_wednesday: office.hoursWednesday,
+            hours_thursday: office.hoursThursday,
+            hours_friday: office.hoursFriday,
+            hours_saturday: office.hoursSaturday,
+            hours_sunday: office.hoursSunday,
+            jurisdiction_type: office.jurisdictionType,
+            department_name: office.departmentName,
+            office_type: office.officeType,
+            building_permits: office.buildingPermits,
+            electrical_permits: office.electricalPermits,
+            plumbing_permits: office.plumbingPermits,
+            mechanical_permits: office.mechanicalPermits,
+            zoning_permits: office.zoningPermits,
+            planning_review: office.planningReview,
+            online_applications: office.onlineApplications,
+            online_payments: office.onlinePayments,
+            permit_tracking: office.permitTracking,
+            online_portal_url: office.onlinePortalUrl,
             permitFees: office.permitFees || getRealFeeData(office.city),
             instructions: office.instructions || getRealInstructions(office.city),
             downloadableApplications: office.downloadableApplications || getRealDownloadableApps(office.city),
