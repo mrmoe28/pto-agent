@@ -42,6 +42,46 @@ export interface PermitOffice {
   active: boolean
   distance?: number
   enhancedData?: Record<string, unknown>
+
+  // Enhanced comprehensive data from multi-page scraping
+  permit_fees?: Record<string, any> | null
+  instructions?: Record<string, any> | null
+  downloadable_applications?: Record<string, any> | null
+  processing_times?: Record<string, any> | null
+  contact_details?: Record<string, any> | null
+  office_details?: Record<string, any> | null
+  permit_categories?: Record<string, string[]> | null
+  related_pages?: Array<Record<string, string>> | null
+
+  // Additional contact methods
+  fax?: string | null
+  alternative_phones?: string[]
+  alternative_emails?: string[]
+
+  // Detailed service information
+  service_area_description?: string | null
+  staff_directory?: string[]
+  department_divisions?: string[]
+
+  // Permit-specific details
+  permit_types_available?: string[]
+  special_requirements?: Record<string, string> | null
+  inspection_services?: string[]
+
+  // Operational details
+  seasonal_hours?: Record<string, string> | null
+  appointment_required?: boolean | null
+  walk_in_hours?: string | null
+
+  // Digital services
+  online_portal_features?: string[]
+  mobile_app_available?: boolean | null
+  document_upload_supported?: boolean | null
+
+  // Scraping metadata
+  confidence_score?: number | null
+  pages_crawled?: number | null
+  crawl_depth?: number | null
 }
 
 interface SearchResult {

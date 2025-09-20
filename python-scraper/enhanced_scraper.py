@@ -24,6 +24,7 @@ from geocoding_service import GeocodingService
 from enhanced_data_extractor import EnhancedDataExtractor
 from robots_checker import RobotsChecker
 from rate_limiter import IntelligentRateLimiter
+from multi_page_crawler import MultiPageCrawler
 from config import config
 
 logger = logging.getLogger(__name__)
@@ -38,6 +39,11 @@ class EnhancedPermitOfficeScraper:
         self.rate_limiter = IntelligentRateLimiter(
             base_delay=config.SCRAPING_DELAY,
             requests_per_minute=config.RATE_LIMIT_REQUESTS // 60  # Convert hourly to per minute
+        )
+        self.multi_page_crawler = MultiPageCrawler(
+            max_pages=5,  # Crawl up to 5 related pages
+            max_depth=2,  # Go 2 levels deep
+            min_relevance=1.0  # Minimum relevance score
         )
         self.session = None
         self.playwright = None
@@ -216,6 +222,212 @@ class EnhancedPermitOfficeScraper:
                 duration_seconds=time.time() - start_time,
                 errors=[str(e)]
             )
+
+    async def scrape_comprehensive_data(self, target: ScrapingTarget) -> ScrapingResult:
+        """Enhanced scraping with comprehensive multi-page data extraction"""
+        start_time = time.time()
+        offices_found = 0
+        offices_processed = 0
+        errors = []
+
+        try:
+            logger.info(f"Starting comprehensive multi-page scrape of {target.name}")
+
+            # Use multi-page crawler for comprehensive data extraction
+            async with self.multi_page_crawler as crawler:
+                comprehensive_data = await crawler.crawl_comprehensive_data(target)
+
+            # Create enhanced office with comprehensive data
+            office = await self._create_comprehensive_office(target, comprehensive_data)
+
+            if office:
+                offices_found = 1
+                await self._process_office(office, target)
+                offices_processed = 1
+
+                # Log comprehensive data statistics
+                crawl_stats = crawler.get_crawl_statistics()
+                logger.info(f"Comprehensive crawl completed: {crawl_stats['total_urls_crawled']} pages crawled")
+
+                return ScrapingResult(
+                    target=target,
+                    success=True,
+                    offices_found=offices_found,
+                    offices_processed=offices_processed,
+                    duration_seconds=time.time() - start_time,
+                    errors=errors
+                )
+            else:
+                return ScrapingResult(
+                    target=target,
+                    success=False,
+                    offices_found=0,
+                    offices_processed=0,
+                    duration_seconds=time.time() - start_time,
+                    errors=["Failed to create comprehensive office data"]
+                )
+
+        except Exception as e:
+            logger.error(f"Comprehensive scraping failed for {target.name}: {e}")
+            return ScrapingResult(
+                target=target,
+                success=False,
+                offices_found=0,
+                offices_processed=0,
+                duration_seconds=time.time() - start_time,
+                errors=[str(e)]
+            )
+
+    async def _create_comprehensive_office(self, target: ScrapingTarget, comprehensive_data: Dict[str, Any]) -> Optional[PermitOffice]:
+        """Create a PermitOffice with comprehensive data from multiple pages"""
+        try:
+            # Extract basic office information
+            office_name = target.name
+            if comprehensive_data.get('office_details', {}).get('departments'):
+                # Use the first department name if available
+                office_name = comprehensive_data['office_details']['departments'][0]
+
+            # Determine services based on found permit categories
+            permit_categories = comprehensive_data.get('permit_categories', {})
+
+            # Extract contact information
+            contact_details = comprehensive_data.get('contact_details', {})
+            primary_phone = None
+            primary_email = None
+
+            if contact_details.get('phones'):
+                primary_phone = contact_details['phones'][0]
+            if contact_details.get('emails'):
+                primary_email = contact_details['emails'][0]
+
+            # Extract all permit types available
+            all_permit_types = []
+            for category_permits in permit_categories.values():
+                all_permit_types.extend(category_permits)
+
+            # Extract alternative contact methods
+            alt_phones = contact_details.get('phones', [])[1:] if len(contact_details.get('phones', [])) > 1 else []
+            alt_emails = contact_details.get('emails', [])[1:] if len(contact_details.get('emails', [])) > 1 else []
+            fax_number = contact_details.get('fax', [None])[0] if contact_details.get('fax') else None
+
+            # Extract office details
+            office_data = comprehensive_data.get('office_details', {})
+            service_area_desc = office_data.get('service_area', '')
+            staff_list = office_data.get('staff', [])
+            dept_divisions = office_data.get('departments', [])
+
+            # Create the comprehensive office object
+            office = PermitOffice(
+                department_name=office_name,
+                city=target.city or 'Unknown',
+                county=target.county or 'Unknown',
+                state=target.state,
+                jurisdiction_type=target.type,
+                office_type='combined',  # Assume combined since we have comprehensive data
+                address='Address not found',  # Will be enhanced by geocoding
+                phone=primary_phone,
+                email=primary_email,
+                website=target.url,
+
+                # Determine services from permit categories
+                building_permits='building' in permit_categories,
+                electrical_permits='electrical' in permit_categories,
+                plumbing_permits='plumbing' in permit_categories,
+                mechanical_permits='mechanical' in permit_categories,
+                zoning_permits='zoning' in permit_categories,
+                planning_review=any(category in permit_categories for category in ['planning', 'zoning']),
+                inspections=True,  # Assume inspections are available
+
+                # Enhanced comprehensive data
+                permit_fees=comprehensive_data.get('permit_fees'),
+                instructions=comprehensive_data.get('instructions'),
+                downloadable_applications=comprehensive_data.get('downloadable_applications'),
+                processing_times=comprehensive_data.get('processing_times'),
+
+                # Comprehensive details from multi-page crawling
+                contact_details=comprehensive_data.get('contact_details'),
+                office_details=comprehensive_data.get('office_details'),
+                permit_categories=permit_categories,
+                related_pages=comprehensive_data.get('crawled_pages', []),
+
+                # Additional contact methods
+                fax=fax_number,
+                alternative_phones=alt_phones,
+                alternative_emails=alt_emails,
+
+                # Detailed service information
+                service_area_description=service_area_desc,
+                staff_directory=staff_list,
+                department_divisions=dept_divisions,
+
+                # Permit-specific details
+                permit_types_available=all_permit_types,
+                inspection_services=['general inspection'],  # Default assumption
+
+                # Digital services (inferred from available data)
+                online_applications=bool(comprehensive_data.get('downloadable_applications')),
+                document_upload_supported=bool(comprehensive_data.get('downloadable_applications')),
+
+                # Metadata
+                data_source='comprehensive_scraped',
+                last_verified=datetime.now(),
+                crawl_frequency='weekly',
+                active=True,
+                source_url=target.url,
+                scraped_at=datetime.now(),
+                confidence_score=self._calculate_confidence_score(comprehensive_data),
+                pages_crawled=comprehensive_data.get('pages_successfully_crawled', 0),
+                crawl_depth=2  # Maximum depth we allow
+            )
+
+            # Enhance with geocoding
+            await self._enhance_office_data(office, target)
+
+            return office
+
+        except Exception as e:
+            logger.error(f"Error creating comprehensive office: {e}")
+            return None
+
+    def _calculate_confidence_score(self, comprehensive_data: Dict[str, Any]) -> float:
+        """Calculate confidence score based on amount and quality of extracted data"""
+        score = 0.0
+        max_score = 10.0
+
+        # Base score for successful crawling
+        if comprehensive_data.get('pages_successfully_crawled', 0) > 0:
+            score += 2.0
+
+        # Bonus for multiple pages crawled
+        pages_crawled = comprehensive_data.get('pages_successfully_crawled', 0)
+        if pages_crawled > 1:
+            score += min(2.0, pages_crawled * 0.5)
+
+        # Bonus for finding permit fees
+        if comprehensive_data.get('permit_fees'):
+            score += 1.5
+
+        # Bonus for finding instructions
+        if comprehensive_data.get('instructions'):
+            score += 1.5
+
+        # Bonus for finding downloadable applications
+        if comprehensive_data.get('downloadable_applications'):
+            score += 1.0
+
+        # Bonus for finding processing times
+        if comprehensive_data.get('processing_times'):
+            score += 1.0
+
+        # Bonus for detailed contact information
+        contact_details = comprehensive_data.get('contact_details', {})
+        if contact_details.get('phones'):
+            score += 0.5
+        if contact_details.get('emails'):
+            score += 0.5
+
+        # Normalize to 0-1 scale
+        return min(1.0, score / max_score)
     
     async def _scrape_with_enhanced_requests(self, target: ScrapingTarget) -> List[PermitOffice]:
         """Enhanced HTTP scraping with sophisticated data extraction"""
