@@ -7,20 +7,31 @@ https://www.georgia.gov/business/permits-licenses
 https://www.atlantaga.gov/government/departments/city-planning/bureau-of-buildings
 https://www.fultoncountyga.gov/services/building-and-development
 
-# === FLORIDA (FL) - TODO: Add seeds ===
-# https://www.flgov.com/permits (placeholder)
+# === FLORIDA (FL) - Validated 2025 URLs ===
+https://www.stateofflorida.com/permits-and-licensing/
+https://www.miamidade.gov/Apps/RER/EPSPortal/
+https://fasttrack.ocfl.net/OnlineServices/
+https://www.orangecountyfl.net/permitslicenses.aspx
 
-# === NORTH CAROLINA (NC) - TODO: Add seeds ===
-# https://www.nc.gov/services/build-or-buy-home (placeholder)
+# === NORTH CAROLINA (NC) - Validated 2025 URLs ===
+https://code.mecknc.gov/permitting
+https://webpermit.mecklenburgcountync.gov/
+https://www.charlottenc.gov/Growth-and-Development/Getting-Started-on-Your-Project/Building-Permits
 
-# === SOUTH CAROLINA (SC) - TODO: Add seeds ===
-# https://www.sc.gov/business/permits-licenses (placeholder)
+# === SOUTH CAROLINA (SC) - Validated 2025 URLs ===
+https://etrakit.rcgov.us/
+https://grvlc-trk.aspgov.com/eTRAKiT/
+https://www.charleston-sc.gov/856/Permit-Center
+https://www.greenvillecounty.org/buildingsafety/Permits.aspx
 
-# === TENNESSEE (TN) - TODO: Add seeds ===
-# https://www.tn.gov/environment/permit-applications.html (placeholder)
+# === TENNESSEE (TN) - Validated 2025 URLs ===
+https://www.nashville.gov/departments/codes/construction-and-permits/building-permits-central
+https://www.nashville.gov/departments/codes/construction-and-permits/e-permits-system
 
-# === ALABAMA (AL) - TODO: Add seeds ===
-# https://www.alabama.gov/business/permits (placeholder)
+# === ALABAMA (AL) - Validated 2025 URLs ===
+https://permits.jccal.org/citizenaccess/Default.aspx
+https://aca-prod.accela.com/BIRMINGHAM/Default.aspx
+https://www.birminghamal.gov/government/city-departments/pep/permitting-inspection-division/permitting
 
 # === CALIFORNIA (CA) - TODO: Add seeds ===
 # https://www.ca.gov/business/permits-licenses (placeholder)
