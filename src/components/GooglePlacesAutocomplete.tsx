@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Loader } from '@googlemaps/js-api-loader';
 import { PLACES_CONFIG, GOOGLE_API_ERRORS, isGoogleAPIConfigured } from '@/lib/google-apis';
 
@@ -35,6 +35,7 @@ export default function GooglePlacesAutocomplete({
   const [inputValue, setInputValue] = useState(value);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const initializeAutocomplete = async () => {
@@ -110,19 +111,25 @@ export default function GooglePlacesAutocomplete({
     setInputValue(value);
   }, [value]);
 
-  const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    setInputValue(newValue);
-    onChange?.(newValue);
-    
-    // If Google Places API is not working, use fallback
-    if (newValue.length > 2 && !autocompleteRef.current && process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY) {
+  // Autocomplete function for fallback API calls with built-in debouncing
+  const performAutocomplete = useCallback(async (searchValue: string) => {
+    // Clear any existing timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+
+    // Set a new timeout for debouncing
+    debounceTimeoutRef.current = setTimeout(async () => {
+      if (searchValue.length <= 2 || autocompleteRef.current || !process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY) {
+        return;
+      }
+
       try {
         const response = await fetch(
-          `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(newValue)}&key=${process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY}&types=address&components=country:us`
+          `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(searchValue)}&key=${process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY}&types=address&components=country:us`
         );
         const data = await response.json();
-        
+
         if (data.predictions) {
           const suggestions = data.predictions.map((pred: GooglePlacesPrediction) => pred.description);
           setSuggestions(suggestions);
@@ -130,7 +137,19 @@ export default function GooglePlacesAutocomplete({
         }
       } catch (error) {
         console.error('Fallback autocomplete error:', error);
+        setShowSuggestions(false);
       }
+    }, 500); // 500ms delay
+  }, [setSuggestions, setShowSuggestions]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setInputValue(newValue);
+    onChange?.(newValue);
+
+    // Use debounced autocomplete for fallback API calls
+    if (newValue.length > 2) {
+      performAutocomplete(newValue);
     } else {
       setShowSuggestions(false);
     }

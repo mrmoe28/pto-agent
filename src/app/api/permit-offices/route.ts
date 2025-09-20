@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { sql } from '@/lib/neon'
 import { enqueueScrapeJob } from '@/lib/db/jobs'
 import { type PermitOffice } from '@/lib/permit-office-search'
+import { createCacheKey, withCache } from '@/lib/cache'
 
 interface PermitOfficeRow {
   id: string
@@ -75,8 +76,22 @@ export async function GET(request: NextRequest) {
 
     console.log(`Searching for permit offices: city=${city}, county=${county}, state=${normalizedState}`)
 
-    // Step 1: Database lookup
-    const databaseOffices = await searchPermitOfficesFromDatabase(city, county, normalizedState)
+    // Create cache key for this search
+    const cacheKey = createCacheKey('permit-offices', {
+      city: city || '',
+      county: county || '',
+      state: normalizedState,
+      lat: latitude || 0,
+      lng: longitude || 0
+    })
+
+    // Step 1: Check cache first, then database lookup
+    const databaseOffices = await withCache(
+      cacheKey,
+      () => searchPermitOfficesFromDatabase(city, county, normalizedState),
+      300 // Cache for 5 minutes
+    )
+
     if (databaseOffices.length > 0) {
       const response = formatOfficesResponse(databaseOffices, latitude, longitude)
       return NextResponse.json({ ...response, source: 'database' })
@@ -89,32 +104,46 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ ...response, source: 'fallback' })
     }
 
-    // Step 3: Queue background scrape job
-    const { job, created } = await enqueueScrapeJob({
-      city,
-      county,
-      state: normalizedState,
-      latitude,
-      longitude
-    })
+    // Step 3: Queue background scrape job with error handling
+    try {
+      const { job, created } = await enqueueScrapeJob({
+        city,
+        county,
+        state: normalizedState,
+        latitude,
+        longitude
+      })
 
-    const statusCode = created ? 202 : 200
-    const message = created
-      ? 'No permit offices yet—collecting live data now. Try again in a few minutes.'
-      : 'Permit office data is being collected. Check back shortly.'
+      const statusCode = created ? 202 : 200
+      const message = created
+        ? 'No permit offices yet—collecting live data now. Try again in a few minutes.'
+        : 'Permit office data is being collected. Check back shortly.'
 
-    return NextResponse.json(
-      {
-        success: true,
-        offices: [],
-        count: 0,
-        source: 'job_queue',
-        jobId: job.id,
-        jobStatus: job.status,
-        message
-      },
-      { status: statusCode }
-    )
+      return NextResponse.json(
+        {
+          success: true,
+          offices: [],
+          count: 0,
+          source: 'job_queue',
+          jobId: job.id,
+          jobStatus: job.status,
+          message
+        },
+        { status: statusCode }
+      )
+    } catch (jobError) {
+      console.error('Failed to enqueue scrape job:', jobError)
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Unable to collect permit office data at this time',
+          offices: [],
+          count: 0,
+          source: 'error'
+        },
+        { status: 503 }
+      )
+    }
   } catch (error) {
     console.error('Permit office search error:', error)
     return NextResponse.json(
@@ -137,42 +166,64 @@ async function searchPermitOfficesFromDatabase(city: string | null, county: stri
       setTimeout(() => reject(new Error('Database query timeout')), 5000)
     )
 
-    const conditions: string[] = ['active = true']
-    const params: unknown[] = []
+    console.log(`Searching database: city=${city}, county=${county}, state=${state}`)
 
-    // Optimize queries - use exact match first, then partial match
-    if (city) {
-      conditions.push('(city = $' + (params.length + 1) + ' OR city ILIKE $' + (params.length + 2) + ')')
-      params.push(city, `%${city}%`)
+    // Use template literal syntax for better compatibility
+    let query: Promise<unknown>
+    if (city && county) {
+      query = sql`
+        SELECT * FROM permit_offices
+        WHERE active = true 
+          AND (city = ${city} OR city ILIKE ${`%${city}%`})
+          AND (county = ${county} OR county ILIKE ${`%${county}%`})
+          AND state = ${state}
+        ORDER BY
+          CASE WHEN city = ${city} THEN 1 ELSE 2 END,
+          jurisdiction_type = 'city' DESC,
+          city, county
+        LIMIT 20
+      `
+    } else if (city) {
+      query = sql`
+        SELECT * FROM permit_offices
+        WHERE active = true 
+          AND (city = ${city} OR city ILIKE ${`%${city}%`})
+          AND state = ${state}
+        ORDER BY
+          CASE WHEN city = ${city} THEN 1 ELSE 2 END,
+          jurisdiction_type = 'city' DESC,
+          city, county
+        LIMIT 20
+      `
+    } else if (county) {
+      query = sql`
+        SELECT * FROM permit_offices
+        WHERE active = true 
+          AND (county = ${county} OR county ILIKE ${`%${county}%`})
+          AND state = ${state}
+        ORDER BY
+          jurisdiction_type = 'city' DESC,
+          city, county
+        LIMIT 20
+      `
+    } else {
+      query = sql`
+        SELECT * FROM permit_offices
+        WHERE active = true 
+          AND state = ${state}
+        ORDER BY
+          jurisdiction_type = 'city' DESC,
+          city, county
+        LIMIT 20
+      `
     }
-
-    if (county) {
-      conditions.push('(county = $' + (params.length + 1) + ' OR county ILIKE $' + (params.length + 2) + ')')
-      params.push(county, `%${county}%`)
-    }
-
-    conditions.push('state = $' + (params.length + 1))
-    params.push(state)
-
-    const clause = conditions.join(' AND ')
-    // Optimize query with better ordering and limit
-    const query = `
-      SELECT * FROM permit_offices
-      WHERE ${clause}
-      ORDER BY
-        CASE WHEN city = $1 THEN 1 ELSE 2 END,
-        jurisdiction_type = 'city' DESC,
-        city, county
-      LIMIT 20
-    `
-
-    console.log('Database query:', query.replace(/\s+/g, ' '), 'Params:', params)
 
     // Race the query against timeout
-    const queryPromise = (sql as unknown as { unsafe: (text: string, values?: unknown[]) => Promise<unknown> }).unsafe(query, params)
+    const queryPromise = query
     const rawResults = await Promise.race([queryPromise, timeoutPromise])
     const records = rawResults as unknown as PermitOfficeRow[]
 
+    console.log(`Found ${records.length} records in database`)
     return records.map(mapPermitOfficeRow)
   } catch (error) {
     console.error('Database search error:', error)
