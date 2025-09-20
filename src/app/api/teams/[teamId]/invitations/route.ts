@@ -11,7 +11,7 @@ interface RouteParams {
   }>;
 }
 
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(_request: NextRequest, { params }: RouteParams) {
   const { userId } = await auth();
   const { teamId } = await params;
 
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       )
       .limit(1);
 
-    if (membership.length === 0 || !['owner', 'admin'].includes(membership[0].role)) {
+    if (membership.length === 0 || !['owner', 'admin'].includes(membership[0]?.role ?? '')) {
       return NextResponse.json({ 
         error: 'Insufficient permissions to invite members' 
       }, { status: 403 });

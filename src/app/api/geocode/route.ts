@@ -84,13 +84,13 @@ async function geocodeWithLocationIQ(address: string) {
   }
 }
 
-type GoogleAddressComponent = {
+interface GoogleAddressComponent {
   long_name: string
   short_name: string
   types: string[]
 }
 
-type GoogleGeocodeLikeResult = {
+interface GoogleGeocodeLikeResult {
   geometry: {
     location: {
       lat: number
@@ -229,7 +229,7 @@ function extractCity(displayName: string): string {
 
 function extractCounty(displayName: string): string {
   const match = displayName.match(/([^,]+)\s+County/)
-  return match ? match[1] : ''
+  return match?.[1] ?? ''
 }
 
 function extractState(displayName: string): string {

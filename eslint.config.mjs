@@ -23,6 +23,33 @@ const eslintConfig = [
       "pto-agent/**",
     ],
   },
+  {
+    rules: {
+      // Prevent 'any' type usage to maintain type safety
+      "@typescript-eslint/no-explicit-any": "error",
+
+      // Prevent unused imports and variables
+      "@typescript-eslint/no-unused-vars": ["error", {
+        argsIgnorePattern: "^_",
+        varsIgnorePattern: "^_",
+        ignoreRestSiblings: true
+      }],
+
+      // Prevent Function type usage (use specific function signatures)
+      "@typescript-eslint/prefer-function-type": "error",
+
+      // Require consistent return types (only for exported functions)
+      "@typescript-eslint/explicit-function-return-type": "off",
+
+      // Enforce consistent type definitions (warn level)
+      "@typescript-eslint/consistent-type-definitions": ["warn", "interface"],
+
+      // Prevent empty interfaces (unless extending)
+      "@typescript-eslint/no-empty-interface": ["error", {
+        allowSingleExtends: true
+      }]
+    }
+  }
 ];
 
 export default eslintConfig;
