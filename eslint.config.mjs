@@ -21,6 +21,9 @@ const eslintConfig = [
       "**/*.js",
       "python-scraper/**",
       "pto-agent/**",
+      "qa/**",
+      "scripts/**",
+      "tests/**",
     ],
   },
   {
