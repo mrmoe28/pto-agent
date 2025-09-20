@@ -137,18 +137,21 @@ __pycache__/
 *.pyo
 *.pyd
 
-# Data files (large datasets)
-data/
-
-# Scraper files (may contain sensitive data)
-scraper/
+# Data files (large datasets and outputs - keep structure but ignore outputs)
+data/exports/
+data/raw/
+data/logs/
+# Keep seed data structure
+!data/seeds/
 
 # Test environment files
 src/app/test-env/
 
-# Python test files (if not needed)
-tests/__init__.py
-tests/test_*.py
+# Keep scraper infrastructure but ignore cache and sensitive files
+!scraper/
+!tests/
+!cli.py
 
-# CLI scripts (may contain sensitive data)
-cli.py
+# Ignore scraper runtime data
+scraper_cache.sqlite*
+requests_cache.sqlite*
