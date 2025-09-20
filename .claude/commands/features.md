@@ -225,6 +225,26 @@ Add or remove permit offices from user favorites:
 5. **Property Managers**: Managing permits for multiple properties
 6. **Solar/HVAC Installers**: Finding specialized permit departments
 
+## 🤖 Development Agents
+
+### **scraper-code-auditor**
+- **Purpose**: Deep code quality audit for the python-scraper codebase
+- **Model**: Opus (advanced reasoning for complex code analysis)
+- **Capabilities**:
+  - Static code analysis for reliability and error handling
+  - Runtime considerations review (resource limits, memory management)
+  - Compliance checking (robots.txt, respectful delays)
+  - Test coverage gap analysis
+  - Best practices research from context7 knowledge source
+  - Risk prioritization (Critical/High/Medium/Low)
+- **Usage**: `/agent scraper-code-auditor` followed by audit request
+- **Focus Areas**:
+  - Enhanced scraper reliability
+  - Error handling and retry logic
+  - Session management and cleanup
+  - Logging and observability
+  - Data validation and integrity
+
 ## 🛡️ Data Privacy & Security
 - **User Consent**: All user data collection with explicit consent
 - **Clerk Authentication**: Enterprise-grade security with Clerk
