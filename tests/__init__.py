@@ -1,0 +1,1 @@
+"""Tests for the US50 Permit Scraper."""

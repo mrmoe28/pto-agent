@@ -1,0 +1,159 @@
+# US50 Permit Scraper - Start URLs for All States
+# Format: One URL per line, comments start with #
+# State codes follow each URL for reference
+
+# === GEORGIA (GA) - Has working seeds ===
+https://www.georgia.gov/business/permits-licenses
+https://www.atlantaga.gov/government/departments/city-planning/bureau-of-buildings
+https://www.fultoncountyga.gov/services/building-and-development
+
+# === FLORIDA (FL) - TODO: Add seeds ===
+# https://www.flgov.com/permits (placeholder)
+
+# === NORTH CAROLINA (NC) - TODO: Add seeds ===
+# https://www.nc.gov/services/build-or-buy-home (placeholder)
+
+# === SOUTH CAROLINA (SC) - TODO: Add seeds ===
+# https://www.sc.gov/business/permits-licenses (placeholder)
+
+# === TENNESSEE (TN) - TODO: Add seeds ===
+# https://www.tn.gov/environment/permit-applications.html (placeholder)
+
+# === ALABAMA (AL) - TODO: Add seeds ===
+# https://www.alabama.gov/business/permits (placeholder)
+
+# === CALIFORNIA (CA) - TODO: Add seeds ===
+# https://www.ca.gov/business/permits-licenses (placeholder)
+
+# === TEXAS (TX) - TODO: Add seeds ===
+# https://www.texas.gov/business/permits (placeholder)
+
+# === NEW YORK (NY) - TODO: Add seeds ===
+# https://www.ny.gov/services/get-building-permit (placeholder)
+
+# === ILLINOIS (IL) - TODO: Add seeds ===
+# https://www.illinois.gov/business/permits (placeholder)
+
+# === PENNSYLVANIA (PA) - TODO: Add seeds ===
+# https://www.pa.gov/business/permits (placeholder)
+
+# === OHIO (OH) - TODO: Add seeds ===
+# https://www.ohio.gov/business/permits (placeholder)
+
+# === MICHIGAN (MI) - TODO: Add seeds ===
+# https://www.michigan.gov/business/permits (placeholder)
+
+# === VIRGINIA (VA) - TODO: Add seeds ===
+# https://www.virginia.gov/business/permits (placeholder)
+
+# === WASHINGTON (WA) - TODO: Add seeds ===
+# https://www.wa.gov/business/permits (placeholder)
+
+# === ARIZONA (AZ) - TODO: Add seeds ===
+# https://www.az.gov/business/permits (placeholder)
+
+# === MASSACHUSETTS (MA) - TODO: Add seeds ===
+# https://www.mass.gov/business/permits (placeholder)
+
+# === INDIANA (IN) - TODO: Add seeds ===
+# https://www.in.gov/business/permits (placeholder)
+
+# === COLORADO (CO) - TODO: Add seeds ===
+# https://www.colorado.gov/business/permits (placeholder)
+
+# === MARYLAND (MD) - TODO: Add seeds ===
+# https://www.maryland.gov/business/permits (placeholder)
+
+# === MISSOURI (MO) - TODO: Add seeds ===
+# https://www.mo.gov/business/permits (placeholder)
+
+# === WISCONSIN (WI) - TODO: Add seeds ===
+# https://www.wisconsin.gov/business/permits (placeholder)
+
+# === MINNESOTA (MN) - TODO: Add seeds ===
+# https://www.mn.gov/business/permits (placeholder)
+
+# === LOUISIANA (LA) - TODO: Add seeds ===
+# https://www.louisiana.gov/business/permits (placeholder)
+
+# === KENTUCKY (KY) - TODO: Add seeds ===
+# https://www.ky.gov/business/permits (placeholder)
+
+# === OREGON (OR) - TODO: Add seeds ===
+# https://www.oregon.gov/business/permits (placeholder)
+
+# === OKLAHOMA (OK) - TODO: Add seeds ===
+# https://www.ok.gov/business/permits (placeholder)
+
+# === CONNECTICUT (CT) - TODO: Add seeds ===
+# https://www.ct.gov/business/permits (placeholder)
+
+# === UTAH (UT) - TODO: Add seeds ===
+# https://www.utah.gov/business/permits (placeholder)
+
+# === IOWA (IA) - TODO: Add seeds ===
+# https://www.iowa.gov/business/permits (placeholder)
+
+# === NEVADA (NV) - TODO: Add seeds ===
+# https://www.nv.gov/business/permits (placeholder)
+
+# === ARKANSAS (AR) - TODO: Add seeds ===
+# https://www.arkansas.gov/business/permits (placeholder)
+
+# === MISSISSIPPI (MS) - TODO: Add seeds ===
+# https://www.ms.gov/business/permits (placeholder)
+
+# === KANSAS (KS) - TODO: Add seeds ===
+# https://www.kansas.gov/business/permits (placeholder)
+
+# === NEW MEXICO (NM) - TODO: Add seeds ===
+# https://www.newmexico.gov/business/permits (placeholder)
+
+# === NEBRASKA (NE) - TODO: Add seeds ===
+# https://www.nebraska.gov/business/permits (placeholder)
+
+# === IDAHO (ID) - TODO: Add seeds ===
+# https://www.idaho.gov/business/permits (placeholder)
+
+# === WEST VIRGINIA (WV) - TODO: Add seeds ===
+# https://www.wv.gov/business/permits (placeholder)
+
+# === HAWAII (HI) - TODO: Add seeds ===
+# https://www.hawaii.gov/business/permits (placeholder)
+
+# === NEW HAMPSHIRE (NH) - TODO: Add seeds ===
+# https://www.nh.gov/business/permits (placeholder)
+
+# === MAINE (ME) - TODO: Add seeds ===
+# https://www.maine.gov/business/permits (placeholder)
+
+# === RHODE ISLAND (RI) - TODO: Add seeds ===
+# https://www.ri.gov/business/permits (placeholder)
+
+# === MONTANA (MT) - TODO: Add seeds ===
+# https://www.mt.gov/business/permits (placeholder)
+
+# === DELAWARE (DE) - TODO: Add seeds ===
+# https://www.delaware.gov/business/permits (placeholder)
+
+# === SOUTH DAKOTA (SD) - TODO: Add seeds ===
+# https://www.sd.gov/business/permits (placeholder)
+
+# === NORTH DAKOTA (ND) - TODO: Add seeds ===
+# https://www.nd.gov/business/permits (placeholder)
+
+# === ALASKA (AK) - TODO: Add seeds ===
+# https://www.alaska.gov/business/permits (placeholder)
+
+# === VERMONT (VT) - TODO: Add seeds ===
+# https://www.vermont.gov/business/permits (placeholder)
+
+# === WYOMING (WY) - TODO: Add seeds ===
+# https://www.wyoming.gov/business/permits (placeholder)
+
+# === TODO SECTION ===
+# States without verified seeds (need research and validation):
+# - All states except GA currently have placeholder URLs
+# - Priority for next phase: FL, NC, SC, TN, AL (existing target states in config)
+# - Research county and city-level permits for major metropolitan areas
+# - Add Accela, eTRAKiT, Tyler EnerGov, and other platform URLs as discovered
