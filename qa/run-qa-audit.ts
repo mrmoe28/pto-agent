@@ -71,7 +71,7 @@ class QAAuditOrchestrator {
       }
 
       // Phase 6: Re-test after repairs (if repairs were applied)
-      if (repairSession && repairSession.repairs.some(r => r.success)) {
+      if (repairSession && repairSession.repairs.some((r: any) => r.success)) {
         console.log('🔄 Re-testing after automated repairs...');
         const retestResults = await this.performDetailedTesting(crawlResults, true);
         this.compareResults(testResults, retestResults);
@@ -352,7 +352,7 @@ class QAAuditOrchestrator {
 
       // Additional wait for Clerk
       await page.waitForFunction(() => {
-        return window.Clerk ? window.Clerk.loaded : true;
+        return (window as any).Clerk ? (window as any).Clerk.loaded : true;
       }, { timeout: 5000 }).catch(() => {
         // Clerk might not be on this page
       });
@@ -468,7 +468,7 @@ class QAAuditOrchestrator {
       await page.waitForSelector('[data-clerk-id], .cl-component, [class*="cl-"]', { timeout: 10000 });
 
       const clerkLoaded = await page.evaluate(() => {
-        return typeof window.Clerk !== 'undefined';
+        return typeof (window as any).Clerk !== 'undefined';
       });
 
       if (!clerkLoaded) {
@@ -756,7 +756,7 @@ class QAAuditOrchestrator {
       await page.waitForTimeout(1000);
 
       // Check if content is still accessible
-      const overflowElements = await page.$$eval('*', elements => {
+      const overflowElements = await page.$$eval('*', (elements: Element[]) => {
         return elements.filter(el => {
           const style = window.getComputedStyle(el);
           return style.overflowX === 'auto' || style.overflowX === 'scroll';

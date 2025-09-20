@@ -500,7 +500,7 @@ export class QAReportGenerator {
 
     if (recommendations.immediate.length > 0) {
       section += `### 🚨 Immediate Action Required\n\n`;
-      recommendations.immediate.forEach((rec, index) => {
+      recommendations.immediate.forEach((rec: string, index: number) => {
         section += `${index + 1}. ${rec}\n`;
       });
       section += '\n';
@@ -508,7 +508,7 @@ export class QAReportGenerator {
 
     if (recommendations.shortTerm.length > 0) {
       section += `### 📅 Short-term (Next Sprint)\n\n`;
-      recommendations.shortTerm.forEach((rec, index) => {
+      recommendations.shortTerm.forEach((rec: string, index: number) => {
         section += `${index + 1}. ${rec}\n`;
       });
       section += '\n';
@@ -516,7 +516,7 @@ export class QAReportGenerator {
 
     if (recommendations.longTerm.length > 0) {
       section += `### 🎯 Long-term (Roadmap)\n\n`;
-      recommendations.longTerm.forEach((rec, index) => {
+      recommendations.longTerm.forEach((rec: string, index: number) => {
         section += `${index + 1}. ${rec}\n`;
       });
       section += '\n';

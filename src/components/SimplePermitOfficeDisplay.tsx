@@ -4,9 +4,10 @@ import React, { useState } from 'react';
 import {
   Phone, Mail, MapPin, Clock, Building,
   Zap, Droplets, Settings, CheckCircle, Globe,
-  FileText, DollarSign, Calendar, Download, AlertCircle, Loader2
+  FileText, DollarSign, Calendar, Download, AlertCircle, Loader2, Eye
 } from 'lucide-react';
 import FavoriteButton from './FavoriteButton';
+import PermitOfficeDialog from './PermitOfficeDialog';
 
 interface PermitOffice {
   id?: string;
@@ -415,6 +416,15 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
                   
                   {/* Action Buttons */}
                   <div className="mt-4 flex flex-wrap gap-2">
+                    <PermitOfficeDialog 
+                      office={office}
+                      trigger={
+                        <button className="px-3 py-1.5 text-xs bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-1">
+                          <Eye className="w-3 h-3" />
+                          View Details
+                        </button>
+                      }
+                    />
                     {office.website && (
                       <button
                         onClick={() => office.website && window.open(office.website, '_blank')}

@@ -11,13 +11,12 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { MapPin, Phone, Mail, Globe, Clock, CheckCircle, XCircle } from 'lucide-react'
 
 interface PermitOffice {
-  id: string
+  id?: string
   city: string
   county: string
   state: string
@@ -46,21 +45,20 @@ interface PermitOffice {
   online_payments?: boolean
   permit_tracking?: boolean
   online_portal_url?: string | null
-  latitude?: number | null
-  longitude?: number | null
+  latitude?: string | number | null
+  longitude?: string | number | null
   distance?: number
 }
 
 interface PermitOfficeDialogProps {
   office: PermitOffice
   trigger?: React.ReactNode
-  children?: React.ReactNode
 }
 
-export default function PermitOfficeDialog({ office, trigger, children }: PermitOfficeDialogProps) {
+export default function PermitOfficeDialog({ office, trigger }: PermitOfficeDialogProps) {
   const [isOpen, setIsOpen] = useState(false)
 
-  const formatHours = (day: string, hours: string | null) => {
+  const formatHours = (day: string, hours: string | null | undefined) => {
     if (!hours) return null
     return (
       <div className="flex justify-between text-sm">

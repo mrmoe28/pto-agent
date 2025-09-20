@@ -334,7 +334,7 @@ export class UICrawler {
 
       // Check for empty links
       const emptyLinks = await page.$$eval('a[href]', links =>
-        links.filter(link => !link.textContent?.trim() && !link.querySelector('img')).map(link => link.href)
+        links.filter(link => !link.textContent?.trim() && !link.querySelector('img')).map(link => (link as HTMLAnchorElement).href)
       );
 
       emptyLinks.forEach(href => {
