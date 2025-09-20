@@ -1,262 +1,34 @@
-// Initial Georgia permit office data for seeding
-// This will be used until we have full crawling implemented
+// Georgia permit office data structure
+// Data should be populated from web scraping, API calls, or database
+// This file defines the structure but contains no hardcoded office data
 
-export const georgiaPermitOffices = [
-  {
-    city: 'Atlanta',
-    county: 'Fulton',
-    state: 'GA',
-    jurisdiction_type: 'city' as const,
-    department_name: 'Department of City Planning - Bureau of Buildings',
-    office_type: 'combined' as const,
-    address: '55 Trinity Avenue SW, Suite 3350, Atlanta, GA 30303',
-    phone: '(404) 330-6145',
-    email: 'permits@atlantaga.gov',
-    website: 'https://www.atlantaga.gov/government/departments/city-planning/bureau-of-buildings',
-    online_applications: true,
-    online_payments: true,
-    permit_tracking: true,
-    online_portal_url: 'https://aca-prod.accela.com/ATLANTA',
-    building_permits: true,
-    electrical_permits: true,
-    plumbing_permits: true,
-    mechanical_permits: true,
-    zoning_permits: true,
-    planning_review: true,
-    inspections: true,
-    hours_monday: '8:00 AM - 5:00 PM',
-    hours_tuesday: '8:00 AM - 5:00 PM',
-    hours_wednesday: '8:00 AM - 5:00 PM',
-    hours_thursday: '8:00 AM - 5:00 PM',
-    hours_friday: '8:00 AM - 5:00 PM',
-    hours_saturday: null,
-    hours_sunday: null,
-    latitude: null,
-    longitude: null,
-    service_area_bounds: null,
-    last_verified: null,
-    data_source: 'manual' as const,
-    crawl_frequency: 'weekly' as const,
-    active: true
-  },
-  {
-    city: 'Savannah',
-    county: 'Chatham',
-    state: 'GA',
-    jurisdiction_type: 'city' as const,
-    department_name: 'Development Services Department',
-    office_type: 'combined' as const,
-    address: '2 E Bay Street, Savannah, GA 31401',
-    phone: '(912) 651-6510',
-    website: 'https://www.savannahga.gov/1072/Development-Services',
-    online_applications: true,
-    online_payments: true,
-    permit_tracking: true,
-    online_portal_url: 'https://aca-prod.accela.com/SAVANNAH',
-    building_permits: true,
-    electrical_permits: true,
-    plumbing_permits: true,
-    mechanical_permits: true,
-    zoning_permits: true,
-    planning_review: true,
-    inspections: true,
-    hours_monday: '8:00 AM - 5:00 PM',
-    hours_tuesday: '8:00 AM - 5:00 PM',
-    hours_wednesday: '8:00 AM - 5:00 PM',
-    hours_thursday: '8:00 AM - 5:00 PM',
-    hours_friday: '8:00 AM - 5:00 PM',
-    hours_saturday: null,
-    hours_sunday: null,
-    latitude: null,
-    longitude: null,
-    service_area_bounds: null,
-    last_verified: null,
-    data_source: 'manual' as const,
-    crawl_frequency: 'weekly' as const,
-    active: true
-  },
-  {
-    city: 'Sandy Springs',
-    county: 'Fulton',
-    state: 'GA',
-    jurisdiction_type: 'city' as const,
-    department_name: 'Community Development Department',
-    office_type: 'combined' as const,
-    address: '1 Galambos Way, Sandy Springs, GA 30328',
-    phone: '(770) 730-5600',
-    website: 'https://www.sandyspringsga.gov/government/city-departments/community-development',
-    online_applications: true,
-    online_payments: true,
-    permit_tracking: true,
-    building_permits: true,
-    electrical_permits: true,
-    plumbing_permits: true,
-    mechanical_permits: true,
-    zoning_permits: true,
-    planning_review: true,
-    inspections: true,
-    hours_monday: '8:00 AM - 5:00 PM',
-    hours_tuesday: '8:00 AM - 5:00 PM',
-    hours_wednesday: '8:00 AM - 5:00 PM',
-    hours_thursday: '8:00 AM - 5:00 PM',
-    hours_friday: '8:00 AM - 5:00 PM',
-    hours_saturday: null,
-    hours_sunday: null,
-    latitude: null,
-    longitude: null,
-    service_area_bounds: null,
-    last_verified: null,
-    data_source: 'manual' as const,
-    crawl_frequency: 'weekly' as const,
-    active: true
-  },
-  {
-    city: 'Unincorporated',
-    county: 'Gwinnett',
-    state: 'GA',
-    jurisdiction_type: 'county' as const,
-    department_name: 'Community Development Division',
-    office_type: 'combined' as const,
-    address: '75 Langley Drive, Lawrenceville, GA 30046',
-    phone: '(678) 518-6020',
-    website: 'https://www.gwinnettcounty.com/web/gwinnett/departments/communitydevelopment',
-    online_applications: true,
-    online_payments: true,
-    permit_tracking: true,
-    building_permits: true,
-    electrical_permits: true,
-    plumbing_permits: true,
-    mechanical_permits: true,
-    zoning_permits: true,
-    planning_review: true,
-    inspections: true,
-    hours_monday: '8:00 AM - 5:00 PM',
-    hours_tuesday: '8:00 AM - 5:00 PM',
-    hours_wednesday: '8:00 AM - 5:00 PM',
-    hours_thursday: '8:00 AM - 5:00 PM',
-    hours_friday: '8:00 AM - 5:00 PM',
-    hours_saturday: null,
-    hours_sunday: null,
-    latitude: null,
-    longitude: null,
-    service_area_bounds: null,
-    last_verified: null,
-    data_source: 'manual' as const,
-    crawl_frequency: 'weekly' as const,
-    active: true
-  },
-  {
-    city: 'Decatur',
-    county: 'DeKalb',
-    state: 'GA',
-    jurisdiction_type: 'county' as const,
-    department_name: 'DeKalb County Planning & Sustainability Department',
-    office_type: 'combined' as const,
-    address: '330 W Ponce de Leon Ave, Decatur, GA 30030',
-    phone: '(404) 371-2155',
-    email: 'planning@dekalbcountyga.gov',
-    website: 'https://www.dekalbcountyga.gov/planning-sustainability',
-    online_applications: true,
-    online_payments: true,
-    permit_tracking: true,
-    online_portal_url: 'https://aca-prod.accela.com/DEKALB',
-    building_permits: true,
-    electrical_permits: true,
-    plumbing_permits: true,
-    mechanical_permits: true,
-    zoning_permits: true,
-    planning_review: true,
-    inspections: true,
-    hours_monday: '8:00 AM - 5:00 PM',
-    hours_tuesday: '8:00 AM - 5:00 PM',
-    hours_wednesday: '8:00 AM - 5:00 PM',
-    hours_thursday: '8:00 AM - 5:00 PM',
-    hours_friday: '8:00 AM - 5:00 PM',
-    hours_saturday: null,
-    hours_sunday: null,
-    latitude: null,
-    longitude: null,
-    service_area_bounds: null,
-    last_verified: null,
-    data_source: 'manual' as const,
-    crawl_frequency: 'weekly' as const,
-    active: true
-  },
-  {
-    city: 'Smyrna',
-    county: 'Cobb',
-    state: 'GA',
-    jurisdiction_type: 'city' as const,
-    department_name: 'Community Development Department',
-    office_type: 'combined' as const,
-    address: '2800 King Street, Smyrna, GA 30080',
-    phone: '(770) 431-2800',
-    email: 'permits@smyrnaga.gov',
-    website: 'https://www.smyrnaga.gov/government/departments/community-development',
-    online_applications: true,
-    online_payments: true,
-    permit_tracking: true,
-    online_portal_url: 'https://aca-prod.accela.com/SMYRNA',
-    building_permits: true,
-    electrical_permits: true,
-    plumbing_permits: true,
-    mechanical_permits: true,
-    zoning_permits: true,
-    planning_review: true,
-    inspections: true,
-    hours_monday: '8:00 AM - 5:00 PM',
-    hours_tuesday: '8:00 AM - 5:00 PM',
-    hours_wednesday: '8:00 AM - 5:00 PM',
-    hours_thursday: '8:00 AM - 5:00 PM',
-    hours_friday: '8:00 AM - 5:00 PM',
-    hours_saturday: null,
-    hours_sunday: null,
-    latitude: 33.8834,
-    longitude: -84.5144,
-    service_area_bounds: null,
-    last_verified: null,
-    data_source: 'manual' as const,
-    crawl_frequency: 'weekly' as const,
-    active: true
-  },
-  {
-    city: 'Unincorporated',
-    county: 'Cobb',
-    state: 'GA',
-    jurisdiction_type: 'county' as const,
-    department_name: 'Community Development Agency',
-    office_type: 'combined' as const,
-    address: '1000 Cherokee Street, Marietta, GA 30060',
-    phone: '(770) 528-2030',
-    email: 'permits@cobbcounty.org',
-    website: 'https://www.cobbcounty.org/community-development',
-    online_applications: true,
-    online_payments: true,
-    permit_tracking: true,
-    online_portal_url: 'https://aca-prod.accela.com/COBB',
-    building_permits: true,
-    electrical_permits: true,
-    plumbing_permits: true,
-    mechanical_permits: true,
-    zoning_permits: true,
-    planning_review: true,
-    inspections: true,
-    hours_monday: '8:00 AM - 5:00 PM',
-    hours_tuesday: '8:00 AM - 5:00 PM',
-    hours_wednesday: '8:00 AM - 5:00 PM',
-    hours_thursday: '8:00 AM - 5:00 PM',
-    hours_friday: '8:00 AM - 5:00 PM',
-    hours_saturday: null,
-    hours_sunday: null,
-    latitude: 33.9526,
-    longitude: -84.5499,
-    service_area_bounds: null,
-    last_verified: null,
-    data_source: 'manual' as const,
-    crawl_frequency: 'weekly' as const,
-    active: true
-  }
-]
+// Interface for Georgia-specific permit office data
+interface PermitOffice {
+  city: string
+  county: string
+  state: string
+  jurisdiction_type: 'city' | 'county' | 'state' | 'special_district'
+  department_name: string
+  office_type: 'building' | 'planning' | 'zoning' | 'combined' | 'other'
+  address: string
+  phone?: string
+  email?: string
+  website?: string
+  online_applications?: boolean
+  online_payments?: boolean
+  permit_tracking?: boolean
+  online_portal_url?: string
+  building_permits?: boolean
+  electrical_permits?: boolean
+  plumbing_permits?: boolean
+  mechanical_permits?: boolean
+  zoning_permits?: boolean
+  planning_review?: boolean
+  inspections?: boolean
+}
+
+// Empty array - data populated dynamically from scraping/database
+export const georgiaPermitOffices: PermitOffice[] = []
 
 // Georgia-specific website patterns for crawling
 export const georgiaWebsitePatterns = {
@@ -267,7 +39,7 @@ export const georgiaWebsitePatterns = {
     '.savannahga.gov',
     '.augustaga.gov'
   ],
-  
+
   permit_keywords: [
     'building permit',
     'construction permit',
@@ -280,7 +52,7 @@ export const georgiaWebsitePatterns = {
     'community development',
     'code enforcement'
   ],
-  
+
   contact_selectors: [
     'contact',
     'phone',
@@ -289,11 +61,35 @@ export const georgiaWebsitePatterns = {
     'office hours',
     'location'
   ],
-  
+
   common_permit_portals: [
     'accela.com',
     'citizenserve.com',
     'viewpoint.com',
     'clariti.com'
   ]
+}
+
+// Helper function to validate Georgia permit office data structure
+export function validateGeorgiaPermitOffice(office: unknown): office is PermitOffice {
+  if (!office || typeof office !== 'object') return false
+
+  const o = office as Record<string, unknown>
+
+  return (
+    typeof o.city === 'string' &&
+    typeof o.county === 'string' &&
+    o.state === 'GA' &&
+    ['city', 'county', 'state', 'special_district'].includes(o.jurisdiction_type as string) &&
+    typeof o.department_name === 'string' &&
+    ['building', 'planning', 'zoning', 'combined', 'other'].includes(o.office_type as string) &&
+    typeof o.address === 'string'
+  )
+}
+
+// Helper function to get Georgia counties for validation
+export function getGeorgiaCounties(): string[] {
+  // This would typically come from a database or API
+  // Returning empty array as no hardcoded data should be included
+  return []
 }

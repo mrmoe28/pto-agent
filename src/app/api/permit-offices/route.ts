@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { georgiaPermitOffices } from '@/lib/georgia-permit-data'
 import { sql } from '@/lib/neon'
 import { enqueueScrapeJob } from '@/lib/db/jobs'
-import { generatePermitOfficeId, type PermitOffice } from '@/lib/permit-office-search'
+import { type PermitOffice } from '@/lib/permit-office-search'
 
 interface PermitOfficeRow {
   id: string
@@ -270,58 +269,13 @@ function convertStateNameToAbbreviation(state: string): string {
 }
 
 function getFallbackOffices(city: string | null, county: string | null, state: string): PermitOffice[] {
+  // No hardcoded fallback data - all data comes from database, web scraping, or API calls
+  // If no database results exist, the application will trigger web scraping
   if (state !== 'GA') {
     return []
   }
 
-  const normalizedCity = city?.toLowerCase() ?? null
-  const normalizedCounty = county?.toLowerCase() ?? null
-
-  return georgiaPermitOffices
-    .filter(office => {
-      if (office.state !== 'GA') return false
-      if (normalizedCity && office.city.toLowerCase() !== normalizedCity) return false
-      if (normalizedCounty && office.county.toLowerCase() !== normalizedCounty) return false
-      return true
-    })
-    .map(office => ({
-      id: generatePermitOfficeId(),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      city: office.city,
-      county: office.county,
-      state: office.state,
-      jurisdiction_type: office.jurisdiction_type,
-      department_name: office.department_name,
-      office_type: office.office_type,
-      address: office.address,
-      phone: office.phone ?? null,
-      email: office.email ?? null,
-      website: office.website ?? null,
-      hours_monday: office.hours_monday ?? null,
-      hours_tuesday: office.hours_tuesday ?? null,
-      hours_wednesday: office.hours_wednesday ?? null,
-      hours_thursday: office.hours_thursday ?? null,
-      hours_friday: office.hours_friday ?? null,
-      hours_saturday: office.hours_saturday ?? null,
-      hours_sunday: office.hours_sunday ?? null,
-      building_permits: office.building_permits ?? false,
-      electrical_permits: office.electrical_permits ?? false,
-      plumbing_permits: office.plumbing_permits ?? false,
-      mechanical_permits: office.mechanical_permits ?? false,
-      zoning_permits: office.zoning_permits ?? false,
-      planning_review: office.planning_review ?? false,
-      inspections: office.inspections ?? false,
-      online_applications: office.online_applications ?? false,
-      online_payments: office.online_payments ?? false,
-      permit_tracking: office.permit_tracking ?? false,
-      online_portal_url: office.online_portal_url ?? null,
-      latitude: office.latitude ?? null,
-      longitude: office.longitude ?? null,
-      service_area_bounds: office.service_area_bounds ?? null,
-      data_source: 'manual',
-      last_verified: office.last_verified ?? null,
-      crawl_frequency: office.crawl_frequency ?? 'monthly',
-      active: office.active ?? true
-    }))
+  // Return empty array to indicate no fallback data available
+  // This will cause the application to rely on web scraping and database storage
+  return []
 }

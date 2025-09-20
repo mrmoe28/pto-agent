@@ -412,6 +412,37 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
                       <p className="text-sm text-gray-500 italic">No contact information available</p>
                     )}
                   </div>
+                  
+                  {/* Action Buttons */}
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {office.website && (
+                      <button
+                        onClick={() => office.website && window.open(office.website, '_blank')}
+                        className="px-3 py-1.5 text-xs bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-1"
+                      >
+                        <Globe className="w-3 h-3" />
+                        Visit Website
+                      </button>
+                    )}
+                    {office.address && (
+                      <button
+                        onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(office.address)}`, '_blank')}
+                        className="px-3 py-1.5 text-xs bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center gap-1"
+                      >
+                        <MapPin className="w-3 h-3" />
+                        View on Map
+                      </button>
+                    )}
+                    {office.phone && (
+                      <button
+                        onClick={() => window.open(`tel:${office.phone}`, '_blank')}
+                        className="px-3 py-1.5 text-xs bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors flex items-center gap-1"
+                      >
+                        <Phone className="w-3 h-3" />
+                        Call
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Operating Hours */}
