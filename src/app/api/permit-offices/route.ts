@@ -132,33 +132,51 @@ export async function GET(request: NextRequest) {
 
 async function searchPermitOfficesFromDatabase(city: string | null, county: string | null, state: string): Promise<PermitOffice[]> {
   try {
+    // Set a timeout for database queries to prevent hanging
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Database query timeout')), 5000)
+    )
+
     const conditions: string[] = ['active = true']
     const params: unknown[] = []
 
+    // Optimize queries - use exact match first, then partial match
     if (city) {
-      conditions.push('(city ILIKE $' + (params.length + 1) + ' OR city ILIKE $' + (params.length + 2) + ')')
-      params.push(`%${city}%`, city)
+      conditions.push('(city = $' + (params.length + 1) + ' OR city ILIKE $' + (params.length + 2) + ')')
+      params.push(city, `%${city}%`)
     }
 
     if (county) {
-      conditions.push('(county ILIKE $' + (params.length + 1) + ' OR county ILIKE $' + (params.length + 2) + ')')
-      params.push(`%${county}%`, county)
+      conditions.push('(county = $' + (params.length + 1) + ' OR county ILIKE $' + (params.length + 2) + ')')
+      params.push(county, `%${county}%`)
     }
 
     conditions.push('state = $' + (params.length + 1))
     params.push(state)
 
     const clause = conditions.join(' AND ')
-    const query = `SELECT * FROM permit_offices WHERE ${clause} ORDER BY city, county LIMIT 20`
+    // Optimize query with better ordering and limit
+    const query = `
+      SELECT * FROM permit_offices
+      WHERE ${clause}
+      ORDER BY
+        CASE WHEN city = $1 THEN 1 ELSE 2 END,
+        jurisdiction_type = 'city' DESC,
+        city, county
+      LIMIT 20
+    `
 
-    console.log('Database query:', query, 'Params:', params)
+    console.log('Database query:', query.replace(/\s+/g, ' '), 'Params:', params)
 
-    const rawResults = await (sql as unknown as { unsafe: (text: string, values?: unknown[]) => Promise<unknown> }).unsafe(query, params)
+    // Race the query against timeout
+    const queryPromise = (sql as unknown as { unsafe: (text: string, values?: unknown[]) => Promise<unknown> }).unsafe(query, params)
+    const rawResults = await Promise.race([queryPromise, timeoutPromise])
     const records = rawResults as unknown as PermitOfficeRow[]
 
     return records.map(mapPermitOfficeRow)
   } catch (error) {
     console.error('Database search error:', error)
+    // Return empty array instead of throwing to allow fallback methods
     return []
   }
 }
