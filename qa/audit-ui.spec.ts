@@ -5,14 +5,13 @@
 
 import { test, expect, Page, Browser } from '@playwright/test';
 import { UICrawler } from './crawl';
-import { UIRepairEngine } from './repair-strategies';
-import { QAIssue, QATestResult, takeScreenshot, urlToFilename, waitForNetworkIdle } from './utils';
+import { QAIssue, QATestResult, takeScreenshot, waitForNetworkIdle } from './utils';
 import AxeBuilder from '@axe-core/playwright';
 
 interface TestContext {
   browser: Browser;
   baseUrl: string;
-  crawlResults: any;
+  crawlResults: unknown;
   testResults: QATestResult[];
   issues: QAIssue[];
 }
@@ -59,7 +58,7 @@ test.describe('Comprehensive UI Quality Assurance', () => {
 
     // Check that critical routes were discovered
     const criticalRoutes = ['/search', '/dashboard', '/sign-in', '/sign-up'];
-    const discoveredUrls = testContext.crawlResults.routes.map((r: any) => new URL(r.url).pathname);
+    const discoveredUrls = testContext.crawlResults.routes.map((r: { url: string }) => new URL(r.url).pathname);
 
     for (const route of criticalRoutes) {
       const found = discoveredUrls.some((url: string) => url.includes(route));
@@ -356,7 +355,7 @@ async function testAuthenticationFlow(page: Page): Promise<void> {
     await page.goto(testConfig.baseUrl);
 
     const signInButton = page.locator('text=Sign In, a[href*="sign-in"]').first();
-    const signUpButton = page.locator('text=Sign Up, a[href*="sign-up"]').first();
+    const _signUpButton = page.locator('text=Sign Up, a[href*="sign-up"]').first();
 
     // Test navigation to auth pages
     if (await signInButton.isVisible()) {
@@ -479,7 +478,7 @@ async function collectConsoleErrors(page: Page): Promise<string[]> {
 /**
  * Perform accessibility audit using axe-core
  */
-async function performAccessibilityAudit(page: Page): Promise<{ issues: any[], score: number }> {
+async function performAccessibilityAudit(page: Page): Promise<{ issues: unknown[], score: number }> {
   try {
     const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
 
@@ -508,7 +507,7 @@ async function performAccessibilityAudit(page: Page): Promise<{ issues: any[], s
 /**
  * Test interactive elements
  */
-async function testInteractiveElements(page: Page, url: string): Promise<QAIssue[]> {
+async function testInteractiveElements(page: Page, _url: string): Promise<QAIssue[]> {
   const issues: QAIssue[] = [];
 
   try {
@@ -830,7 +829,7 @@ function generateOverallRecommendations(issues: QAIssue[]): string[] {
   return recommendations;
 }
 
-function generateMarkdownReport(report: any): string {
+function generateMarkdownReport(report: unknown): string {
   let markdown = `# UI Quality Assurance Report\n\n`;
   markdown += `**Generated:** ${report.timestamp}\n`;
   markdown += `**Base URL:** ${report.baseUrl}\n\n`;

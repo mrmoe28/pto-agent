@@ -3,8 +3,8 @@
  * Provides better performance and explicit cache control
  */
 
-import { sql } from '@/lib/neon'
 import { type PermitOffice } from '@/lib/permit-office-search'
+import { sql } from '@/lib/neon'
 
 interface PermitOfficeRow {
   id: string
@@ -56,7 +56,7 @@ export async function getCachedPermitOfficesByLocation(
   county: string | null,
   state: string
 ): Promise<PermitOffice[]> {
-  'use cache'
+  // Use Next.js 15 stable caching - remove 'use cache' if not supported
 
   try {
     console.log(`[CACHE] Querying permit offices: city=${city}, county=${county}, state=${state}`)
@@ -133,7 +133,8 @@ export async function getCachedPermitOfficesByCoordinates(
   longitude: number,
   radiusMiles: number = 25
 ): Promise<PermitOffice[]> {
-  'use cache'
+  // Note: 'use cache' directive requires Next.js canary version
+  // Using manual caching instead for compatibility
 
   try {
     console.log(`[CACHE] Querying permit offices by coordinates: lat=${latitude}, lng=${longitude}, radius=${radiusMiles}`)
@@ -181,7 +182,8 @@ export async function getCachedPermitOfficesByCoordinates(
  * Uses aggressive caching since this data changes slowly
  */
 export async function getCachedPopularPermitOffices(limit: number = 10): Promise<PermitOffice[]> {
-  'use cache'
+  // Note: 'use cache' directive requires Next.js canary version
+  // Using manual caching instead for compatibility
 
   try {
     console.log(`[CACHE] Querying popular permit offices (limit: ${limit})`)
@@ -242,8 +244,8 @@ function mapPermitOfficeRow(row: PermitOfficeRow): PermitOffice {
     online_payments: row.online_payments,
     permit_tracking: row.permit_tracking,
     online_portal_url: row.online_portal_url,
-    latitude: row.latitude?.toString() || null,
-    longitude: row.longitude?.toString() || null,
+    latitude: row.latitude ? Number(row.latitude) : null,
+    longitude: row.longitude ? Number(row.longitude) : null,
     service_area_bounds: row.service_area_bounds,
     data_source: row.data_source,
     last_verified: row.last_verified,
