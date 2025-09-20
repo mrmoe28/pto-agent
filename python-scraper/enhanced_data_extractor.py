@@ -47,7 +47,11 @@ class EnhancedDataExtractor:
         self.instruction_keywords = [
             'instructions', 'guidelines', 'requirements', 'procedures',
             'how to apply', 'application process', 'steps', 'checklist',
-            'required documents', 'submission requirements'
+            'required documents', 'submission requirements', 'documentation needed',
+            'application checklist', 'what you need', 'before you apply',
+            'submittal requirements', 'plan requirements', 'review process',
+            'approval process', 'permit process', 'application guide',
+            'how to submit', 'submission process', 'application help'
         ]
         
         # Permit type keywords for categorization
@@ -66,7 +70,11 @@ class EnhancedDataExtractor:
             'permit_fees': self.extract_permit_fees(soup),
             'instructions': self.extract_instructions(soup),
             'downloadable_applications': self.extract_downloadable_applications(soup, base_url),
-            'processing_times': self.extract_processing_times(soup)
+            'processing_times': self.extract_processing_times(soup),
+            'related_pages': self.extract_related_pages(soup, base_url),
+            'contact_details': self.extract_detailed_contact_info(soup),
+            'office_details': self.extract_office_details(soup),
+            'permit_categories': self.extract_permit_categories(soup)
         }
     
     def extract_permit_fees(self, soup: BeautifulSoup) -> Dict[str, Any]:
@@ -453,5 +461,235 @@ class EnhancedDataExtractor:
                         'unit': unit,
                         'description': 'General permit processing time'
                     })
-        
+
         return times
+
+    def extract_related_pages(self, soup: BeautifulSoup, base_url: str) -> List[Dict[str, str]]:
+        """Extract links to related permit pages for multi-page crawling"""
+        related_pages = []
+
+        # Keywords that indicate permit-related pages
+        permit_page_keywords = [
+            'permit', 'application', 'building', 'planning', 'zoning',
+            'electrical', 'plumbing', 'mechanical', 'construction',
+            'development', 'inspection', 'code', 'enforcement',
+            'form', 'fee', 'schedule', 'instructions', 'requirements'
+        ]
+
+        # Find all internal links
+        links = soup.find_all('a', href=True)
+
+        for link in links:
+            href = link.get('href')
+            link_text = link.get_text().strip().lower()
+
+            if not href or not link_text:
+                continue
+
+            # Convert relative URLs to absolute
+            if href.startswith('/'):
+                full_url = urljoin(base_url, href)
+            elif not href.startswith('http'):
+                full_url = urljoin(base_url, href)
+            else:
+                full_url = href
+
+            # Check if it's an internal link (same domain)
+            base_domain = urlparse(base_url).netloc
+            link_domain = urlparse(full_url).netloc
+
+            if base_domain != link_domain:
+                continue
+
+            # Check if link text contains permit-related keywords
+            if any(keyword in link_text for keyword in permit_page_keywords):
+                related_pages.append({
+                    'url': full_url,
+                    'title': link.get_text().strip(),
+                    'relevance': self._calculate_page_relevance(link_text, href)
+                })
+
+        # Remove duplicates and sort by relevance
+        seen_urls = set()
+        unique_pages = []
+        for page in related_pages:
+            if page['url'] not in seen_urls:
+                seen_urls.add(page['url'])
+                unique_pages.append(page)
+
+        # Sort by relevance score (highest first)
+        unique_pages.sort(key=lambda x: x['relevance'], reverse=True)
+
+        return unique_pages[:10]  # Limit to top 10 most relevant pages
+
+    def _calculate_page_relevance(self, link_text: str, href: str) -> float:
+        """Calculate relevance score for a permit-related page"""
+        score = 0.0
+        text_and_url = f"{link_text} {href}".lower()
+
+        # High-value keywords
+        high_value_keywords = {
+            'application': 3.0, 'permit': 2.5, 'form': 2.0, 'instruction': 2.0,
+            'requirement': 2.0, 'fee': 1.5, 'schedule': 1.5, 'process': 1.5
+        }
+
+        # Medium-value keywords
+        medium_value_keywords = {
+            'building': 1.0, 'planning': 1.0, 'zoning': 1.0, 'electrical': 1.0,
+            'plumbing': 1.0, 'mechanical': 1.0, 'inspection': 1.0
+        }
+
+        # Calculate score based on keywords
+        for keyword, value in high_value_keywords.items():
+            if keyword in text_and_url:
+                score += value
+
+        for keyword, value in medium_value_keywords.items():
+            if keyword in text_and_url:
+                score += value
+
+        return score
+
+    def extract_detailed_contact_info(self, soup: BeautifulSoup) -> Dict[str, Any]:
+        """Extract detailed contact information"""
+        contact_info = {}
+
+        # Extract all contact information
+        text_content = soup.get_text()
+
+        # Find contact sections
+        contact_sections = soup.find_all(['div', 'section', 'article'],
+                                       class_=re.compile(r'contact|info|office', re.I))
+
+        # Extract emails
+        email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+        emails = re.findall(email_pattern, text_content)
+        if emails:
+            contact_info['emails'] = list(set(emails))
+
+        # Extract phone numbers (multiple formats)
+        phone_patterns = [
+            r'\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}(?:\s?(?:ext|extension|x)\.?\s?\d+)?',
+            r'\d{3}[-.\s]?\d{3}[-.\s]?\d{4}(?:\s?(?:ext|extension|x)\.?\s?\d+)?'
+        ]
+        phones = []
+        for pattern in phone_patterns:
+            phones.extend(re.findall(pattern, text_content))
+        if phones:
+            contact_info['phones'] = list(set(phones))
+
+        # Extract fax numbers
+        fax_pattern = r'(?:fax|facsimile)[:\s]*(\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4})'
+        fax_matches = re.findall(fax_pattern, text_content, re.IGNORECASE)
+        if fax_matches:
+            contact_info['fax'] = list(set(fax_matches))
+
+        # Extract office hours (more comprehensive)
+        hours_patterns = [
+            r'(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|Mon|Tue|Wed|Thu|Fri|Sat|Sun)[:\s]*\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm)?\s*[-–to]\s*\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm)?',
+            r'(?:Weekdays|Business Hours|Office Hours)[:\s]*\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm)?\s*[-–to]\s*\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm)?'
+        ]
+        hours = []
+        for pattern in hours_patterns:
+            hours.extend(re.findall(pattern, text_content, re.IGNORECASE))
+        if hours:
+            contact_info['office_hours'] = list(set(hours))
+
+        return contact_info
+
+    def extract_office_details(self, soup: BeautifulSoup) -> Dict[str, Any]:
+        """Extract detailed office information"""
+        office_details = {}
+
+        # Extract department/division information
+        dept_keywords = ['department', 'division', 'bureau', 'office', 'agency']
+        dept_elements = soup.find_all(text=re.compile('|'.join(dept_keywords), re.IGNORECASE))
+
+        departments = []
+        for element in dept_elements:
+            parent = element.parent
+            if parent and parent.name in ['h1', 'h2', 'h3', 'title']:
+                departments.append(element.strip())
+
+        if departments:
+            office_details['departments'] = list(set(departments))
+
+        # Extract service area information
+        service_area_keywords = ['serves', 'service area', 'jurisdiction', 'coverage', 'territory']
+        service_text = soup.get_text()
+
+        for keyword in service_area_keywords:
+            pattern = rf'{keyword}[:\s]*([^.!?]*[.!?])'
+            matches = re.findall(pattern, service_text, re.IGNORECASE)
+            if matches:
+                office_details['service_area'] = matches[0].strip()
+                break
+
+        # Extract staff information
+        staff_keywords = ['director', 'manager', 'supervisor', 'coordinator', 'inspector']
+        staff_info = []
+
+        for keyword in staff_keywords:
+            pattern = rf'({keyword}[:\s]*[A-Za-z\s]+)'
+            matches = re.findall(pattern, service_text, re.IGNORECASE)
+            staff_info.extend(matches)
+
+        if staff_info:
+            office_details['staff'] = list(set(staff_info))
+
+        return office_details
+
+    def extract_permit_categories(self, soup: BeautifulSoup) -> Dict[str, List[str]]:
+        """Extract detailed permit categories and types"""
+        categories = {}
+
+        # Expanded permit type keywords with more specific subcategories
+        detailed_permit_types = {
+            'building': [
+                'new construction', 'addition', 'renovation', 'remodel',
+                'deck', 'garage', 'shed', 'fence', 'swimming pool',
+                'commercial building', 'residential building', 'accessory dwelling unit'
+            ],
+            'electrical': [
+                'electrical service', 'electrical panel', 'wiring', 'outlet installation',
+                'lighting', 'electrical repair', 'generator', 'solar panel installation',
+                'electric vehicle charging station'
+            ],
+            'plumbing': [
+                'plumbing installation', 'plumbing repair', 'water heater',
+                'bathroom renovation', 'kitchen renovation', 'sewer connection',
+                'water line', 'septic system', 'backflow prevention'
+            ],
+            'mechanical': [
+                'hvac installation', 'air conditioning', 'heating system',
+                'ventilation', 'ductwork', 'furnace', 'heat pump',
+                'boiler', 'gas line'
+            ],
+            'zoning': [
+                'variance', 'conditional use', 'rezoning', 'special exception',
+                'site plan', 'subdivision', 'planned unit development',
+                'home occupation', 'signage'
+            ],
+            'demolition': [
+                'building demolition', 'partial demolition', 'interior demolition',
+                'garage demolition', 'shed demolition'
+            ],
+            'specialty': [
+                'fire permit', 'alarm system', 'sprinkler system',
+                'temporary permit', 'event permit', 'right of way permit',
+                'excavation permit', 'tree removal permit'
+            ]
+        }
+
+        text_content = soup.get_text().lower()
+
+        for category, permit_types in detailed_permit_types.items():
+            found_types = []
+            for permit_type in permit_types:
+                if permit_type in text_content:
+                    found_types.append(permit_type)
+
+            if found_types:
+                categories[category] = found_types
+
+        return categories
