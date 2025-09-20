@@ -1,18 +1,17 @@
-# Documentation files
-README.md
+# Development tools and documentation (not needed for production)
+dev-tools/
 *.md
 docs/
 documentation/
 
-# Development and configuration files
+# Environment files (handled by Vercel)
 .env
 .env.local
 .env.development
 .env.test
 .env.production.local
-.gitignore
-.eslintrc*
-.prettierrc*
+.env.*.backup
+.env.*.duplicate*
 
 # Version control
 .git/
@@ -26,7 +25,7 @@ documentation/
 *.swo
 .DS_Store
 
-# Testing
+# Testing and development
 __tests__/
 test/
 tests/
@@ -40,6 +39,8 @@ tests/
 *.spec.jsx
 coverage/
 .nyc_output/
+playwright-report/
+test-results/
 
 # CI/CD
 .circleci/
@@ -47,10 +48,13 @@ coverage/
 .gitlab-ci.yml
 azure-pipelines.yml
 
-# Development scripts
+# Development scripts and tools
 scripts/
 setup-*.sh
 *.sh
+*.py
+*.applescript
+cli.py
 
 # Examples and demos
 examples/
@@ -63,12 +67,22 @@ webpack.config.js
 rollup.config.js
 gulpfile.js
 
-# Logs
+# Logs and data
 *.log
 logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+data/
+scraper_cache.sqlite
+server.log
+
+# Python and scrapers
+python-scraper/
+scraper/
+pto-agent/
+__pycache__/
+.pytest_cache/
 
 # Temporary files
 *.tmp
