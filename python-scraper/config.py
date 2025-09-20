@@ -9,7 +9,7 @@ class ScraperConfig(BaseSettings):
     """Configuration settings for the permit office scraper"""
     
     # Database settings
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://neondb_owner:npg_CHW9DuN3bvTV@ep-long-wildflower-adf2shp3-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require")
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://localhost:5432/permit_offices_dev")
     
     # Google APIs
     GOOGLE_MAPS_API_KEY: str = os.getenv("GOOGLE_MAPS_API_KEY", "")

@@ -22,6 +22,8 @@ import json
 from models import PermitOffice, ScrapingTarget, ScrapingResult
 from geocoding_service import GeocodingService
 from enhanced_data_extractor import EnhancedDataExtractor
+from robots_checker import RobotsChecker
+from rate_limiter import IntelligentRateLimiter
 from config import config
 
 logger = logging.getLogger(__name__)
@@ -32,6 +34,11 @@ class EnhancedPermitOfficeScraper:
     def __init__(self):
         self.geocoding_service = GeocodingService()
         self.data_extractor = EnhancedDataExtractor()
+        self.robots_checker = RobotsChecker(user_agent=config.USER_AGENT)
+        self.rate_limiter = IntelligentRateLimiter(
+            base_delay=config.SCRAPING_DELAY,
+            requests_per_minute=config.RATE_LIMIT_REQUESTS // 60  # Convert hourly to per minute
+        )
         self.session = None
         self.playwright = None
         self.browser = None
@@ -92,13 +99,36 @@ class EnhancedPermitOfficeScraper:
         return self
     
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """Async context manager exit"""
+        """Async context manager exit with proper error handling"""
+        errors = []
+
+        # Close session with timeout
         if self.session:
-            await self.session.close()
+            try:
+                await asyncio.wait_for(self.session.close(), timeout=5.0)
+            except Exception as e:
+                errors.append(f"Session close error: {e}")
+                logger.warning(f"Failed to close session gracefully: {e}")
+
+        # Close browser with timeout
         if self.browser:
-            await self.browser.close()
+            try:
+                await asyncio.wait_for(self.browser.close(), timeout=10.0)
+            except Exception as e:
+                errors.append(f"Browser close error: {e}")
+                logger.warning(f"Failed to close browser gracefully: {e}")
+
+        # Stop playwright with timeout
         if self.playwright:
-            await self.playwright.stop()
+            try:
+                await asyncio.wait_for(self.playwright.stop(), timeout=5.0)
+            except Exception as e:
+                errors.append(f"Playwright stop error: {e}")
+                logger.warning(f"Failed to stop playwright gracefully: {e}")
+
+        # Log any cleanup errors but don't raise them during exit
+        if errors:
+            logger.error(f"Resource cleanup errors: {errors}")
     
     async def scrape_target(self, target: ScrapingTarget) -> ScrapingResult:
         """Enhanced scraping with multiple extraction strategies"""
@@ -106,10 +136,27 @@ class EnhancedPermitOfficeScraper:
         offices_found = 0
         offices_processed = 0
         errors = []
-        
+
         try:
             logger.info(f"Starting enhanced scrape of {target.name} at {target.url}")
-            
+
+            # Check robots.txt compliance first
+            if not await self.robots_checker.is_crawling_allowed(target.url):
+                logger.warning(f"Robots.txt disallows crawling {target.url}, skipping")
+                return ScrapingResult(
+                    target=target,
+                    success=False,
+                    offices_found=0,
+                    offices_processed=0,
+                    duration_seconds=time.time() - start_time,
+                    errors=["Crawling disallowed by robots.txt"]
+                )
+
+            # Get crawl delay from robots.txt and apply intelligent rate limiting
+            robots_delay = await self.robots_checker.get_crawl_delay(target.url)
+            actual_delay = await self.rate_limiter.wait_for_request(target.url, robots_delay)
+            logger.debug(f"Applied {actual_delay:.2f}s delay for {target.url}")
+
             # Try different scraping methods
             offices = []
             
@@ -175,11 +222,12 @@ class EnhancedPermitOfficeScraper:
         offices = []
         
         try:
-            # Add rate limiting
-            await asyncio.sleep(config.SCRAPING_DELAY)
-            
+            # Apply intelligent rate limiting
+            await self.rate_limiter.wait_for_request(target.url)
+
             async with self.session.get(target.url) as response:
                 if response.status == 200:
+                    self.rate_limiter.record_success(target.url)
                     html = await response.text()
                     soup = BeautifulSoup(html, 'html.parser')
                     
@@ -204,10 +252,16 @@ class EnhancedPermitOfficeScraper:
                     # Remove duplicates and enhance data
                     unique_offices = self._deduplicate_offices(offices)
                     enhanced_offices = [self._enhance_office_data(office, target) for office in unique_offices]
-                    
+
                     return enhanced_offices
-                    
+                else:
+                    # Record failure for non-200 status
+                    self.rate_limiter.record_failure(target.url, response.status)
+                    logger.warning(f"HTTP {response.status} for {target.url}")
+
         except Exception as e:
+            # Record failure for exceptions
+            self.rate_limiter.record_failure(target.url)
             logger.error(f"Enhanced requests scraping error: {e}")
             raise
         
@@ -652,29 +706,36 @@ class EnhancedPermitOfficeScraper:
     async def _scrape_with_playwright(self, target: ScrapingTarget) -> List[PermitOffice]:
         """Scrape using Playwright for JavaScript-heavy sites"""
         offices = []
-        
+        page = None
+
         try:
-            # Add rate limiting
-            await asyncio.sleep(config.SCRAPING_DELAY)
-            
+            # Apply intelligent rate limiting
+            await self.rate_limiter.wait_for_request(target.url)
+
             page = await self.browser.new_page()
-            
+
             # Set realistic viewport and user agent
             await page.set_viewport_size({"width": 1920, "height": 1080})
             await page.set_extra_http_headers({
                 'Accept-Language': 'en-US,en;q=0.9'
             })
-            
+
             # Navigate to the page
-            await page.goto(target.url, wait_until='networkidle', timeout=30000)
-            
+            response = await page.goto(target.url, wait_until='networkidle', timeout=30000)
+
+            # Record success/failure based on response
+            if response and response.status == 200:
+                self.rate_limiter.record_success(target.url)
+            elif response:
+                self.rate_limiter.record_failure(target.url, response.status)
+
             # Wait for content to load
             await page.wait_for_timeout(2000)
-            
+
             # Get page content
             html = await page.content()
             soup = BeautifulSoup(html, 'html.parser')
-            
+
             # Use the same extraction methods as HTTP requests
             extraction_methods = [
                 self._extract_from_structured_elements,
@@ -684,7 +745,7 @@ class EnhancedPermitOfficeScraper:
                 self._extract_from_footer_contacts,
                 self._extract_from_content_analysis
             ]
-            
+
             for method in extraction_methods:
                 try:
                     method_offices = method(soup, target)
@@ -692,17 +753,23 @@ class EnhancedPermitOfficeScraper:
                 except Exception as e:
                     logger.debug(f"Playwright extraction method {method.__name__} failed: {e}")
                     continue
-            
+
             # Remove duplicates and enhance data
             unique_offices = self._deduplicate_offices(offices)
             enhanced_offices = [self._enhance_office_data(office, target) for office in unique_offices]
-            
-            await page.close()
+
             return enhanced_offices
-            
+
         except Exception as e:
             logger.error(f"Playwright scraping error for {target.name}: {e}")
             return []
+        finally:
+            # Ensure page is always closed
+            if page:
+                try:
+                    await asyncio.wait_for(page.close(), timeout=5.0)
+                except Exception as e:
+                    logger.warning(f"Failed to close page gracefully: {e}")
     
     async def _scrape_with_selenium(self, target: ScrapingTarget) -> List[PermitOffice]:
         """Scrape using Selenium (same as original)"""
