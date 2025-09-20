@@ -1,0 +1,861 @@
+{
+  "metadata": {
+    "timestamp": "2025-09-20T18:28:12.382Z",
+    "baseUrl": "http://localhost:3000",
+    "testDuration": 0,
+    "environment": "development",
+    "version": "1.0.0"
+  },
+  "summary": {
+    "totalRoutes": 10,
+    "totalIssues": 33,
+    "criticalIssues": 0,
+    "highIssues": 22,
+    "mediumIssues": 11,
+    "lowIssues": 0,
+    "passedTests": 0,
+    "failedTests": 10,
+    "accessibilityScore": 0,
+    "performanceScore": 90
+  },
+  "testResults": [
+    {
+      "route": {
+        "url": "http://localhost:3000/",
+        "normalizedUrl": "http://localhost:3000/",
+        "statusCode": 500,
+        "responseTime": 1388,
+        "depth": 0,
+        "discovered": "2025-09-20T18:26:02.200Z",
+        "tested": true,
+        "errors": [],
+        "accessibilityIssues": []
+      },
+      "passed": false,
+      "issues": [
+        {
+          "type": "accessibility",
+          "severity": "high",
+          "description": "document-title: Ensure each HTML document contains a non-empty <title> element",
+          "location": {
+            "selector": "html"
+          },
+          "automated_fix_available": false
+        },
+        {
+          "type": "accessibility",
+          "severity": "high",
+          "description": "html-has-lang: Ensure every HTML document has a lang attribute",
+          "location": {
+            "selector": "html"
+          },
+          "automated_fix_available": false
+        },
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "description": "Link has no accessible text",
+          "location": {
+            "selector": "a:nth-child(2)"
+          },
+          "automated_fix_available": true,
+          "fix_description": "Add descriptive link text"
+        }
+      ],
+      "recommendations": [
+        "Apply 1 available automated fixes"
+      ],
+      "before": {}
+    },
+    {
+      "route": {
+        "url": "http://localhost:3000/search",
+        "normalizedUrl": "http://localhost:3000/search",
+        "statusCode": 500,
+        "responseTime": 1909,
+        "depth": 0,
+        "discovered": "2025-09-20T18:26:05.948Z",
+        "tested": true,
+        "errors": [],
+        "accessibilityIssues": []
+      },
+      "passed": false,
+      "issues": [
+        {
+          "type": "accessibility",
+          "severity": "high",
+          "description": "document-title: Ensure each HTML document contains a non-empty <title> element",
+          "location": {
+            "selector": "html"
+          },
+          "automated_fix_available": false
+        },
+        {
+          "type": "accessibility",
+          "severity": "high",
+          "description": "html-has-lang: Ensure every HTML document has a lang attribute",
+          "location": {
+            "selector": "html"
+          },
+          "automated_fix_available": false
+        },
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "description": "Link has no accessible text",
+          "location": {
+            "selector": "a:nth-child(2)"
+          },
+          "automated_fix_available": true,
+          "fix_description": "Add descriptive link text"
+        }
+      ],
+      "recommendations": [
+        "Apply 1 available automated fixes"
+      ],
+      "before": {}
+    },
+    {
+      "route": {
+        "url": "http://localhost:3000/dashboard",
+        "normalizedUrl": "http://localhost:3000/dashboard",
+        "statusCode": 500,
+        "responseTime": 1665,
+        "depth": 0,
+        "discovered": "2025-09-20T18:26:13.062Z",
+        "tested": true,
+        "errors": [],
+        "accessibilityIssues": []
+      },
+      "passed": false,
+      "issues": [
+        {
+          "type": "accessibility",
+          "severity": "high",
+          "description": "document-title: Ensure each HTML document contains a non-empty <title> element",
+          "location": {
+            "selector": "html"
+          },
+          "automated_fix_available": false
+        },
+        {
+          "type": "accessibility",
+          "severity": "high",
+          "description": "html-has-lang: Ensure every HTML document has a lang attribute",
+          "location": {
+            "selector": "html"
+          },
+          "automated_fix_available": false
+        },
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "description": "Link has no accessible text",
+          "location": {
+            "selector": "a:nth-child(2)"
+          },
+          "automated_fix_available": true,
+          "fix_description": "Add descriptive link text"
+        }
+      ],
+      "recommendations": [
+        "Apply 1 available automated fixes"
+      ],
+      "before": {}
+    },
+    {
+      "route": {
+        "url": "http://localhost:3000/sign-in",
+        "normalizedUrl": "http://localhost:3000/sign-in",
+        "statusCode": 500,
+        "responseTime": 3593,
+        "depth": 0,
+        "discovered": "2025-09-20T18:26:16.608Z",
+        "tested": true,
+        "errors": [],
+        "accessibilityIssues": []
+      },
+      "passed": false,
+      "issues": [
+        {
+          "type": "missing-handler",
+          "severity": "high",
+          "description": "Authentication components failed to load within timeout",
+          "location": {
+            "file": "http://localhost:3000/sign-in"
+          },
+          "automated_fix_available": false
+        },
+        {
+          "type": "accessibility",
+          "severity": "high",
+          "description": "document-title: Ensure each HTML document contains a non-empty <title> element",
+          "location": {
+            "selector": "html"
+          },
+          "automated_fix_available": false
+        },
+        {
+          "type": "accessibility",
+          "severity": "high",
+          "description": "html-has-lang: Ensure every HTML document has a lang attribute",
+          "location": {
+            "selector": "html"
+          },
+          "automated_fix_available": false
+        },
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "description": "Link has no accessible text",
+          "location": {
+            "selector": "a:nth-child(2)"
+          },
+          "automated_fix_available": true,
+          "fix_description": "Add descriptive link text"
+        },
+        {
+          "type": "performance",
+          "severity": "medium",
+          "description": "Moderate page load time: 3593ms",
+          "location": {
+            "file": "http://localhost:3000/sign-in"
+          },
+          "automated_fix_available": false
+        }
+      ],
+      "recommendations": [
+        "Address 3 high-priority issues affecting user experience",
+        "Optimize performance - 1 issues detected",
+        "Apply 1 available automated fixes"
+      ],
+      "before": {}
+    },
+    {
+      "route": {
+        "url": "http://localhost:3000/sign-up",
+        "normalizedUrl": "http://localhost:3000/sign-up",
+        "statusCode": 500,
+        "responseTime": 1691,
+        "depth": 0,
+        "discovered": "2025-09-20T18:26:20.233Z",
+        "tested": true,
+        "errors": [],
+        "accessibilityIssues": []
+      },
+      "passed": false,
+      "issues": [
+        {
+          "type": "missing-handler",
+          "severity": "high",
+          "description": "Authentication components failed to load within timeout",
+          "location": {
+            "file": "http://localhost:3000/sign-up"
+          },
+          "automated_fix_available": false
+        },
+        {
+          "type": "accessibility",
+          "severity": "high",
+          "description": "document-title: Ensure each HTML document contains a non-empty <title> element",
+          "location": {
+            "selector": "html"
+          },
+          "automated_fix_available": false
+        },
+        {
+          "type": "accessibility",
+          "severity": "high",
+          "description": "html-has-lang: Ensure every HTML document has a lang attribute",
+          "location": {
+            "selector": "html"
+          },
+          "automated_fix_available": false
+        },
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "description": "Link has no accessible text",
+          "location": {
+            "selector": "a:nth-child(2)"
+          },
+          "automated_fix_available": true,
+          "fix_description": "Add descriptive link text"
+        }
+      ],
+      "recommendations": [
+        "Address 3 high-priority issues affecting user experience",
+        "Apply 1 available automated fixes"
+      ],
+      "before": {}
+    },
+    {
+      "route": {
+        "url": "http://localhost:3000/pricing",
+        "normalizedUrl": "http://localhost:3000/pricing",
+        "statusCode": 500,
+        "responseTime": 1409,
+        "depth": 0,
+        "discovered": "2025-09-20T18:26:09.516Z",
+        "tested": true,
+        "errors": [],
+        "accessibilityIssues": []
+      },
+      "passed": false,
+      "issues": [
+        {
+          "type": "accessibility",
+          "severity": "high",
+          "description": "document-title: Ensure each HTML document contains a non-empty <title> element",
+          "location": {
+            "selector": "html"
+          },
+          "automated_fix_available": false
+        },
+        {
+          "type": "accessibility",
+          "severity": "high",
+          "description": "html-has-lang: Ensure every HTML document has a lang attribute",
+          "location": {
+            "selector": "html"
+          },
+          "automated_fix_available": false
+        },
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "description": "Link has no accessible text",
+          "location": {
+            "selector": "a:nth-child(2)"
+          },
+          "automated_fix_available": true,
+          "fix_description": "Add descriptive link text"
+        }
+      ],
+      "recommendations": [
+        "Apply 1 available automated fixes"
+      ],
+      "before": {}
+    },
+    {
+      "route": {
+        "url": "http://localhost:3000/teams",
+        "normalizedUrl": "http://localhost:3000/teams",
+        "statusCode": 500,
+        "responseTime": 1644,
+        "depth": 0,
+        "discovered": "2025-09-20T18:26:23.784Z",
+        "tested": true,
+        "errors": [],
+        "accessibilityIssues": []
+      },
+      "passed": false,
+      "issues": [
+        {
+          "type": "accessibility",
+          "severity": "high",
+          "description": "document-title: Ensure each HTML document contains a non-empty <title> element",
+          "location": {
+            "selector": "html"
+          },
+          "automated_fix_available": false
+        },
+        {
+          "type": "accessibility",
+          "severity": "high",
+          "description": "html-has-lang: Ensure every HTML document has a lang attribute",
+          "location": {
+            "selector": "html"
+          },
+          "automated_fix_available": false
+        },
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "description": "Link has no accessible text",
+          "location": {
+            "selector": "a:nth-child(2)"
+          },
+          "automated_fix_available": true,
+          "fix_description": "Add descriptive link text"
+        }
+      ],
+      "recommendations": [
+        "Apply 1 available automated fixes"
+      ],
+      "before": {}
+    },
+    {
+      "route": {
+        "url": "http://localhost:3000/favorites",
+        "normalizedUrl": "http://localhost:3000/favorites",
+        "statusCode": 500,
+        "responseTime": 2266,
+        "depth": 0,
+        "discovered": "2025-09-20T18:26:27.541Z",
+        "tested": true,
+        "errors": [],
+        "accessibilityIssues": []
+      },
+      "passed": false,
+      "issues": [
+        {
+          "type": "accessibility",
+          "severity": "high",
+          "description": "document-title: Ensure each HTML document contains a non-empty <title> element",
+          "location": {
+            "selector": "html"
+          },
+          "automated_fix_available": false
+        },
+        {
+          "type": "accessibility",
+          "severity": "high",
+          "description": "html-has-lang: Ensure every HTML document has a lang attribute",
+          "location": {
+            "selector": "html"
+          },
+          "automated_fix_available": false
+        },
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "description": "Link has no accessible text",
+          "location": {
+            "selector": "a:nth-child(2)"
+          },
+          "automated_fix_available": true,
+          "fix_description": "Add descriptive link text"
+        }
+      ],
+      "recommendations": [
+        "Apply 1 available automated fixes"
+      ],
+      "before": {}
+    },
+    {
+      "route": {
+        "url": "http://localhost:3000/profile",
+        "normalizedUrl": "http://localhost:3000/profile",
+        "statusCode": 500,
+        "responseTime": 1453,
+        "depth": 0,
+        "discovered": "2025-09-20T18:26:31.212Z",
+        "tested": true,
+        "errors": [],
+        "accessibilityIssues": []
+      },
+      "passed": false,
+      "issues": [
+        {
+          "type": "accessibility",
+          "severity": "high",
+          "description": "document-title: Ensure each HTML document contains a non-empty <title> element",
+          "location": {
+            "selector": "html"
+          },
+          "automated_fix_available": false
+        },
+        {
+          "type": "accessibility",
+          "severity": "high",
+          "description": "html-has-lang: Ensure every HTML document has a lang attribute",
+          "location": {
+            "selector": "html"
+          },
+          "automated_fix_available": false
+        },
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "description": "Link has no accessible text",
+          "location": {
+            "selector": "a:nth-child(2)"
+          },
+          "automated_fix_available": true,
+          "fix_description": "Add descriptive link text"
+        }
+      ],
+      "recommendations": [
+        "Apply 1 available automated fixes"
+      ],
+      "before": {}
+    },
+    {
+      "route": {
+        "url": "http://localhost:3000/settings",
+        "normalizedUrl": "http://localhost:3000/settings",
+        "statusCode": 500,
+        "responseTime": 1474,
+        "depth": 0,
+        "discovered": "2025-09-20T18:26:34.855Z",
+        "tested": true,
+        "errors": [],
+        "accessibilityIssues": []
+      },
+      "passed": false,
+      "issues": [
+        {
+          "type": "accessibility",
+          "severity": "high",
+          "description": "document-title: Ensure each HTML document contains a non-empty <title> element",
+          "location": {
+            "selector": "html"
+          },
+          "automated_fix_available": false
+        },
+        {
+          "type": "accessibility",
+          "severity": "high",
+          "description": "html-has-lang: Ensure every HTML document has a lang attribute",
+          "location": {
+            "selector": "html"
+          },
+          "automated_fix_available": false
+        },
+        {
+          "type": "accessibility",
+          "severity": "medium",
+          "description": "Link has no accessible text",
+          "location": {
+            "selector": "a:nth-child(2)"
+          },
+          "automated_fix_available": true,
+          "fix_description": "Add descriptive link text"
+        }
+      ],
+      "recommendations": [
+        "Apply 1 available automated fixes"
+      ],
+      "before": {}
+    }
+  ],
+  "issues": [
+    {
+      "type": "accessibility",
+      "severity": "high",
+      "description": "document-title: Ensure each HTML document contains a non-empty <title> element",
+      "location": {
+        "selector": "html"
+      },
+      "automated_fix_available": false
+    },
+    {
+      "type": "accessibility",
+      "severity": "high",
+      "description": "html-has-lang: Ensure every HTML document has a lang attribute",
+      "location": {
+        "selector": "html"
+      },
+      "automated_fix_available": false
+    },
+    {
+      "type": "accessibility",
+      "severity": "medium",
+      "description": "Link has no accessible text",
+      "location": {
+        "selector": "a:nth-child(2)"
+      },
+      "automated_fix_available": true,
+      "fix_description": "Add descriptive link text"
+    },
+    {
+      "type": "accessibility",
+      "severity": "high",
+      "description": "document-title: Ensure each HTML document contains a non-empty <title> element",
+      "location": {
+        "selector": "html"
+      },
+      "automated_fix_available": false
+    },
+    {
+      "type": "accessibility",
+      "severity": "high",
+      "description": "html-has-lang: Ensure every HTML document has a lang attribute",
+      "location": {
+        "selector": "html"
+      },
+      "automated_fix_available": false
+    },
+    {
+      "type": "accessibility",
+      "severity": "medium",
+      "description": "Link has no accessible text",
+      "location": {
+        "selector": "a:nth-child(2)"
+      },
+      "automated_fix_available": true,
+      "fix_description": "Add descriptive link text"
+    },
+    {
+      "type": "accessibility",
+      "severity": "high",
+      "description": "document-title: Ensure each HTML document contains a non-empty <title> element",
+      "location": {
+        "selector": "html"
+      },
+      "automated_fix_available": false
+    },
+    {
+      "type": "accessibility",
+      "severity": "high",
+      "description": "html-has-lang: Ensure every HTML document has a lang attribute",
+      "location": {
+        "selector": "html"
+      },
+      "automated_fix_available": false
+    },
+    {
+      "type": "accessibility",
+      "severity": "medium",
+      "description": "Link has no accessible text",
+      "location": {
+        "selector": "a:nth-child(2)"
+      },
+      "automated_fix_available": true,
+      "fix_description": "Add descriptive link text"
+    },
+    {
+      "type": "missing-handler",
+      "severity": "high",
+      "description": "Authentication components failed to load within timeout",
+      "location": {
+        "file": "http://localhost:3000/sign-in"
+      },
+      "automated_fix_available": false
+    },
+    {
+      "type": "accessibility",
+      "severity": "high",
+      "description": "document-title: Ensure each HTML document contains a non-empty <title> element",
+      "location": {
+        "selector": "html"
+      },
+      "automated_fix_available": false
+    },
+    {
+      "type": "accessibility",
+      "severity": "high",
+      "description": "html-has-lang: Ensure every HTML document has a lang attribute",
+      "location": {
+        "selector": "html"
+      },
+      "automated_fix_available": false
+    },
+    {
+      "type": "accessibility",
+      "severity": "medium",
+      "description": "Link has no accessible text",
+      "location": {
+        "selector": "a:nth-child(2)"
+      },
+      "automated_fix_available": true,
+      "fix_description": "Add descriptive link text"
+    },
+    {
+      "type": "performance",
+      "severity": "medium",
+      "description": "Moderate page load time: 3593ms",
+      "location": {
+        "file": "http://localhost:3000/sign-in"
+      },
+      "automated_fix_available": false
+    },
+    {
+      "type": "missing-handler",
+      "severity": "high",
+      "description": "Authentication components failed to load within timeout",
+      "location": {
+        "file": "http://localhost:3000/sign-up"
+      },
+      "automated_fix_available": false
+    },
+    {
+      "type": "accessibility",
+      "severity": "high",
+      "description": "document-title: Ensure each HTML document contains a non-empty <title> element",
+      "location": {
+        "selector": "html"
+      },
+      "automated_fix_available": false
+    },
+    {
+      "type": "accessibility",
+      "severity": "high",
+      "description": "html-has-lang: Ensure every HTML document has a lang attribute",
+      "location": {
+        "selector": "html"
+      },
+      "automated_fix_available": false
+    },
+    {
+      "type": "accessibility",
+      "severity": "medium",
+      "description": "Link has no accessible text",
+      "location": {
+        "selector": "a:nth-child(2)"
+      },
+      "automated_fix_available": true,
+      "fix_description": "Add descriptive link text"
+    },
+    {
+      "type": "accessibility",
+      "severity": "high",
+      "description": "document-title: Ensure each HTML document contains a non-empty <title> element",
+      "location": {
+        "selector": "html"
+      },
+      "automated_fix_available": false
+    },
+    {
+      "type": "accessibility",
+      "severity": "high",
+      "description": "html-has-lang: Ensure every HTML document has a lang attribute",
+      "location": {
+        "selector": "html"
+      },
+      "automated_fix_available": false
+    },
+    {
+      "type": "accessibility",
+      "severity": "medium",
+      "description": "Link has no accessible text",
+      "location": {
+        "selector": "a:nth-child(2)"
+      },
+      "automated_fix_available": true,
+      "fix_description": "Add descriptive link text"
+    },
+    {
+      "type": "accessibility",
+      "severity": "high",
+      "description": "document-title: Ensure each HTML document contains a non-empty <title> element",
+      "location": {
+        "selector": "html"
+      },
+      "automated_fix_available": false
+    },
+    {
+      "type": "accessibility",
+      "severity": "high",
+      "description": "html-has-lang: Ensure every HTML document has a lang attribute",
+      "location": {
+        "selector": "html"
+      },
+      "automated_fix_available": false
+    },
+    {
+      "type": "accessibility",
+      "severity": "medium",
+      "description": "Link has no accessible text",
+      "location": {
+        "selector": "a:nth-child(2)"
+      },
+      "automated_fix_available": true,
+      "fix_description": "Add descriptive link text"
+    },
+    {
+      "type": "accessibility",
+      "severity": "high",
+      "description": "document-title: Ensure each HTML document contains a non-empty <title> element",
+      "location": {
+        "selector": "html"
+      },
+      "automated_fix_available": false
+    },
+    {
+      "type": "accessibility",
+      "severity": "high",
+      "description": "html-has-lang: Ensure every HTML document has a lang attribute",
+      "location": {
+        "selector": "html"
+      },
+      "automated_fix_available": false
+    },
+    {
+      "type": "accessibility",
+      "severity": "medium",
+      "description": "Link has no accessible text",
+      "location": {
+        "selector": "a:nth-child(2)"
+      },
+      "automated_fix_available": true,
+      "fix_description": "Add descriptive link text"
+    },
+    {
+      "type": "accessibility",
+      "severity": "high",
+      "description": "document-title: Ensure each HTML document contains a non-empty <title> element",
+      "location": {
+        "selector": "html"
+      },
+      "automated_fix_available": false
+    },
+    {
+      "type": "accessibility",
+      "severity": "high",
+      "description": "html-has-lang: Ensure every HTML document has a lang attribute",
+      "location": {
+        "selector": "html"
+      },
+      "automated_fix_available": false
+    },
+    {
+      "type": "accessibility",
+      "severity": "medium",
+      "description": "Link has no accessible text",
+      "location": {
+        "selector": "a:nth-child(2)"
+      },
+      "automated_fix_available": true,
+      "fix_description": "Add descriptive link text"
+    },
+    {
+      "type": "accessibility",
+      "severity": "high",
+      "description": "document-title: Ensure each HTML document contains a non-empty <title> element",
+      "location": {
+        "selector": "html"
+      },
+      "automated_fix_available": false
+    },
+    {
+      "type": "accessibility",
+      "severity": "high",
+      "description": "html-has-lang: Ensure every HTML document has a lang attribute",
+      "location": {
+        "selector": "html"
+      },
+      "automated_fix_available": false
+    },
+    {
+      "type": "accessibility",
+      "severity": "medium",
+      "description": "Link has no accessible text",
+      "location": {
+        "selector": "a:nth-child(2)"
+      },
+      "automated_fix_available": true,
+      "fix_description": "Add descriptive link text"
+    }
+  ],
+  "repairSession": {
+    "sessionId": "repair_1758392892375",
+    "timestamp": "2025-09-20T18:28:12.375Z",
+    "repairs": [],
+    "rollbackAvailable": false
+  },
+  "recommendations": {
+    "immediate": [
+      "Apply 10 available automated fixes"
+    ],
+    "shortTerm": [
+      "Address 22 high-priority issues affecting user experience",
+      "Improve accessibility compliance (current score: 0%)"
+    ],
+    "longTerm": [
+      "Implement comprehensive automated testing pipeline",
+      "Set up continuous QA monitoring and alerts"
+    ]
+  }
+}

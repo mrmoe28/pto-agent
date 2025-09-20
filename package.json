@@ -20,9 +20,13 @@
     "chrome:debug": "chmod +x scripts/launch-chrome-debug.sh && ./scripts/launch-chrome-debug.sh",
     "extract:keys": "node scripts/get-clerk-production-keys.js",
     "extract:keys:auto": "node scripts/extract-clerk-keys-applescript.js",
-    "clerk:production": "node scripts/manual-clerk-keys-update.js"
+    "clerk:production": "node scripts/manual-clerk-keys-update.js",
+    "qa:audit": "tsx qa/run-qa-audit.ts",
+    "qa:audit:headless": "tsx qa/run-qa-audit.ts --no-headless",
+    "qa:test": "playwright test qa/audit-ui.spec.ts"
   },
   "dependencies": {
+    "@axe-core/playwright": "^4.10.2",
     "@clerk/nextjs": "^6.32.0",
     "@googlemaps/js-api-loader": "^1.16.10",
     "@neondatabase/serverless": "^1.0.1",
