@@ -130,3 +130,25 @@ Thumbs.db
 dist/
 build/tsconfig.tsbuildinfo
 .vercel
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Data files (large datasets)
+data/
+
+# Scraper files (may contain sensitive data)
+scraper/
+
+# Test environment files
+src/app/test-env/
+
+# Python test files (if not needed)
+tests/__init__.py
+tests/test_*.py
+
+# CLI scripts (may contain sensitive data)
+cli.py
