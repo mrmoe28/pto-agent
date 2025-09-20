@@ -14,7 +14,11 @@
     "validate:clerk": "node scripts/validate-clerk-env.js",
     "update:clerk": "node scripts/update-clerk-production-env.js",
     "deploy:clerk": "./scripts/deploy-with-tests.sh",
-    "process:scrape-jobs": "tsx scripts/process-scrape-jobs.ts"
+    "process:scrape-jobs": "tsx scripts/process-scrape-jobs.ts",
+    "chrome:debug": "chmod +x scripts/launch-chrome-debug.sh && ./scripts/launch-chrome-debug.sh",
+    "extract:keys": "node scripts/get-clerk-production-keys.js",
+    "extract:keys:auto": "node scripts/extract-clerk-keys-applescript.js",
+    "clerk:production": "node scripts/manual-clerk-keys-update.js"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.32.0",
