@@ -33,7 +33,10 @@
     "clerk:production": "node scripts/manual-clerk-keys-update.js",
     "qa:audit": "tsx qa/run-qa-audit.ts",
     "qa:audit:headless": "tsx qa/run-qa-audit.ts --no-headless",
-    "qa:test": "playwright test qa/audit-ui.spec.ts"
+    "qa:test": "playwright test qa/audit-ui.spec.ts",
+    "scrape:us:fast": "python -m cli crawl --urls data/seeds/us/start_urls.txt --depth 2 --out data/exports",
+    "scrape:us:deep": "python -m cli crawl --urls data/seeds/us/start_urls.txt --depth 3 --allow-dynamic --out data/exports",
+    "scrape:test:url": "python -m cli test-url --url"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.32.0",
