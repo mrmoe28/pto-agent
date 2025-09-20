@@ -1,6 +1,0 @@
-# Test URLs - Known working portals for validation
-https://permits.jccal.org/citizenaccess/Default.aspx
-https://etrakit.rcgov.us/etrakit/
-https://webpermit.mecklenburgcountync.gov/
-https://aca-prod.accela.com/BIRMINGHAM/Default.aspx
-https://grvlc-trk.aspgov.com/eTRAKiT/

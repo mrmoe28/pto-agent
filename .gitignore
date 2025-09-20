@@ -137,6 +137,9 @@ __pycache__/
 *.pyo
 *.pyd
 
+# Development tools (not needed for production)
+dev-tools/
+
 # Data files (large datasets and outputs - keep structure but ignore outputs)
 data/exports/
 data/raw/
