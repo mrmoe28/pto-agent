@@ -174,7 +174,9 @@ export default function Hero() {
       const officesResponse = await fetch(`/api/permit-offices?${params}`)
       
       if (!officesResponse.ok) {
-        throw new Error('Could not find permit offices')
+        const errorData = await officesResponse.json().catch(() => ({}))
+        const errorMessage = errorData.error || `Server error: ${officesResponse.status}`
+        throw new Error(errorMessage)
       }
 
       const officesData = await officesResponse.json()

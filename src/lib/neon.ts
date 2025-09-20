@@ -8,12 +8,8 @@ if (!databaseUrl) {
   console.warn('DATABASE_URL environment variable is not set. Database operations will fail.')
 }
 
-// Create a Neon client with timeout configuration
-export const sql = neon(databaseUrl, {
-  // Set timeout to 5 seconds to prevent hanging requests
-  fetchConnectionCache: true,
-  // Enable connection pooling for better performance
-})
+// Create a Neon client
+export const sql = neon(databaseUrl)
 
 // Database types for Georgia permit offices
 export interface PermitOffice {
