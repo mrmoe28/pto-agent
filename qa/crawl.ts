@@ -4,7 +4,7 @@
  */
 
 import { Page, Browser } from '@playwright/test';
-import { RouteInfo, normalizeUrl, shouldCrawlUrl, extractLinks, waitForNetworkIdle, takeScreenshot, urlToFilename } from './utils';
+import { RouteInfo, normalizeUrl, shouldCrawlUrl, waitForNetworkIdle, takeScreenshot, urlToFilename } from './utils';
 
 export interface CrawlOptions {
   maxDepth: number;
@@ -237,7 +237,7 @@ export class UICrawler {
               !this.visitedUrls.has(normalizedUrl)) {
             this.queue.push({ url: normalizedUrl, depth });
           }
-        } catch (error) {
+        } catch {
           // Invalid URL, skip
         }
       }
