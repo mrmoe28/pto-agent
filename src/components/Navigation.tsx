@@ -14,11 +14,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Settings, User, Heart, Users, Download, Key, BarChart3, Palette, GraduationCap, Shield } from 'lucide-react'
+import { Settings, User, Heart, Users, Download, Key, BarChart3, Palette, GraduationCap, Shield, Menu, X } from 'lucide-react'
 
 export default function Navigation() {
   const { isSignedIn, user, isLoaded } = useUser()
   const [mounted, setMounted] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     setMounted(true)
@@ -40,7 +41,7 @@ export default function Navigation() {
             </Link>
           </div>
 
-          {/* Navigation Links */}
+          {/* Navigation Links - Desktop */}
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-4">
               <Link
@@ -88,6 +89,22 @@ export default function Navigation() {
                 </>
               )}
             </div>
+          </div>
+
+          {/* Mobile menu button */}
+          <div className="md:hidden">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              {mobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </Button>
           </div>
 
           {/* Authentication Buttons */}
@@ -220,6 +237,64 @@ export default function Navigation() {
           </div>
         </div>
       </div>
+
+      {/* Mobile menu overlay */}
+      {mobileMenuOpen && (
+        <div className="md:hidden">
+          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-b border-gray-200">
+            <Link
+              href="/"
+              className="text-gray-600 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Home
+            </Link>
+            <Link
+              href="/search"
+              className="text-gray-600 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Search
+            </Link>
+            <Link
+              href="/pricing"
+              className="text-gray-600 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Pricing
+            </Link>
+            {mounted && isLoaded && isSignedIn && (
+              <>
+                <Link
+                  href="/dashboard"
+                  className="text-gray-600 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Dashboard
+                </Link>
+                {user?.publicMetadata?.subscriptionPlan === 'enterprise' && (
+                  <>
+                    <Link
+                      href="/favorites"
+                      className="text-gray-600 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Favorites
+                    </Link>
+                    <Link
+                      href="/teams"
+                      className="text-gray-600 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Teams
+                    </Link>
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </nav>
   )
 }
