@@ -24,6 +24,7 @@ const eslintConfig = [
       "qa/**",
       "scripts/**",
       "tests/**",
+      "dev-tools/**",
     ],
   },
   {

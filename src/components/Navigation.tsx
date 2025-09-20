@@ -3,10 +3,13 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Menu, X } from 'lucide-react'
+import { Menu, X, User } from 'lucide-react'
+import { useUser, useClerk } from '@clerk/nextjs'
 
 export default function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { isSignedIn, user } = useUser()
+  const { signOut } = useClerk()
 
   return (
     <nav className="bg-white shadow-sm border-b border-gray-200 relative z-50">
@@ -69,20 +72,45 @@ export default function Navigation() {
 
           {/* Authentication Buttons */}
           <div className="flex items-center space-x-4 relative z-10">
-            <div className="flex items-center space-x-3">
-              <Link
-                href="/sign-in"
-                className="text-gray-700 hover:text-gray-900 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 border border-gray-300 hover:border-gray-400 bg-white hover:bg-gray-50"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/sign-up"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
-              >
-                Sign Up
-              </Link>
-            </div>
+            {isSignedIn ? (
+              <div className="flex items-center space-x-3">
+                <Link
+                  href="/dashboard"
+                  className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 hover:bg-gray-100"
+                >
+                  Dashboard
+                </Link>
+                <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 text-gray-700">
+                    <User className="h-4 w-4" />
+                    <span className="text-sm font-medium">{user?.firstName || 'User'}</span>
+                  </div>
+                  <Button
+                    onClick={() => signOut()}
+                    variant="outline"
+                    size="sm"
+                    className="text-gray-700 border-gray-300 hover:border-gray-400"
+                  >
+                    Sign Out
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-3">
+                <Link
+                  href="/sign-in"
+                  className="text-gray-700 hover:text-gray-900 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 border border-gray-300 hover:border-gray-400 bg-white hover:bg-gray-50"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/sign-up"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
+                >
+                  Sign Up
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -112,6 +140,55 @@ export default function Navigation() {
             >
               Pricing
             </Link>
+
+            {/* Mobile Authentication */}
+            <div className="border-t border-gray-200 pt-3 mt-3">
+              {isSignedIn ? (
+                <>
+                  <Link
+                    href="/dashboard"
+                    className="text-gray-600 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                  <div className="px-3 py-2">
+                    <div className="flex items-center space-x-2 text-gray-600 mb-2">
+                      <User className="h-4 w-4" />
+                      <span className="text-sm font-medium">{user?.firstName || 'User'}</span>
+                    </div>
+                    <Button
+                      onClick={() => {
+                        signOut()
+                        setMobileMenuOpen(false)
+                      }}
+                      variant="outline"
+                      size="sm"
+                      className="w-full text-gray-700 border-gray-300"
+                    >
+                      Sign Out
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/sign-in"
+                    className="text-gray-600 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/sign-up"
+                    className="bg-blue-600 hover:bg-blue-700 text-white block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 mx-3 text-center"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Sign Up
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
