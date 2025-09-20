@@ -1,29 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { useUser, SignOutButton } from '@clerk/nextjs'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Settings, User, Heart, Users, Download, Key, BarChart3, Palette, GraduationCap, Shield, Menu, X } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
 
 export default function Navigation() {
-  const { isSignedIn, user, isLoaded } = useUser()
-  const [mounted, setMounted] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   return (
     <nav className="bg-white shadow-sm border-b border-gray-200 relative z-50">
@@ -62,32 +45,6 @@ export default function Navigation() {
               >
                 Pricing
               </Link>
-              {mounted && isLoaded && isSignedIn && (
-                <>
-                  <Link
-                    href="/dashboard"
-                    className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 hover:bg-gray-100"
-                  >
-                    Dashboard
-                  </Link>
-                  {user?.publicMetadata?.subscriptionPlan === 'enterprise' && (
-                    <>
-                      <Link
-                        href="/favorites"
-                        className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 hover:bg-gray-100"
-                      >
-                        Favorites
-                      </Link>
-                      <Link
-                        href="/teams"
-                        className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 hover:bg-gray-100"
-                      >
-                        Teams
-                      </Link>
-                    </>
-                  )}
-                </>
-              )}
             </div>
           </div>
 
@@ -112,131 +69,20 @@ export default function Navigation() {
 
           {/* Authentication Buttons */}
           <div className="flex items-center space-x-4 relative z-10">
-            {!mounted || !isLoaded ? (
-              <div className="flex items-center space-x-3">
-                <div className="w-20 h-8 bg-gray-200 animate-pulse rounded"></div>
-                <div className="w-16 h-8 bg-gray-200 animate-pulse rounded"></div>
-              </div>
-            ) : isSignedIn ? (
-              <div className="flex items-center space-x-4">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={user?.imageUrl} alt={user?.firstName || 'User'} />
-                        <AvatarFallback>
-                          {user?.firstName?.charAt(0) || user?.emailAddresses[0]?.emailAddress?.charAt(0) || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56" align="end" forceMount>
-                    <DropdownMenuLabel className="font-normal">
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">
-                          {user?.firstName || 'User'}
-                        </p>
-                        <p className="text-xs leading-none text-muted-foreground">
-                          {user?.emailAddresses[0]?.emailAddress}
-                        </p>
-                        <Badge variant="secondary" className="w-fit text-xs">
-                          {String(user?.publicMetadata?.subscriptionPlan || 'free')}
-                        </Badge>
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link href="/profile" className="flex items-center">
-                        <User className="mr-2 h-4 w-4" />
-                        <span>Profile</span>
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/dashboard" className="flex items-center">
-                        <BarChart3 className="mr-2 h-4 w-4" />
-                        <span>Dashboard</span>
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    {user?.publicMetadata?.subscriptionPlan === 'enterprise' && (
-                      <>
-                        <DropdownMenuItem asChild>
-                          <Link href="/favorites" className="flex items-center">
-                            <Heart className="mr-2 h-4 w-4" />
-                            <span>Favorites</span>
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href="/teams" className="flex items-center">
-                            <Users className="mr-2 h-4 w-4" />
-                            <span>Teams</span>
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild>
-                          <Link href="/settings" className="flex items-center">
-                            <Settings className="mr-2 h-4 w-4" />
-                            <span>Settings</span>
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href="/settings/api" className="flex items-center">
-                            <Key className="mr-2 h-4 w-4" />
-                            <span>API Keys</span>
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href="/settings/export" className="flex items-center">
-                            <Download className="mr-2 h-4 w-4" />
-                            <span>Export Settings</span>
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href="/settings/analytics" className="flex items-center">
-                            <BarChart3 className="mr-2 h-4 w-4" />
-                            <span>Analytics</span>
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href="/settings/branding" className="flex items-center">
-                            <Palette className="mr-2 h-4 w-4" />
-                            <span>Branding</span>
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href="/settings/training" className="flex items-center">
-                            <GraduationCap className="mr-2 h-4 w-4" />
-                            <span>Training</span>
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                      </>
-                    )}
-                    <SignOutButton>
-                      <DropdownMenuItem className="text-red-600">
-                        <Shield className="mr-2 h-4 w-4" />
-                        <span>Sign Out</span>
-                      </DropdownMenuItem>
-                    </SignOutButton>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            ) : (
-              <div className="flex items-center space-x-3">
-                <Link
-                  href="/sign-in"
-                  className="text-gray-700 hover:text-gray-900 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 border border-gray-300 hover:border-gray-400 bg-white hover:bg-gray-50"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  href="/sign-up"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
-                >
-                  Sign Up
-                </Link>
-              </div>
-            )}
+            <div className="flex items-center space-x-3">
+              <Link
+                href="/sign-in"
+                className="text-gray-700 hover:text-gray-900 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 border border-gray-300 hover:border-gray-400 bg-white hover:bg-gray-50"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/sign-up"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
+              >
+                Sign Up
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -266,35 +112,6 @@ export default function Navigation() {
             >
               Pricing
             </Link>
-            {mounted && isLoaded && isSignedIn && (
-              <>
-                <Link
-                  href="/dashboard"
-                  className="text-gray-600 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Dashboard
-                </Link>
-                {user?.publicMetadata?.subscriptionPlan === 'enterprise' && (
-                  <>
-                    <Link
-                      href="/favorites"
-                      className="text-gray-600 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Favorites
-                    </Link>
-                    <Link
-                      href="/teams"
-                      className="text-gray-600 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Teams
-                    </Link>
-                  </>
-                )}
-              </>
-            )}
           </div>
         </div>
       )}
