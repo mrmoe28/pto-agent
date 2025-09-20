@@ -98,11 +98,14 @@ export default function Navigation() {
               size="sm"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="text-gray-600 hover:text-gray-900"
+              aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-menu"
             >
               {mobileMenuOpen ? (
-                <X className="h-6 w-6" />
+                <X className="h-6 w-6" aria-hidden="true" />
               ) : (
-                <Menu className="h-6 w-6" />
+                <Menu className="h-6 w-6" aria-hidden="true" />
               )}
             </Button>
           </div>
@@ -240,7 +243,7 @@ export default function Navigation() {
 
       {/* Mobile menu overlay */}
       {mobileMenuOpen && (
-        <div className="md:hidden">
+        <div className="md:hidden" id="mobile-menu">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-b border-gray-200">
             <Link
               href="/"
