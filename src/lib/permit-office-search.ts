@@ -1,6 +1,123 @@
 import { DetailedOfficeInfo } from '@/lib/enhanced-web-scraper'
 import { getDetailedOfficeInfo } from '@/lib/scraper-manager'
 
+// Comprehensive data type interfaces
+export interface PermitFee {
+  amount: number | string
+  description: string
+  category?: string
+}
+
+export interface PermitFees {
+  [feeType: string]: PermitFee[]
+}
+
+export interface ProcessingTime {
+  type: string
+  time: string
+  notes?: string
+}
+
+export interface ProcessingTimes {
+  [permitType: string]: ProcessingTime | string
+}
+
+export interface ContactInfo {
+  name?: string
+  title?: string
+  phone?: string
+  email?: string
+  department?: string
+}
+
+export interface ContactDetails {
+  [contactType: string]: ContactInfo[]
+}
+
+export interface OfficeDetails {
+  [detailType: string]: string[]
+}
+
+export interface PermitCategories {
+  [category: string]: string[]
+}
+
+export interface RelatedPage {
+  url: string
+  title: string
+  relevance: number
+}
+
+export interface DownloadableApplication {
+  name: string
+  url: string
+  format: string
+  description?: string
+}
+
+export interface DownloadableApplications {
+  [applicationType: string]: DownloadableApplication[]
+}
+
+export interface Instructions {
+  [instructionType: string]: string
+}
+
+export interface ServiceAreaBounds {
+  north?: number
+  south?: number
+  east?: number
+  west?: number
+  center?: { lat: number; lng: number }
+  radius?: number
+}
+
+export interface SeasonalHours {
+  [season: string]: string
+}
+
+export interface SpecialRequirements {
+  [permitType: string]: string
+}
+
+// Structured data interfaces for search results
+interface OrganizationData {
+  name?: string
+  type?: string
+  url?: string
+  logo?: string
+}
+
+interface LocalBusinessData {
+  name?: string
+  address?: PostalAddressData
+  telephone?: string
+  openingHours?: string
+  priceRange?: string
+}
+
+interface ContactPointData {
+  telephone?: string
+  email?: string
+  contactType?: string
+  areaServed?: string
+}
+
+interface PostalAddressData {
+  streetAddress?: string
+  addressLocality?: string
+  addressRegion?: string
+  postalCode?: string
+  addressCountry?: string
+}
+
+interface StructuredData {
+  organization?: OrganizationData
+  localBusiness?: LocalBusinessData
+  contactPoint?: ContactPointData
+  postalAddress?: PostalAddressData
+}
+
 export interface PermitOffice {
   id: string
   created_at: string
@@ -35,23 +152,33 @@ export interface PermitOffice {
   online_portal_url: string | null
   latitude: number | null
   longitude: number | null
-  service_area_bounds: Record<string, unknown> | null
+  service_area_bounds: ServiceAreaBounds | null
   data_source: 'web_search' | 'crawled' | 'api' | 'manual'
   last_verified: string | null
   crawl_frequency: 'daily' | 'weekly' | 'monthly'
   active: boolean
   distance?: number
-  enhancedData?: Record<string, unknown>
+  enhancedData?: {
+    dataCompleteness: number
+    sourceReliability: number
+    totalForms: number
+    staffContacts: number
+    specialServices: string[]
+    onlineCapabilities: string[]
+    availablePortals: string[]
+    processInfo: unknown
+    feeStructure: unknown
+  }
 
   // Enhanced comprehensive data from multi-page scraping
-  permit_fees?: Record<string, any> | null
-  instructions?: Record<string, any> | null
-  downloadable_applications?: Record<string, any> | null
-  processing_times?: Record<string, any> | null
-  contact_details?: Record<string, any> | null
-  office_details?: Record<string, any> | null
-  permit_categories?: Record<string, string[]> | null
-  related_pages?: Array<Record<string, string>> | null
+  permit_fees?: PermitFees | null
+  instructions?: Instructions | null
+  downloadable_applications?: DownloadableApplications | null
+  processing_times?: ProcessingTimes | null
+  contact_details?: ContactDetails | null
+  office_details?: OfficeDetails | null
+  permit_categories?: PermitCategories | null
+  related_pages?: RelatedPage[] | null
 
   // Additional contact methods
   fax?: string | null
@@ -65,11 +192,11 @@ export interface PermitOffice {
 
   // Permit-specific details
   permit_types_available?: string[]
-  special_requirements?: Record<string, string> | null
+  special_requirements?: SpecialRequirements | null
   inspection_services?: string[]
 
   // Operational details
-  seasonal_hours?: Record<string, string> | null
+  seasonal_hours?: SeasonalHours | null
   appointment_required?: boolean | null
   walk_in_hours?: string | null
 
@@ -89,12 +216,7 @@ interface SearchResult {
   url: string
   snippet: string
   detailedInfo?: DetailedOfficeInfo
-  structuredData?: {
-    organization?: Record<string, unknown>
-    localBusiness?: Record<string, unknown>
-    contactPoint?: Record<string, unknown>
-    postalAddress?: Record<string, unknown>
-  }
+  structuredData?: StructuredData
 }
 
 export async function searchPermitOfficesWeb(city: string | null, county: string | null, state: string): Promise<PermitOffice[]> {
@@ -293,7 +415,12 @@ async function searchGoogleCustomSearch(query: string): Promise<SearchResult[]> 
           continue
         }
 
-        const items = (data as { items?: Array<Record<string, unknown>> }).items || []
+        const items = (data as { items?: Array<{
+          title?: string
+          link?: string
+          snippet?: string
+          pagemap?: StructuredData
+        }> }).items || []
 
         for (const item of items) {
           const link = typeof item.link === 'string' ? item.link : null
@@ -378,7 +505,11 @@ async function searchBingAPI(query: string): Promise<SearchResult[]> {
           continue
         }
 
-        const webPages = (data as { webPages?: { value?: Array<Record<string, unknown>> } }).webPages
+        const webPages = (data as { webPages?: { value?: Array<{
+          name?: string
+          url?: string
+          snippet?: string
+        }> } }).webPages
         const values = webPages?.value || []
 
         for (const item of values) {
@@ -569,7 +700,9 @@ function extractPermitOfficesFromSearchResults(searchResults: SearchResult[], lo
     if (detailedInfo) {
       office.enhancedData = {
         dataCompleteness: detailedInfo.metadata.dataCompleteness,
-        sourceReliability: detailedInfo.metadata.sourceReliability,
+        sourceReliability: typeof detailedInfo.metadata.sourceReliability === 'number'
+          ? detailedInfo.metadata.sourceReliability
+          : parseFloat(String(detailedInfo.metadata.sourceReliability)) || 0,
         totalForms: Object.values(detailedInfo.forms).reduce((sum, arr) => sum + arr.length, 0),
         staffContacts: Object.keys(detailedInfo.staffContacts).length,
         specialServices: [
@@ -579,13 +712,13 @@ function extractPermitOfficesFromSearchResults(searchResults: SearchResult[], lo
           detailedInfo.services.specialEventPermits && 'Special Event Permits',
           detailedInfo.services.signPermits && 'Sign Permits',
           detailedInfo.services.demolitionPermits && 'Demolition Permits'
-        ].filter(Boolean),
+        ].filter((service): service is string => Boolean(service)),
         onlineCapabilities: [
           detailedInfo.onlineServices.documentSubmission && 'Document Submission',
           detailedInfo.onlineServices.schedulingInspections && 'Inspection Scheduling',
           detailedInfo.onlineServices.statusUpdates && 'Status Updates',
           detailedInfo.onlineServices.renewals && 'Permit Renewals'
-        ].filter(Boolean),
+        ].filter((capability): capability is string => Boolean(capability)),
         availablePortals: Object.keys(detailedInfo.portals).filter(key => detailedInfo.portals[key as keyof typeof detailedInfo.portals]),
         processInfo: detailedInfo.processInfo,
         feeStructure: detailedInfo.feeStructure
@@ -628,7 +761,7 @@ function extractOfficeTypeFromDetailed(detailedInfo?: DetailedOfficeInfo): 'buil
   return 'other'
 }
 
-function formatStructuredAddress(postalAddress?: Record<string, unknown>): string {
+function formatStructuredAddress(postalAddress?: PostalAddressData): string {
   if (!postalAddress) return ''
 
   const parts = [

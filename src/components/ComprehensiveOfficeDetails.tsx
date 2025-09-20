@@ -1,11 +1,11 @@
 'use client'
 
 import React, { useState } from 'react'
-import { PermitOffice } from '@/lib/permit-office-search'
+import { PermitOffice, PermitFee, ProcessingTime, DownloadableApplication } from '@/lib/permit-office-search'
 import {
-  MapPin, Phone, Mail, Globe, Clock, FileText, DollarSign,
+  Phone, Mail, Globe, Clock, FileText, DollarSign,
   Users, Building, ExternalLink, Download, ChevronDown, ChevronUp,
-  AlertCircle, CheckCircle, Calendar, Target, Briefcase
+  AlertCircle, CheckCircle, Calendar, Briefcase
 } from 'lucide-react'
 
 interface ComprehensiveOfficeDetailsProps {
@@ -32,28 +32,28 @@ export default function ComprehensiveOfficeDetails({ office }: ComprehensiveOffi
     }))
   }
 
-  const formatFeeData = (fees: Record<string, any>) => {
+  const formatFeeData = (fees: import('../lib/permit-office-search').PermitFees) => {
     return Object.entries(fees).map(([category, feeList]) => {
       const fees = Array.isArray(feeList) ? feeList : [feeList]
       return { category, fees }
     })
   }
 
-  const formatInstructions = (instructions: Record<string, any>) => {
+  const formatInstructions = (instructions: import('../lib/permit-office-search').Instructions) => {
     return Object.entries(instructions).map(([type, instruction]) => ({
       type: type.charAt(0).toUpperCase() + type.slice(1),
       content: instruction
     }))
   }
 
-  const formatApplications = (apps: Record<string, any>) => {
+  const formatApplications = (apps: import('../lib/permit-office-search').DownloadableApplications) => {
     return Object.entries(apps).map(([category, urls]) => {
       const links = Array.isArray(urls) ? urls : [urls]
       return { category, links }
     })
   }
 
-  const formatProcessingTimes = (times: Record<string, any>) => {
+  const formatProcessingTimes = (times: import('../lib/permit-office-search').ProcessingTimes) => {
     return Object.entries(times).map(([type, timeInfo]) => {
       if (Array.isArray(timeInfo)) {
         return { type, times: timeInfo }
@@ -300,10 +300,14 @@ export default function ComprehensiveOfficeDetails({ office }: ComprehensiveOffi
               <div key={category} className="border rounded-lg p-4">
                 <h4 className="font-medium text-gray-900 mb-2 capitalize">{category}</h4>
                 <div className="space-y-2">
-                  {fees.map((fee: any, index: number) => (
+                  {fees.map((fee: PermitFee | string, index: number) => (
                     <div key={index} className="flex justify-between items-center">
-                      <span className="text-gray-700">{fee.description || `${category} permit`}</span>
-                      <span className="font-medium">${fee.amount || fee}</span>
+                      <span className="text-gray-700">
+                        {typeof fee === 'string' ? `${category} permit` : (fee.description || `${category} permit`)}
+                      </span>
+                      <span className="font-medium">
+                        ${typeof fee === 'string' ? fee : (fee.amount || 'Contact office')}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -345,16 +349,21 @@ export default function ComprehensiveOfficeDetails({ office }: ComprehensiveOffi
               <div key={category} className="border rounded-lg p-4">
                 <h4 className="font-medium text-gray-900 mb-2 capitalize">{category} Applications</h4>
                 <div className="space-y-2">
-                  {links.map((link: string, index: number) => (
+                  {links.map((link: DownloadableApplication | string, index: number) => (
                     <a
                       key={index}
-                      href={link}
+                      href={typeof link === 'string' ? link : link.url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center space-x-2 text-blue-600 hover:underline"
                     >
                       <Download className="h-4 w-4" />
-                      <span>Download {category} application</span>
+                      <span>
+                        {typeof link === 'string'
+                          ? `Download ${category} application`
+                          : link.name || `Download ${category} application`
+                        }
+                      </span>
                       <ExternalLink className="h-3 w-3" />
                     </a>
                   ))}
@@ -378,17 +387,17 @@ export default function ComprehensiveOfficeDetails({ office }: ComprehensiveOffi
               <div key={type} className="border rounded-lg p-4">
                 <h4 className="font-medium text-gray-900 mb-2 capitalize">{type} Processing</h4>
                 <div className="space-y-2">
-                  {times.map((time: any, index: number) => (
+                  {times.map((time: ProcessingTime | string, index: number) => (
                     <div key={index} className="flex items-center space-x-2">
                       <Calendar className="h-4 w-4 text-gray-400" />
                       <span className="text-gray-700">
-                        {time.min === time.max ?
-                          `${time.min} ${time.unit}` :
-                          `${time.min}-${time.max} ${time.unit}`
+                        {typeof time === 'string'
+                          ? time
+                          : time.time || `Processing time varies`
                         }
                       </span>
-                      {time.description && (
-                        <span className="text-gray-500 text-sm">({time.description})</span>
+                      {typeof time !== 'string' && time.notes && (
+                        <span className="text-gray-500 text-sm">({time.notes})</span>
                       )}
                     </div>
                   ))}
