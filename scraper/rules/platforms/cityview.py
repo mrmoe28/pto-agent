@@ -34,17 +34,17 @@ def parse(url: str, html: str, soup: BeautifulSoup) -> Optional[Record]:
     if not detect(url, html):
         return None
 
+    # Extract jurisdiction info first
+    state, county, city = guess_jurisdiction(html)
+
     record = Record(
         source_url=url,
         platform="cityview",
+        state=state or "Unknown",
+        county=county,
+        city=city,
         confidence=0.1
     )
-
-    # Extract jurisdiction info
-    state, county, city = guess_jurisdiction(html)
-    record.state = state or "Unknown"
-    record.county = county
-    record.city = city
 
     # Look for department/agency name
     dept_selectors = [

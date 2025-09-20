@@ -12,6 +12,13 @@
         "GA": [
           "https://aca.fultoncountyga.gov/CitizenAccess/",
           "https://aca.dekalbcountyga.gov/CitizenAccess/"
+        ],
+        "AL": [
+          "https://permits.jccal.org/citizenaccess/Default.aspx",
+          "https://aca-prod.accela.com/BIRMINGHAM/Default.aspx"
+        ],
+        "NC": [
+          "https://webpermit.mecklenburgcountync.gov/"
         ]
       }
     },
@@ -22,7 +29,12 @@
         "etrakit.",
         "permits.etrakit.com"
       ],
-      "known_instances": {}
+      "known_instances": {
+        "SC": [
+          "https://etrakit.rcgov.us/",
+          "https://grvlc-trk.aspgov.com/eTRAKiT/"
+        ]
+      }
     },
     "tyler-energov": {
       "description": "Tyler Technologies EnerGov",
@@ -68,6 +80,31 @@
         "lightning"
       ],
       "known_instances": {}
+    },
+    "fasttrack": {
+      "description": "FastTrack permitting systems (Orange County FL)",
+      "common_patterns": [
+        "fasttrack.",
+        "/onlineservices/",
+        "fasttrack permitting"
+      ],
+      "known_instances": {
+        "FL": [
+          "https://fasttrack.ocfl.net/OnlineServices/"
+        ]
+      }
+    },
+    "miami-dade-eps": {
+      "description": "Miami-Dade Electronic Permitting System",
+      "common_patterns": [
+        "/Apps/RER/EPSPortal/",
+        "miamidade.gov/permits"
+      ],
+      "known_instances": {
+        "FL": [
+          "https://www.miamidade.gov/Apps/RER/EPSPortal/"
+        ]
+      }
     }
   },
   "state_hints": {

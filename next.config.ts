@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Enable Next.js 15 experimental features for performance
+  experimental: {
+    dynamicIO: true,  // Enable dynamic IO for better caching control
+  },
+
   // External packages for server components
   serverExternalPackages: ['@neondatabase/serverless'],
 
