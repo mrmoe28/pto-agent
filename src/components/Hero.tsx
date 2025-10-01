@@ -278,7 +278,7 @@ export default function Hero() {
                 <p className="font-medium mb-1">{error}</p>
                 {(error.includes('collecting') || error.includes('Check back')) && (
                   <div className="mt-3 space-y-2 text-sm">
-                    <p>We're gathering permit office information for your location. This typically takes 1-2 minutes.</p>
+                    <p>We&apos;re gathering permit office information for your location. This typically takes 1-2 minutes.</p>
                     <div className="flex items-center gap-2">
                       <div className="animate-spin rounded-full h-4 w-4 border-2 border-amber-600 border-t-transparent"></div>
                       <span>Processing your request...</span>
