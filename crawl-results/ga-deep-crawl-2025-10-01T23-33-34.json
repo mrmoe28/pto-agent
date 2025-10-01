@@ -1,0 +1,142 @@
+[
+  {
+    "office": {
+      "id": "4ad1b409-b48e-436f-b08e-68542b34dec1",
+      "city": "Alpharetta",
+      "county": "Fulton",
+      "state": "GA",
+      "website": "https://www.alpharetta.ga.us/departments/community-development",
+      "department_name": "Community Development"
+    },
+    "data": {
+      "generalInstructions": [],
+      "stepByStep": [],
+      "requiredDocuments": [],
+      "fees": [],
+      "timelines": [],
+      "contacts": [],
+      "onlineForms": [],
+      "downloadableForms": []
+    },
+    "quality": {
+      "hasInstructions": false,
+      "hasFees": false,
+      "hasTimelines": false,
+      "hasContacts": false,
+      "hasForms": false,
+      "totalDataPoints": 0
+    }
+  },
+  {
+    "office": {
+      "id": "53934f1b-d735-480e-9d13-dd88d58d117f",
+      "city": "Atlanta",
+      "county": "Fulton",
+      "state": "GA",
+      "website": "https://www.atlantaga.gov/government/departments/city-planning/bureau-of-buildings",
+      "department_name": "Department of City Planning - Bureau of Buildings"
+    },
+    "data": {
+      "generalInstructions": [],
+      "stepByStep": [],
+      "requiredDocuments": [],
+      "fees": [],
+      "timelines": [],
+      "contacts": [],
+      "onlineForms": [],
+      "downloadableForms": []
+    },
+    "quality": {
+      "hasInstructions": false,
+      "hasFees": false,
+      "hasTimelines": false,
+      "hasContacts": false,
+      "hasForms": false,
+      "totalDataPoints": 0
+    }
+  },
+  {
+    "office": {
+      "id": "9670760f-8602-4689-9bf5-60752cca9581",
+      "city": "Atlanta",
+      "county": "Fulton",
+      "state": "GA",
+      "website": "https://www.atlantaga.gov/government/departments/city-planning/office-of-buildings",
+      "department_name": "Office of Buildings"
+    },
+    "data": {
+      "generalInstructions": [],
+      "stepByStep": [],
+      "requiredDocuments": [],
+      "fees": [],
+      "timelines": [],
+      "contacts": [],
+      "onlineForms": [],
+      "downloadableForms": []
+    },
+    "quality": {
+      "hasInstructions": false,
+      "hasFees": false,
+      "hasTimelines": false,
+      "hasContacts": false,
+      "hasForms": false,
+      "totalDataPoints": 0
+    }
+  },
+  {
+    "office": {
+      "id": "561ca947-b413-4091-916c-0affb56107dd",
+      "city": "Atlanta",
+      "county": "Fulton",
+      "state": "GA",
+      "website": "https://www.fultoncountyga.gov/services/building-permits-and-inspections",
+      "department_name": "Building Permits and Inspections"
+    },
+    "data": {
+      "generalInstructions": [],
+      "stepByStep": [],
+      "requiredDocuments": [],
+      "fees": [],
+      "timelines": [],
+      "contacts": [],
+      "onlineForms": [],
+      "downloadableForms": []
+    },
+    "quality": {
+      "hasInstructions": false,
+      "hasFees": false,
+      "hasTimelines": false,
+      "hasContacts": false,
+      "hasForms": false,
+      "totalDataPoints": 0
+    }
+  },
+  {
+    "office": {
+      "id": "a5e126e0-304a-4bbe-a99d-129edfabe531",
+      "city": "Augusta",
+      "county": "Richmond",
+      "state": "GA",
+      "website": "https://www.augustaga.gov/1100/Planning-Development",
+      "department_name": "Augusta Planning & Development Department"
+    },
+    "data": {
+      "generalInstructions": [],
+      "stepByStep": [],
+      "requiredDocuments": [],
+      "fees": [],
+      "timelines": [],
+      "contacts": [],
+      "onlineForms": [],
+      "downloadableForms": []
+    },
+    "quality": {
+      "hasInstructions": false,
+      "hasFees": false,
+      "hasTimelines": false,
+      "hasContacts": false,
+      "hasForms": false,
+      "totalDataPoints": 0
+    }
+  }
+]
