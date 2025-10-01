@@ -3,6 +3,15 @@ import { userSubscriptions } from './db/schema';
 import { eq } from 'drizzle-orm';
 import { PLAN_LIMITS, type PlanType, type PlanLimits } from './subscription-types';
 
+// Admin email (update this with your actual email)
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'mrmoe28@gmail.com';
+
+// Check if user is admin
+function isAdminUser(user: any): boolean {
+  const primaryEmail = user.emailAddresses?.find((email: any) => email.id === user.primaryEmailAddressId);
+  return primaryEmail?.emailAddress === ADMIN_EMAIL;
+}
+
 // Get user's subscription plan from Clerk metadata (server-side only)
 export async function getUserPlanFromClerk(): Promise<PlanType> {
   try {
@@ -11,6 +20,11 @@ export async function getUserPlanFromClerk(): Promise<PlanType> {
     const { currentUser } = await import('@clerk/nextjs/server');
     const user = await currentUser();
     if (!user) return 'free';
+
+    // Check if user is admin first
+    if (isAdminUser(user)) {
+      return 'admin';
+    }
 
     // Check if user has subscription metadata from Clerk
     const subscriptionPlan = user.publicMetadata?.subscriptionPlan as PlanType;
