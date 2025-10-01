@@ -41,7 +41,8 @@
     "scrape:us:deep": "python -m cli crawl --urls data/seeds/us/start_urls.txt --depth 3 --allow-dynamic --out data/exports",
     "scrape:test:url": "python -m cli test-url --url",
     "db:optimize": "tsx scripts/apply-performance-indexes.ts",
-    "db:analyze": "tsx scripts/analyze-performance.ts"
+    "db:analyze": "tsx scripts/analyze-performance.ts",
+    "test:deep-crawl": "tsx scripts/test-deep-crawl.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.32.0",

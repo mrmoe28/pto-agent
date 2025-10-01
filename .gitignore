@@ -158,3 +158,4 @@ src/app/test-env/
 # Ignore scraper runtime data
 scraper_cache.sqlite*
 requests_cache.sqlite*.env.production
+.env.production
