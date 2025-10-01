@@ -393,12 +393,9 @@ export default function ComprehensiveOfficeDetails({ office }: ComprehensiveOffi
                       <span className="text-gray-700">
                         {typeof time === 'string'
                           ? time
-                          : time.time || `Processing time varies`
+                          : time.description || `${time.min}-${time.max} ${time.unit}` || `Processing time varies`
                         }
                       </span>
-                      {typeof time !== 'string' && time.notes && (
-                        <span className="text-gray-500 text-sm">({time.notes})</span>
-                      )}
                     </div>
                   ))}
                 </div>

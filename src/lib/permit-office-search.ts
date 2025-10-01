@@ -3,19 +3,20 @@ import { getDetailedOfficeInfo } from '@/lib/scraper-manager'
 
 // Comprehensive data type interfaces
 export interface PermitFee {
-  amount: number | string
-  description: string
-  category?: string
+  amount?: number
+  description?: string
+  unit?: string
 }
 
 export interface PermitFees {
-  [feeType: string]: PermitFee[]
+  [feeType: string]: PermitFee | PermitFee[]
 }
 
 export interface ProcessingTime {
-  type: string
-  time: string
-  notes?: string
+  min?: number
+  max?: number
+  unit?: string
+  description?: string
 }
 
 export interface ProcessingTimes {
