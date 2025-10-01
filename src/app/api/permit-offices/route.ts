@@ -36,6 +36,9 @@ interface PermitOfficeRow {
   online_payments: boolean
   permit_tracking: boolean
   online_portal_url: string | null
+  permit_fees: Record<string, unknown> | null
+  instructions: Record<string, unknown> | null
+  processing_times: Record<string, unknown> | null
   latitude: number | null
   longitude: number | null
   service_area_bounds: Record<string, unknown> | null
@@ -265,6 +268,9 @@ function mapPermitOfficeRow(row: PermitOfficeRow): PermitOffice {
     online_payments: row.online_payments,
     permit_tracking: row.permit_tracking,
     online_portal_url: row.online_portal_url,
+    permit_fees: row.permit_fees,
+    instructions: row.instructions,
+    processing_times: row.processing_times,
     latitude: row.latitude,
     longitude: row.longitude,
     service_area_bounds: row.service_area_bounds,
