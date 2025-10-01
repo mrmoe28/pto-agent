@@ -4,7 +4,7 @@ import { eq } from 'drizzle-orm';
 import { PLAN_LIMITS, type PlanType, type PlanLimits } from './subscription-types';
 
 // Admin email (update this with your actual email)
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'mrmoe28@gmail.com';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'edwardsteel.0@gmail.com';
 
 // Check if user is admin
 function isAdminUser(user: { emailAddresses?: Array<{ id: string; emailAddress: string }>; primaryEmailAddressId?: string | null }): boolean {
