@@ -10,7 +10,7 @@ import { Check, Zap, Crown } from 'lucide-react';
 interface UpgradeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  currentPlan: 'free' | 'pro' | 'enterprise';
+  currentPlan: 'free' | 'pro' | 'enterprise' | 'admin';
   searchesUsed: number;
   searchesLimit: number | null;
 }
