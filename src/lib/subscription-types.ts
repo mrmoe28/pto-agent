@@ -1,4 +1,4 @@
-export type PlanType = 'free' | 'pro' | 'enterprise';
+export type PlanType = 'free' | 'pro' | 'enterprise' | 'admin';
 
 export interface PlanLimits {
   searchesLimit: number | null; // null means unlimited
@@ -24,6 +24,13 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     hasPrioritySupport: false,
   },
   enterprise: {
+    searchesLimit: null, // unlimited
+    canSaveFavorites: true,
+    canExportResults: true,
+    hasTeamCollaboration: true,
+    hasPrioritySupport: true,
+  },
+  admin: {
     searchesLimit: null, // unlimited
     canSaveFavorites: true,
     canExportResults: true,
