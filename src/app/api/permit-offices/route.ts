@@ -171,60 +171,87 @@ async function searchPermitOfficesFromDatabase(city: string | null, county: stri
 
     console.log(`Searching database: city=${city}, county=${county}, state=${state}`)
 
-    // Use template literal syntax for better compatibility
-    let query: Promise<unknown>
-    if (city && county) {
-      query = sql`
-        SELECT * FROM permit_offices
-        WHERE active = true 
-          AND (city = ${city} OR city ILIKE ${`%${city}%`})
-          AND (county = ${county} OR county ILIKE ${`%${county}%`})
-          AND state = ${state}
-        ORDER BY
-          CASE WHEN city = ${city} THEN 1 ELSE 2 END,
-          jurisdiction_type = 'city' DESC,
-          city, county
-        LIMIT 20
-      `
-    } else if (city) {
-      query = sql`
-        SELECT * FROM permit_offices
-        WHERE active = true 
-          AND (city = ${city} OR city ILIKE ${`%${city}%`})
-          AND state = ${state}
-        ORDER BY
-          CASE WHEN city = ${city} THEN 1 ELSE 2 END,
-          jurisdiction_type = 'city' DESC,
-          city, county
-        LIMIT 20
-      `
-    } else if (county) {
-      query = sql`
-        SELECT * FROM permit_offices
-        WHERE active = true 
-          AND (county = ${county} OR county ILIKE ${`%${county}%`})
-          AND state = ${state}
-        ORDER BY
-          jurisdiction_type = 'city' DESC,
-          city, county
-        LIMIT 20
-      `
-    } else {
-      query = sql`
-        SELECT * FROM permit_offices
-        WHERE active = true 
-          AND state = ${state}
-        ORDER BY
-          jurisdiction_type = 'city' DESC,
-          city, county
-        LIMIT 20
-      `
-    }
+    let records: PermitOfficeRow[] = []
 
-    // Race the query against timeout
-    const queryPromise = query
-    const rawResults = await Promise.race([queryPromise, timeoutPromise])
-    const records = rawResults as unknown as PermitOfficeRow[]
+    // Strategy: Try city+county first, then fallback to county-only if no results
+    if (city && county) {
+      // First try: exact city + county match
+      const cityCountyQuery = sql`
+        SELECT * FROM permit_offices
+        WHERE active = true
+          AND (city = ${city} OR city ILIKE ${`%${city}%`})
+          AND (county = ${county} OR county ILIKE ${`%${county}%`})
+          AND state = ${state}
+        ORDER BY
+          CASE WHEN city = ${city} THEN 1 ELSE 2 END,
+          jurisdiction_type = 'city' DESC,
+          city, county
+        LIMIT 20
+      `
+
+      const cityCountyResults = await Promise.race([cityCountyQuery, timeoutPromise])
+      records = cityCountyResults as unknown as PermitOfficeRow[]
+
+      // Fallback: If no city+county match, try county-only (for unincorporated areas)
+      if (records.length === 0) {
+        console.log(`No results for city=${city}, falling back to county=${county} only`)
+        const countyQuery = sql`
+          SELECT * FROM permit_offices
+          WHERE active = true
+            AND (county = ${county} OR county ILIKE ${`%${county}%`})
+            AND state = ${state}
+          ORDER BY
+            jurisdiction_type = 'county' DESC,
+            city, county
+          LIMIT 20
+        `
+
+        const countyResults = await Promise.race([countyQuery, timeoutPromise])
+        records = countyResults as unknown as PermitOfficeRow[]
+      }
+    } else if (city) {
+      const cityQuery = sql`
+        SELECT * FROM permit_offices
+        WHERE active = true
+          AND (city = ${city} OR city ILIKE ${`%${city}%`})
+          AND state = ${state}
+        ORDER BY
+          CASE WHEN city = ${city} THEN 1 ELSE 2 END,
+          jurisdiction_type = 'city' DESC,
+          city, county
+        LIMIT 20
+      `
+
+      const cityResults = await Promise.race([cityQuery, timeoutPromise])
+      records = cityResults as unknown as PermitOfficeRow[]
+    } else if (county) {
+      const countyQuery = sql`
+        SELECT * FROM permit_offices
+        WHERE active = true
+          AND (county = ${county} OR county ILIKE ${`%${county}%`})
+          AND state = ${state}
+        ORDER BY
+          jurisdiction_type = 'city' DESC,
+          city, county
+        LIMIT 20
+      `
+
+      const countyResults = await Promise.race([countyQuery, timeoutPromise])
+      records = countyResults as unknown as PermitOfficeRow[]
+    } else {
+      const stateQuery = sql`
+        SELECT * FROM permit_offices
+        WHERE active = true
+          AND state = ${state}
+        ORDER BY
+          jurisdiction_type = 'city' DESC,
+          city, county
+        LIMIT 20
+      `
+
+      const stateResults = await Promise.race([stateQuery, timeoutPromise])
+      records = stateResults as unknown as PermitOfficeRow[]
+    }
 
     console.log(`Found ${records.length} records in database`)
     return records.map(mapPermitOfficeRow)
