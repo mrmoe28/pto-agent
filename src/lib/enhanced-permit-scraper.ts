@@ -161,7 +161,7 @@ function extractInstructions($: cheerio.CheerioAPI): string | undefined {
   let instructions = ''
 
   // Look for instruction sections
-  $('h1, h2, h3, h4, p, li').each((_, elem) => {
+  $('h1, h2, h3, h4, p, li').each((_, elem): boolean | void => {
     const text = $(elem).text().toLowerCase()
 
     if (instructionKeywords.some(keyword => text.includes(keyword))) {
@@ -192,7 +192,7 @@ function extractTimeline($: cheerio.CheerioAPI): string | undefined {
 
   let timeline = ''
 
-  $('p, li, td, div').each((_, elem) => {
+  $('p, li, td, div').each((_, elem): boolean | void => {
     const text = $(elem).text()
 
     for (const pattern of timelinePatterns) {
@@ -218,7 +218,7 @@ function extractFees($: cheerio.CheerioAPI): SolarPermitInfo['fees'] | undefined
 
   let feeInfo: SolarPermitInfo['fees'] = {}
 
-  $('p, li, td').each((_, elem) => {
+  $('p, li, td').each((_, elem): boolean | void => {
     const text = $(elem).text().toLowerCase()
 
     if (text.includes('solar') || text.includes('electrical')) {
@@ -247,11 +247,11 @@ function extractRequiredDocuments($: cheerio.CheerioAPI): string[] | undefined {
   const documents: string[] = []
   const docKeywords = ['required', 'document', 'submit', 'checklist', 'need']
 
-  $('ul, ol').each((_, list) => {
+  $('ul, ol').each((_, list): void => {
     const listText = $(list).text().toLowerCase()
 
     if (docKeywords.some(keyword => listText.includes(keyword))) {
-      $(list).find('li').each((_, item) => {
+      $(list).find('li').each((_, item): void => {
         const doc = $(item).text().trim()
         if (doc.length > 5 && doc.length < 200) {
           documents.push(doc)
@@ -269,7 +269,7 @@ function extractRequiredDocuments($: cheerio.CheerioAPI): string[] | undefined {
 function extractApplicationUrl($: cheerio.CheerioAPI): string | undefined {
   let appUrl: string | undefined
 
-  $('a').each((_, elem) => {
+  $('a').each((_, elem): boolean | void => {
     const text = $(elem).text().toLowerCase()
     const href = $(elem).attr('href')
 
@@ -302,7 +302,7 @@ function findRelatedPermitLinks($: cheerio.CheerioAPI, baseUrl: string): string[
     'guideline'
   ]
 
-  $('a').each((_, elem) => {
+  $('a').each((_, elem): void => {
     const href = $(elem).attr('href')
     const text = $(elem).text().toLowerCase()
 
