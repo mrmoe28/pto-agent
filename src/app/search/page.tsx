@@ -159,8 +159,8 @@ export default function SearchPage() {
       if (response.ok) {
         const data = await response.json();
 
-        // Allow search if canSearch is true OR if limit is null (unlimited)
-        if (!data.success || (!data.canSearch && data.usage.limit !== null)) {
+        // Show upgrade modal if user cannot search
+        if (!data.success || !data.canSearch) {
           setShowUpgradeModal(true);
           return;
         }

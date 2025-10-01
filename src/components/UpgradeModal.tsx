@@ -50,9 +50,11 @@ export default function UpgradeModal({
             {currentPlan === 'free' ? 'Upgrade to Continue Searching' : 'Upgrade for More Searches'}
           </DialogTitle>
           <DialogDescription className="text-center text-lg">
-            {currentPlan === 'free' 
-              ? `You've used your 1 free search. Upgrade to Pro for 40 searches per month!`
-              : `You've used ${searchesUsed} of your ${searchesLimit} monthly searches. Upgrade to Enterprise for unlimited searches!`
+            {currentPlan === 'free'
+              ? `You've used ${searchesUsed} of ${searchesLimit} free search${searchesLimit === 1 ? '' : 'es'}. Upgrade to Pro for 40 searches per month!`
+              : currentPlan === 'pro'
+                ? `You've used ${searchesUsed} of ${searchesLimit} monthly searches. Upgrade to Enterprise for unlimited searches!`
+                : `You've used ${searchesUsed} of ${searchesLimit} monthly searches.`
             }
           </DialogDescription>
         </DialogHeader>
@@ -191,7 +193,7 @@ export default function UpgradeModal({
                   disabled={isLoading || currentPlan === 'enterprise'}
                   className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white"
                 >
-                  {isLoading ? 'Processing...' : currentPlan === 'enterprise' ? 'Current Plan' : 'Upgrade to Enterprise'}
+                  {isLoading ? 'Processing...' : currentPlan === 'enterprise' ? 'Current Plan' : currentPlan === 'free' ? 'Need unlimited? Go Enterprise' : 'Upgrade to Enterprise'}
                 </Button>
               </CardContent>
             </Card>

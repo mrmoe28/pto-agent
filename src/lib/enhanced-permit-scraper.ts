@@ -1,6 +1,7 @@
 import { db, permitOffices } from './db'
 import type { NewPermitOffice } from './db/schema'
 import * as cheerio from 'cheerio'
+import { DeepPermitCrawler, type PermitRequirements } from './deep-crawler'
 
 interface ScrapeParams {
   city: string
@@ -36,6 +37,7 @@ interface SolarPermitInfo {
   }
   requiredDocuments?: string[]
   applicationUrl?: string
+  deepCrawlData?: PermitRequirements
 }
 
 /**
@@ -81,13 +83,13 @@ export async function scrapeSolarPermitData(params: ScrapeParams): Promise<Permi
 
 /**
  * Extract solar/electrical permit information from a webpage
- * Crawls the page and related pages for instructions and timelines
+ * Uses deep crawler for comprehensive data extraction
  */
 async function extractSolarPermitInfo(url: string): Promise<SolarPermitInfo> {
   try {
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; PermitBot/1.0)'
+        'User-Agent': 'Mozilla/5.0 (compatible; PermitBot/2.0)'
       }
     })
 
@@ -101,37 +103,77 @@ async function extractSolarPermitInfo(url: string): Promise<SolarPermitInfo> {
 
     const solarInfo: SolarPermitInfo = {}
 
-    // Extract instructions
+    // Extract basic information first
     solarInfo.instructions = extractInstructions($)
-
-    // Extract timeline/processing time
     solarInfo.timeline = extractTimeline($)
-
-    // Extract fees
     solarInfo.fees = extractFees($)
-
-    // Extract required documents
     solarInfo.requiredDocuments = extractRequiredDocuments($)
-
-    // Look for application/form URLs
     solarInfo.applicationUrl = extractApplicationUrl($)
 
-    // Crawl related pages for more details
-    const relatedLinks = findRelatedPermitLinks($, url)
-    for (const link of relatedLinks.slice(0, 3)) { // Limit to 3 related pages
-      const relatedInfo = await extractFromRelatedPage(link)
-      // Merge information
-      if (!solarInfo.instructions && relatedInfo.instructions) {
-        solarInfo.instructions = relatedInfo.instructions
+    // Run deep crawler for comprehensive extraction
+    try {
+      const crawler = new DeepPermitCrawler()
+      const deepData = await crawler.crawlSite(url, {
+        maxDepth: 4,
+        maxPages: 15,
+        followExternal: false,
+        targetPaths: [
+          '/permit', '/solar', '/electrical', '/renewable',
+          '/application', '/form', '/fee', '/requirement',
+          '/instruction', '/timeline', '/process'
+        ],
+        extractPDFs: true
+      })
+
+      solarInfo.deepCrawlData = deepData
+
+      // Merge deep crawl data with basic extraction
+      if (deepData.stepByStep.length > 0 && !solarInfo.instructions) {
+        solarInfo.instructions = deepData.stepByStep.join(' → ')
       }
-      if (!solarInfo.timeline && relatedInfo.timeline) {
-        solarInfo.timeline = relatedInfo.timeline
+
+      if (deepData.requiredDocuments.length > 0 && !solarInfo.requiredDocuments) {
+        solarInfo.requiredDocuments = deepData.requiredDocuments
       }
-      if (!solarInfo.fees && relatedInfo.fees) {
-        solarInfo.fees = relatedInfo.fees
+
+      if (deepData.fees.length > 0 && !solarInfo.fees) {
+        const primaryFee = deepData.fees[0]
+        solarInfo.fees = {
+          amount: primaryFee.baseFee,
+          description: primaryFee.description,
+          unit: 'USD'
+        }
       }
-      if (!solarInfo.requiredDocuments && relatedInfo.requiredDocuments) {
-        solarInfo.requiredDocuments = relatedInfo.requiredDocuments
+
+      if (deepData.timelines.length > 0 && !solarInfo.timeline) {
+        const primaryTimeline = deepData.timelines[0]
+        solarInfo.timeline = primaryTimeline.description
+      }
+
+      console.log(`Deep crawl found: ${deepData.stepByStep.length} instructions, ${deepData.fees.length} fees, ${deepData.timelines.length} timelines`)
+
+    } catch (crawlError) {
+      console.error('Deep crawl failed, using basic extraction:', crawlError)
+      // Continue with basic extraction if deep crawl fails
+    }
+
+    // Fallback: Crawl related pages if still missing data
+    if (!solarInfo.instructions || !solarInfo.timeline || !solarInfo.fees) {
+      const relatedLinks = findRelatedPermitLinks($, url)
+      for (const link of relatedLinks.slice(0, 3)) {
+        const relatedInfo = await extractFromRelatedPage(link)
+        if (!solarInfo.instructions && relatedInfo.instructions) {
+          solarInfo.instructions = relatedInfo.instructions
+        }
+        if (!solarInfo.timeline && relatedInfo.timeline) {
+          solarInfo.timeline = relatedInfo.timeline
+        }
+        if (!solarInfo.fees && relatedInfo.fees) {
+          solarInfo.fees = relatedInfo.fees
+        }
+        if (!solarInfo.requiredDocuments && relatedInfo.requiredDocuments) {
+          solarInfo.requiredDocuments = relatedInfo.requiredDocuments
+        }
       }
     }
 
@@ -376,6 +418,58 @@ async function buildOfficeData(
     departmentName = 'Building Department'
   }
 
+  // Build comprehensive instructions from deep crawl data
+  const deepData = solarInfo.deepCrawlData
+  const instructions: Record<string, unknown> = {
+    general: solarInfo.instructions || deepData?.generalInstructions.join('\n'),
+    electrical: solarInfo.instructions || deepData?.stepByStep.join('\n'),
+    requiredDocuments: solarInfo.requiredDocuments || deepData?.requiredDocuments,
+  }
+
+  // Add deep crawl specific data
+  if (deepData) {
+    if (deepData.onlineForms.length > 0) {
+      instructions.onlineForms = deepData.onlineForms
+    }
+    if (deepData.downloadableForms.length > 0) {
+      instructions.downloadableForms = deepData.downloadableForms
+    }
+    if (deepData.contacts.length > 0) {
+      instructions.contacts = deepData.contacts
+    }
+  }
+
+  // Build comprehensive fee structure
+  const permitFees: Record<string, unknown> = {}
+  if (solarInfo.fees) {
+    permitFees.electrical = solarInfo.fees
+  } else if (deepData && deepData.fees.length > 0) {
+    permitFees.electrical = deepData.fees.map(fee => ({
+      permitType: fee.permitType,
+      amount: fee.baseFee,
+      variableFee: fee.variableFee,
+      description: fee.description,
+      applicableTo: fee.applicableTo
+    }))
+  }
+
+  // Build comprehensive processing times
+  const processingTimes: Record<string, unknown> = {}
+  if (solarInfo.timeline) {
+    processingTimes.electrical = {
+      description: solarInfo.timeline
+    }
+  } else if (deepData && deepData.timelines.length > 0) {
+    processingTimes.electrical = deepData.timelines.map(timeline => ({
+      permitType: timeline.permitType,
+      minDays: timeline.minDays,
+      maxDays: timeline.maxDays,
+      averageDays: timeline.averageDays,
+      description: timeline.description,
+      conditions: timeline.conditions
+    }))
+  }
+
   const office: PermitOfficeData = {
     city,
     county: county || '',
@@ -384,8 +478,8 @@ async function buildOfficeData(
     departmentName,
     officeType: 'combined',
     address: `${city}, ${state}`,
-    phone: null,
-    email: null,
+    phone: deepData?.contacts[0]?.phone || null,
+    email: deepData?.contacts[0]?.email || null,
     website: result.link,
     buildingPermits: true,
     electricalPermits: true,
@@ -394,27 +488,17 @@ async function buildOfficeData(
     zoningPermits: false,
     planningReview: true,
     inspections: true,
-    onlineApplications: !!solarInfo.applicationUrl,
+    onlineApplications: !!(solarInfo.applicationUrl || deepData?.onlineForms.length),
     onlinePayments: false,
     permitTracking: false,
-    onlinePortalUrl: solarInfo.applicationUrl || null,
+    onlinePortalUrl: solarInfo.applicationUrl || deepData?.onlineForms[0] || null,
     latitude: latitude?.toString() || null,
     longitude: longitude?.toString() || null,
-    dataSource: 'web_search',
+    dataSource: 'crawled',
     active: true,
-    instructions: {
-      general: solarInfo.instructions,
-      electrical: solarInfo.instructions,
-      requiredDocuments: solarInfo.requiredDocuments,
-    },
-    permitFees: solarInfo.fees ? {
-      electrical: solarInfo.fees
-    } : undefined,
-    processingTimes: solarInfo.timeline ? {
-      electrical: {
-        description: solarInfo.timeline
-      }
-    } : undefined
+    instructions: Object.keys(instructions).length > 0 ? instructions : undefined,
+    permitFees: Object.keys(permitFees).length > 0 ? permitFees : undefined,
+    processingTimes: Object.keys(processingTimes).length > 0 ? processingTimes : undefined
   }
 
   return office
