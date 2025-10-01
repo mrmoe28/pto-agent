@@ -32,12 +32,12 @@ export default function GooglePlacesAutocomplete({
       try {
         console.log('Initializing Google Places Autocomplete with new API...');
 
-        // Import the Places library using the new API
-        const { PlaceAutocompleteElement } = await google.maps.importLibrary("places") as google.maps.PlacesLibrary;
+        // Import the Places library using the standard API
+        const { Autocomplete } = await google.maps.importLibrary("places") as google.maps.PlacesLibrary;
 
         if (autocompleteRef.current) {
-          // Create the new PlaceAutocompleteElement
-          const placeAutocomplete = new PlaceAutocompleteElement({
+          // Create the new Autocomplete
+          const placeAutocomplete = new Autocomplete({
             locationBias: {
               // Default bias to US
               north: 49.0,
