@@ -9,7 +9,17 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'edwardsteel.0@gmail.com';
 // Check if user is admin
 function isAdminUser(user: { emailAddresses?: Array<{ id: string; emailAddress: string }>; primaryEmailAddressId?: string | null }): boolean {
   const primaryEmail = user.emailAddresses?.find((email) => email.id === user.primaryEmailAddressId);
-  return primaryEmail?.emailAddress === ADMIN_EMAIL;
+  const userEmail = primaryEmail?.emailAddress;
+
+  console.log('[Admin Check]', {
+    userEmail,
+    adminEmail: ADMIN_EMAIL,
+    isMatch: userEmail === ADMIN_EMAIL,
+    allEmails: user.emailAddresses?.map(e => e.emailAddress)
+  });
+
+  // Check primary email or any email address
+  return userEmail === ADMIN_EMAIL || user.emailAddresses?.some(e => e.emailAddress === ADMIN_EMAIL) || false;
 }
 
 // Get user's subscription plan from Clerk metadata (server-side only)
