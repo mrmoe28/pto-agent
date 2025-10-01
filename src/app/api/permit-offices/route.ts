@@ -3,6 +3,7 @@ import { sql } from '@/lib/neon'
 import { enqueueScrapeJob } from '@/lib/db/jobs'
 import { type PermitOffice } from '@/lib/permit-office-search'
 import { createCacheKey, withCache } from '@/lib/cache'
+import { analyzeJurisdiction } from '@/lib/jurisdiction-analyzer'
 
 interface PermitOfficeRow {
   id: string
@@ -77,7 +78,15 @@ export async function GET(request: NextRequest) {
     const latitude = latitudeParam ? Number(latitudeParam) : null
     const longitude = longitudeParam ? Number(longitudeParam) : null
 
+    // Analyze jurisdiction to determine best search strategy
+    const jurisdictionAnalysis = analyzeJurisdiction({
+      city,
+      county,
+      state: normalizedState
+    })
+
     console.log(`Searching for permit offices: city=${city}, county=${county}, state=${normalizedState}`)
+    console.log(`Jurisdiction analysis: level=${jurisdictionAnalysis.searchLevel}, confidence=${jurisdictionAnalysis.confidence}, reason="${jurisdictionAnalysis.reason}"`)
 
     // Create cache key for this search
     const cacheKey = createCacheKey('permit-offices', {
@@ -88,10 +97,10 @@ export async function GET(request: NextRequest) {
       lng: longitude || 0
     })
 
-    // Step 1: Check cache first, then database lookup
+    // Step 1: Check cache first, then database lookup with intelligent jurisdiction priority
     const databaseOffices = await withCache(
       cacheKey,
-      () => searchPermitOfficesFromDatabase(city, county, normalizedState),
+      () => searchPermitOfficesFromDatabase(city, county, normalizedState, jurisdictionAnalysis),
       300 // Cache for 5 minutes
     )
 
@@ -162,7 +171,12 @@ export async function GET(request: NextRequest) {
   }
 }
 
-async function searchPermitOfficesFromDatabase(city: string | null, county: string | null, state: string): Promise<PermitOffice[]> {
+async function searchPermitOfficesFromDatabase(
+  city: string | null,
+  county: string | null,
+  state: string,
+  jurisdictionAnalysis: ReturnType<typeof analyzeJurisdiction>
+): Promise<PermitOffice[]> {
   try {
     // Set a timeout for database queries to prevent hanging
     const timeoutPromise = new Promise<never>((_, reject) =>
@@ -170,13 +184,53 @@ async function searchPermitOfficesFromDatabase(city: string | null, county: stri
     )
 
     console.log(`Searching database: city=${city}, county=${county}, state=${state}`)
+    console.log(`Using search order: ${jurisdictionAnalysis.suggestedOrder.join(' → ')}`)
 
     let records: PermitOfficeRow[] = []
 
-    // Strategy: Try city+county first, then fallback to county-only if no results
-    if (city && county) {
-      // First try: exact city + county match
-      const cityCountyQuery = sql`
+    // Use jurisdiction analysis to determine search strategy
+    if (jurisdictionAnalysis.searchLevel === 'county' || (city && county && jurisdictionAnalysis.suggestedOrder[0] === 'county')) {
+      // County-first strategy (for unincorporated areas)
+      console.log(`Primary search: County level (${jurisdictionAnalysis.reason})`)
+
+      const countyQuery = sql`
+        SELECT * FROM permit_offices
+        WHERE active = true
+          AND (county = ${county} OR county ILIKE ${`%${county}%`})
+          AND state = ${state}
+        ORDER BY
+          jurisdiction_type = 'county' DESC,
+          CASE WHEN city = ${city || ''} THEN 1 ELSE 2 END,
+          city, county
+        LIMIT 20
+      `
+
+      const countyResults = await Promise.race([countyQuery, timeoutPromise])
+      records = countyResults as unknown as PermitOfficeRow[]
+
+      // If county search returns nothing and we have a city, try city search
+      if (records.length === 0 && city) {
+        console.log(`No county results, trying city search as fallback`)
+        const cityQuery = sql`
+          SELECT * FROM permit_offices
+          WHERE active = true
+            AND (city = ${city} OR city ILIKE ${`%${city}%`})
+            AND state = ${state}
+          ORDER BY
+            CASE WHEN city = ${city} THEN 1 ELSE 2 END,
+            jurisdiction_type = 'city' DESC,
+            city, county
+          LIMIT 20
+        `
+
+        const cityResults = await Promise.race([cityQuery, timeoutPromise])
+        records = cityResults as unknown as PermitOfficeRow[]
+      }
+    } else if (city && county) {
+      // City-first strategy (for incorporated cities)
+      console.log(`Primary search: City level (${jurisdictionAnalysis.reason})`)
+
+      const cityQuery = sql`
         SELECT * FROM permit_offices
         WHERE active = true
           AND (city = ${city} OR city ILIKE ${`%${city}%`})
@@ -189,12 +243,12 @@ async function searchPermitOfficesFromDatabase(city: string | null, county: stri
         LIMIT 20
       `
 
-      const cityCountyResults = await Promise.race([cityCountyQuery, timeoutPromise])
-      records = cityCountyResults as unknown as PermitOfficeRow[]
+      const cityResults = await Promise.race([cityQuery, timeoutPromise])
+      records = cityResults as unknown as PermitOfficeRow[]
 
-      // Fallback: If no city+county match, try county-only (for unincorporated areas)
+      // Fallback to county if no city results
       if (records.length === 0) {
-        console.log(`No results for city=${city}, falling back to county=${county} only`)
+        console.log(`No city results, falling back to county level`)
         const countyQuery = sql`
           SELECT * FROM permit_offices
           WHERE active = true
