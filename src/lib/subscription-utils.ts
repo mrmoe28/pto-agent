@@ -7,7 +7,7 @@ import { PLAN_LIMITS, type PlanType, type PlanLimits } from './subscription-type
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'mrmoe28@gmail.com';
 
 // Check if user is admin
-function isAdminUser(user: { emailAddresses?: Array<{ id: string; emailAddress: string }>; primaryEmailAddressId?: string }): boolean {
+function isAdminUser(user: { emailAddresses?: Array<{ id: string; emailAddress: string }>; primaryEmailAddressId?: string | null }): boolean {
   const primaryEmail = user.emailAddresses?.find((email) => email.id === user.primaryEmailAddressId);
   return primaryEmail?.emailAddress === ADMIN_EMAIL;
 }
