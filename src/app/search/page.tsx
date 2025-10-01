@@ -155,15 +155,16 @@ export default function SearchPage() {
     // Check usage limits for authenticated users
     if (isAuthenticated && user) {
       const response = await fetch('/api/subscription/check', { method: 'POST' });
-      
+
       if (response.ok) {
         const data = await response.json();
-        
-        if (!data.success || !data.canSearch) {
+
+        // Allow search if canSearch is true OR if limit is null (unlimited)
+        if (!data.success || (!data.canSearch && data.usage.limit !== null)) {
           setShowUpgradeModal(true);
           return;
         }
-        
+
         // Update local state with new usage
         setSearchesUsed(data.usage.used);
       } else {
