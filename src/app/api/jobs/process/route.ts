@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPendingScrapeJobs, markScrapeJobProcessing, markScrapeJobCompleted, markScrapeJobFailed } from '@/lib/db/jobs'
-import { scrapePermitOfficeData } from '@/lib/permit-scraper'
+import { scrapeSolarPermitData } from '@/lib/enhanced-permit-scraper'
 
 /**
  * Background job processor API route
@@ -42,8 +42,8 @@ export async function POST(request: NextRequest) {
           // Mark job as processing
           await markScrapeJobProcessing(job.id)
 
-          // Perform the actual scraping
-          const officeData = await scrapePermitOfficeData({
+          // Perform the actual scraping (solar/electrical focused)
+          const officeData = await scrapeSolarPermitData({
             city: job.city,
             county: job.county || '',
             state: job.state,
