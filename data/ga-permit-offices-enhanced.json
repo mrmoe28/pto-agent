@@ -1,0 +1,455 @@
+{
+  "collection_date": "2025-10-01",
+  "source": "manual_web_research",
+  "total_offices": 14,
+  "offices": [
+    {
+      "id": "savannah-chatham-1",
+      "city": "Savannah",
+      "county": "Chatham",
+      "state": "GA",
+      "department_name": "Development Services Department",
+      "contact": {
+        "address": "2 East Bay Street, P.O. Box 1027, Savannah, GA 31401",
+        "phone": "(912) 651-6530",
+        "email": null,
+        "website": "https://www.savannahga.gov/375/Development-Services-Department",
+        "hours": "Monday-Friday 8:00 AM - 5:00 PM"
+      },
+      "online_services": {
+        "portal_name": "eTRAC",
+        "portal_url": "https://eTRAC.savannahga.gov",
+        "online_applications": true,
+        "online_payments": true,
+        "permit_tracking": true,
+        "features": [
+          "Building permits",
+          "Trade permits",
+          "Site permits",
+          "Plats",
+          "Online submission",
+          "Status tracking"
+        ]
+      },
+      "fees": {
+        "structure": "Based on construction cost",
+        "formula": "$12.00 per $1,000 of materials and labor",
+        "minimum": "$65.00",
+        "specific_fees": {
+          "plan_review": "$85.00 (if no permit issued after 2nd review)",
+          "reinstatement": "$500.00 minimum",
+          "temporary_co_review": "Greater of $500 or 5% of permit fee",
+          "re_inspection": "$100.00",
+          "penalty_no_permit": "$725.00",
+          "after_hours_inspection": "$260 (4 hours) + $65 each additional hour"
+        },
+        "technology_fee": "$5.00 per permit"
+      },
+      "application_process": {
+        "method": "Online via eTRAC",
+        "requirements": [
+          "Signed application",
+          "Complete application checklist",
+          "All required supporting documentation",
+          "Outside agency approvals"
+        ],
+        "residential_specific": [
+          "Homeowner must live in residence",
+          "Cannot have applied for permit at another address within 2 years",
+          "Signed/notarized Homeowner's Affidavit with driver's license copy",
+          "Must hire licensed GA contractors for work not performed by owner"
+        ],
+        "commercial_specific": [
+          "Submit all plans electronically via eTRAC",
+          "Water and Sewer Approval Form required for renovations",
+          "Historic district projects require additional design review"
+        ],
+        "special_requirements": [
+          "Check if property in floodplain (contact: 912-651-6510 ext. 1895)",
+          "Check if in historic district (contact: 912-651-1457)"
+        ]
+      },
+      "timeline": {
+        "plan_review_meetings": "Thursdays at 10:00 AM (Building) and 1:30 PM (Site) via Microsoft Teams",
+        "processing": "Variable - incomplete applications accepted but permits not issued until all requirements met"
+      },
+      "important_dates": {
+        "freeboard_requirement": "2-foot freeboard requirement effective January 1, 2025",
+        "card_processing_fee": "2.99% fee on credit/debit payments effective February 3, 2025"
+      },
+      "data_quality_score": 95
+    },
+    {
+      "id": "clayton-jonesboro-1",
+      "city": "Jonesboro",
+      "county": "Clayton",
+      "state": "GA",
+      "department_name": "Community Development - Building Permits",
+      "contact": {
+        "address": "P.K. Dixon Building Annex 2, 121 South McDonough St, Jonesboro, GA 30236",
+        "phone": null,
+        "email": null,
+        "website": "https://www.claytoncountyga.gov/government/community-development/building-permits/",
+        "hours": "Monday-Friday 8:00 AM - 5:00 PM"
+      },
+      "online_services": {
+        "portal_name": null,
+        "portal_url": null,
+        "online_applications": false,
+        "online_payments": false,
+        "permit_tracking": false
+      },
+      "services": [
+        "Building permits (residential and commercial)",
+        "Mechanical permits",
+        "Electrical permits",
+        "Plumbing permits",
+        "Certificates of Occupancy (C/O)",
+        "Certificates of Completion (CC)",
+        "Contractor license verification"
+      ],
+      "fees": {
+        "structure": "Fees verified after application submission",
+        "details": "Not publicly listed - contact office for fee schedule"
+      },
+      "application_process": {
+        "requirements": [
+          "Owner, authorized agent, or contractor must apply",
+          "Contractor must have proper Georgia state licensure",
+          "Application required for: construct, enlarge, alter, repair, move, demolish, or change occupancy"
+        ]
+      },
+      "data_quality_score": 45
+    },
+    {
+      "id": "cobb-marietta-city",
+      "city": "Marietta",
+      "county": "Cobb",
+      "state": "GA",
+      "department_name": "Community Development - Building Permits",
+      "contact": {
+        "address": "205 Lawrence Street, Marietta, GA 30060",
+        "phone": null,
+        "email": null,
+        "website": "https://www.mariettaga.gov/443/Building-Permits",
+        "hours": null
+      },
+      "online_services": {
+        "portal_name": null,
+        "portal_url": null,
+        "online_applications": false,
+        "online_payments": false,
+        "permit_tracking": false
+      },
+      "fees": {
+        "structure": "Based on construction cost (value)",
+        "minimum": "$50.00",
+        "details": "Determined by total construction cost"
+      },
+      "jurisdiction_note": "Verify if property is in City of Marietta or unincorporated Cobb County - separate permitting processes",
+      "data_quality_score": 40
+    },
+    {
+      "id": "cobb-county-unincorporated",
+      "city": "Marietta",
+      "county": "Cobb",
+      "state": "GA",
+      "department_name": "Community Development - Building and Development",
+      "contact": {
+        "address": "1150 Powder Springs St, Ste 400, Marietta, GA 30064",
+        "mailing_address": "P.O. Box 649, Marietta, GA 30061",
+        "phone": "(770) 528-2071",
+        "email_residential": "residentialpermitreview@cobbcounty.gov",
+        "email_commercial": "commbldgapplication@cobbcounty.gov",
+        "website": "https://www.cobbcounty.gov/community-development",
+        "hours": "Monday-Friday 8:00 AM - 5:00 PM (Payments until 4:30 PM)"
+      },
+      "online_services": {
+        "portal_name": "Cobb County Citizens Access Portal",
+        "portal_url": "https://www.cobbcounty.gov/community-development/building-development",
+        "online_applications": true,
+        "online_payments": true,
+        "permit_tracking": true,
+        "eplan_system": true,
+        "features": [
+          "Electronic plan submission",
+          "Online inspection scheduling",
+          "Text-to-schedule (Selectxt)",
+          "Electronic plan review (6 business days)",
+          "Online comments and red-lined plans"
+        ]
+      },
+      "fees": {
+        "structure": "Variable by project type",
+        "new_construction": "Based on square footage",
+        "renovations": "Based on total project cost",
+        "calculator": "Commercial Fee Calculator Excel spreadsheet available",
+        "details": "Fees vary by type and size of project"
+      },
+      "permit_types": {
+        "residential": [
+          "New construction",
+          "Additions",
+          "Remodels",
+          "Renovations"
+        ],
+        "commercial": [
+          "New construction",
+          "Tenant improvements",
+          "Building alterations"
+        ]
+      },
+      "data_quality_score": 75
+    },
+    {
+      "id": "dekalb-county-1",
+      "city": "Decatur",
+      "county": "DeKalb",
+      "state": "GA",
+      "department_name": "Planning and Sustainability - Building Permits",
+      "contact": {
+        "address": "1300 Commerce Drive, Decatur, GA 30030",
+        "phone": "(404) 371-2000",
+        "phone_311": "311",
+        "email": "permitinfo@dekalbcountyga.gov",
+        "website": "https://www.dekalbcountyga.gov/planning-and-sustainability/building-permits",
+        "hours": null
+      },
+      "online_services": {
+        "portal_name": "ePermitting Portal",
+        "portal_url": "https://epermits.dekalbcountyga.gov",
+        "eplans_url": "https://www.dekalbcountyga.gov/planning-and-sustainability/eplans",
+        "online_applications": true,
+        "online_payments": true,
+        "permit_tracking": true,
+        "features": [
+          "Electronic plan review (ePlans)",
+          "Online permit submission",
+          "Status tracking from anywhere",
+          "Building permits",
+          "Land development permits",
+          "Planning applications"
+        ]
+      },
+      "services": [
+        "Building permits",
+        "Plan review",
+        "Inspections",
+        "Land development permits",
+        "Planning applications"
+      ],
+      "fees": {
+        "details": "Contact office for current fee schedule",
+        "note": "Fee information not publicly listed online"
+      },
+      "data_quality_score": 65
+    },
+    {
+      "id": "gwinnett-lawrenceville-1",
+      "city": "Lawrenceville",
+      "county": "Gwinnett",
+      "state": "GA",
+      "department_name": "Planning & Development",
+      "contact": {
+        "website": "https://www.gwinnettcounty.com/web/gwinnett/departments/planninganddevelopment",
+        "phone": null,
+        "email": null,
+        "address": null,
+        "hours": null
+      },
+      "online_services": {
+        "portal_name": null,
+        "portal_url": null,
+        "online_applications": false,
+        "online_payments": false,
+        "permit_tracking": false
+      },
+      "notes": "Gwinnett County publishes weekly permit activity reports online",
+      "data_quality_score": 25
+    },
+    {
+      "id": "fulton-alpharetta",
+      "city": "Alpharetta",
+      "county": "Fulton",
+      "state": "GA",
+      "department_name": "Community Development",
+      "contact": {
+        "address": "2 Park Plaza, Alpharetta, GA 30009",
+        "phone": "(678) 297-6080",
+        "phone_inspections": "(678) 297-6080 (7:30-8:30 AM for inspection requests)",
+        "website": "https://www.alpharetta.ga.us/157/Community-Development",
+        "hours": null
+      },
+      "online_services": {
+        "portal_name": "City of Alpharetta Permitting Portal",
+        "portal_url": "https://www.alpharetta.ga.us/government/departments/community-development",
+        "online_applications": true,
+        "online_payments": false,
+        "permit_tracking": true,
+        "features": [
+          "Subcontractors can apply for permits online",
+          "Track status of permits",
+          "Track inspection requests"
+        ]
+      },
+      "resources": {
+        "forms_page": "https://www.alpharetta.ga.us/194/Resources",
+        "trade_permits": "https://www.alpharetta.ga.us/195/Trade-Permits"
+      },
+      "fees": {
+        "details": "Fee schedule available on Resources page",
+        "note": "Contact office for specific fee information"
+      },
+      "data_quality_score": 55
+    },
+    {
+      "id": "fulton-atlanta-1",
+      "city": "Atlanta",
+      "county": "Fulton",
+      "state": "GA",
+      "department_name": "Department of City Planning - Office of Buildings",
+      "contact": {
+        "phone_residential": "(404) 330-6906",
+        "email_residential": "residential-oob@atlantaga.gov",
+        "phone_open_records": "(404) 865-8451",
+        "email_open_records": "openrecords-planningbuildings@atlantaga.gov",
+        "website": "https://www.atlantaga.gov/government/departments/city-planning/about-dcp/office-of-buildings",
+        "hours": null
+      },
+      "online_services": {
+        "portal_name": "Accela Citizens Access",
+        "portal_url": "https://aca-prod.accela.com/ATLANTA_GA/Default.aspx",
+        "online_applications": true,
+        "online_payments": true,
+        "permit_tracking": true,
+        "features": [
+          "Online permit submissions",
+          "Building permit tracking",
+          "Applications and forms",
+          "Permit status lookup"
+        ]
+      },
+      "important_info": {
+        "permit_info_site": "https://permits.atlantaga.gov",
+        "applications_forms": "https://www.atlantaga.gov/government/departments/city-planning/zoning-development-permitting-services/applications-forms-and-checklists",
+        "fee_navigator": "Code & Permit Navigator available to calculate costs"
+      },
+      "2025_updates": [
+        "Swimming pool permits must be submitted separately (effective Jan 2, 2025)",
+        "Express permits only accepted in person over the counter (effective Feb 1, 2025)",
+        "Tree impact projects require Arborist Meeting before submission (effective June 25, 2025)"
+      ],
+      "fees": {
+        "structure": "Based on project scope and cost",
+        "calculator": "Code & Permit Navigator tool available",
+        "ordinance": "See Ordinance No. 2013.30 (13-O-1043) page 33 for complete fee breakdown"
+      },
+      "data_quality_score": 80
+    },
+    {
+      "id": "fulton-county-1",
+      "city": "Atlanta",
+      "county": "Fulton",
+      "state": "GA",
+      "department_name": "Public Works - Planning, Zoning and Permitting",
+      "contact": {
+        "website": "https://www.fultoncountyga.gov/business-services/permits-and-inspections",
+        "planning_zoning_url": "https://www.fultoncountyga.gov/inside-fulton-county/fulton-county-departments/public-works/planning-zoning-and-permitting",
+        "phone": null,
+        "email": null,
+        "address": null,
+        "hours": null
+      },
+      "jurisdiction_notes": [
+        "South Fulton area: Services provided by City of South Fulton since July 3, 2017",
+        "Fulton Industrial Business District: Services by Public Works",
+        "City of South Fulton uses SAGES.gov online permitting portal"
+      ],
+      "online_services": {
+        "south_fulton_portal": "https://sagesgov.com",
+        "portal_name": "SAGES.gov (for South Fulton area)",
+        "online_applications": true,
+        "online_payments": true,
+        "permit_tracking": true
+      },
+      "data_quality_score": 50
+    },
+    {
+      "id": "muscogee-columbus",
+      "city": "Columbus",
+      "county": "Muscogee",
+      "state": "GA",
+      "department_name": "Inspections and Code",
+      "contact": {
+        "website": "https://www.columbusga.gov/inspections-and-code-2",
+        "phone": null,
+        "email": null,
+        "address": null,
+        "hours": null
+      },
+      "online_services": {
+        "portal_name": null,
+        "portal_url": null,
+        "online_applications": false,
+        "online_payments": false,
+        "permit_tracking": false
+      },
+      "data_quality_score": 20
+    },
+    {
+      "id": "richmond-augusta",
+      "city": "Augusta",
+      "county": "Richmond",
+      "state": "GA",
+      "department_name": "Planning & Development Department",
+      "contact": {
+        "website": "https://www.augustaga.gov/1100/Planning-Development",
+        "phone": null,
+        "email": null,
+        "address": null,
+        "hours": null
+      },
+      "online_services": {
+        "portal_name": null,
+        "portal_url": null,
+        "online_applications": false,
+        "online_payments": false,
+        "permit_tracking": false
+      },
+      "notes": "Website redirects to Plot Plans page - main planning page may have moved",
+      "data_quality_score": 20
+    }
+  ],
+  "summary": {
+    "total_offices_with_data": 11,
+    "avg_data_quality_score": 51,
+    "offices_with_online_portals": 6,
+    "offices_with_fees": 5,
+    "offices_with_complete_contact": 8,
+    "offices_with_application_process": 3,
+    "high_quality_offices": [
+      "Savannah (95 points)",
+      "Atlanta Office of Buildings (80 points)",
+      "Cobb County (75 points)",
+      "DeKalb County (65 points)"
+    ]
+  },
+  "recommendations": {
+    "tier1_complete": [
+      "Savannah - Chatham County",
+      "Atlanta - Office of Buildings",
+      "Cobb County"
+    ],
+    "tier2_needs_enhancement": [
+      "DeKalb County - needs fee schedule",
+      "Alpharetta - needs detailed fee info",
+      "Fulton County - needs better contact info"
+    ],
+    "tier3_minimal_data": [
+      "Clayton County - needs online portal info",
+      "Gwinnett County - needs contact details",
+      "Columbus - needs all data",
+      "Augusta - needs all data"
+    ]
+  }
+}
