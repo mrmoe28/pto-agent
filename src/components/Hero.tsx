@@ -250,14 +250,48 @@ export default function Hero() {
           </form>
         </div>
 
-        {/* Error Display */}
+        {/* Error/Info Display */}
         {error && (
-          <div className="max-w-2xl mx-auto mb-8 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center gap-2 text-red-700">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z" />
+          <div className={`max-w-2xl mx-auto mb-8 p-4 rounded-lg ${
+            error.includes('collecting') || error.includes('Check back')
+              ? 'bg-amber-50 border border-amber-200'
+              : 'bg-red-50 border border-red-200'
+          }`}>
+            <div className={`flex items-start gap-3 ${
+              error.includes('collecting') || error.includes('Check back')
+                ? 'text-amber-800'
+                : 'text-red-700'
+            }`}>
+              <svg
+                className="w-5 h-5 flex-shrink-0 mt-0.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                {error.includes('collecting') || error.includes('Check back') ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z" />
+                )}
               </svg>
-              <span>{error}</span>
+              <div className="flex-1">
+                <p className="font-medium mb-1">{error}</p>
+                {(error.includes('collecting') || error.includes('Check back')) && (
+                  <div className="mt-3 space-y-2 text-sm">
+                    <p>We're gathering permit office information for your location. This typically takes 1-2 minutes.</p>
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-amber-600 border-t-transparent"></div>
+                      <span>Processing your request...</span>
+                    </div>
+                    <button
+                      onClick={handleSearch}
+                      className="mt-2 text-amber-700 underline hover:text-amber-900"
+                    >
+                      Click to refresh and check for results
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
