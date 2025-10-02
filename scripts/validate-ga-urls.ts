@@ -38,12 +38,12 @@ async function validateUrl(url: string): Promise<{ status: number; redirected: b
 async function main() {
   console.log('\n🔍 Validating all Georgia permit office URLs...\n')
 
-  const offices = await sql<PermitOffice[]>`
+  const offices = await sql`
     SELECT id, city, county, state, department_name, website
     FROM permit_offices
     WHERE state = 'GA' AND active = true
     ORDER BY county, city
-  `
+  ` as PermitOffice[]
 
   console.log(`📊 Found ${offices.length} Georgia offices\n`)
 

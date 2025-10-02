@@ -52,10 +52,6 @@ export default function SignInPage() {
             redirectUrl="/dashboard"
             signUpUrl="/sign-up"
             afterSignInUrl="/dashboard"
-            initialValues={{
-              emailAddress: '',
-              password: ''
-            }}
           />
         </div>
 
