@@ -152,8 +152,12 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 }
 
 async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
-  const subscriptionId = invoice.subscription as string;
-  
+  // Type assertion: subscription is expandable and can be string | Subscription | null
+  const invoiceSubscription = invoice.subscription as string | Stripe.Subscription | null;
+  const subscriptionId = typeof invoiceSubscription === 'string'
+    ? invoiceSubscription
+    : invoiceSubscription?.id;
+
   if (!subscriptionId) {
     console.log('ℹ️ No subscription ID in invoice, skipping');
     return;
