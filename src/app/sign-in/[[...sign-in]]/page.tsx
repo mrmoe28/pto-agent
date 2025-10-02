@@ -49,9 +49,9 @@ export default function SignInPage() {
                 formHeaderSubtitle: 'text-gray-600'
               }
             }}
-            redirectUrl="/dashboard"
+            redirectUrl="/"
             signUpUrl="/sign-up"
-            afterSignInUrl="/dashboard"
+            afterSignInUrl="/"
           />
         </div>
 

@@ -216,7 +216,7 @@ export default function Hero() {
             <span className="text-blue-600 block">Permit Office</span>
           </h1>
           <p className="text-xl text-gray-700 mb-8 max-w-3xl mx-auto">
-            Get instant access to building permits, planning services, and zoning information
+            Get instant access to electrical and solar permits, planning services, and zoning information
             for any location in Georgia. Find contact details, hours, and application instructions.
           </p>
         </div>

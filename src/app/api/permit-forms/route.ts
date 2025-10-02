@@ -36,10 +36,25 @@ export async function POST(request: NextRequest) {
 
     console.log(`Found ${totalForms} forms for ${officeName || 'office'}`);
 
+    // If no forms found, return "not available" status
+    if (totalForms === 0) {
+      return NextResponse.json({
+        success: true,
+        forms,
+        totalForms: 0,
+        available: false,
+        message: 'No permit application forms found on this website',
+        scrapedAt: new Date().toISOString(),
+        website: websiteUrl,
+        officeName: officeName || 'Unknown Office'
+      });
+    }
+
     return NextResponse.json({
       success: true,
       forms,
       totalForms,
+      available: true,
       scrapedAt: new Date().toISOString(),
       website: websiteUrl,
       officeName: officeName || 'Unknown Office'
@@ -84,10 +99,24 @@ export async function GET(request: NextRequest) {
       0
     );
 
+    // If no forms found, return "not available" status
+    if (totalForms === 0) {
+      return NextResponse.json({
+        success: true,
+        forms,
+        totalForms: 0,
+        available: false,
+        message: 'No permit application forms found on this website',
+        scrapedAt: new Date().toISOString(),
+        website: websiteUrl
+      });
+    }
+
     return NextResponse.json({
       success: true,
       forms,
       totalForms,
+      available: true,
       scrapedAt: new Date().toISOString(),
       website: websiteUrl
     });

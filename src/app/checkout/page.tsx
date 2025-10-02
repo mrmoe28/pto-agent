@@ -99,17 +99,32 @@ function CheckoutPageContent() {
 
     setIsProcessing(true);
     try {
-      // Here you would integrate with Clerk's subscription system
-      // For now, we'll simulate the process
-      console.log(`Subscribing to plan: ${selectedPlan.id}`);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Redirect to success page
-      router.push(`/success?plan=${selectedPlan.id}`);
+      // Create Stripe checkout session
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          planId: selectedPlan.id,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create checkout session');
+      }
+
+      const { url } = await response.json();
+
+      // Redirect to Stripe Checkout
+      if (url) {
+        window.location.href = url;
+      } else {
+        throw new Error('No checkout URL returned');
+      }
     } catch (error) {
       console.error('Error subscribing:', error);
+      alert('Failed to start checkout. Please try again.');
     } finally {
       setIsProcessing(false);
     }
@@ -203,7 +218,7 @@ function CheckoutPageContent() {
                   <span>Payment Information</span>
                 </CardTitle>
                 <CardDescription>
-                  Secure payment powered by Clerk
+                  Secure payment powered by Stripe
                 </CardDescription>
               </CardHeader>
               <CardContent>

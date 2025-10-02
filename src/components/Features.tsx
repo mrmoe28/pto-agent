@@ -43,8 +43,8 @@ export default function Features() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
         </svg>
       ),
-      title: "All Permit Types",
-      description: "Whether it's building, electrical, plumbing, or zoning permits, we'll connect you with the right office."
+      title: "Electrical & Solar Permits",
+      description: "Specializing in electrical, solar, and renewable energy permits to connect you with the right office."
     },
     {
       icon: (
