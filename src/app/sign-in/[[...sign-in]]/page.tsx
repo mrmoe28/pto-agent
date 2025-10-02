@@ -25,7 +25,7 @@ export default function SignInPage() {
 
         {/* Sign In Form */}
         <div className="mt-8">
-          <SignIn 
+          <SignIn
             appearance={{
               elements: {
                 rootBox: 'w-full',
@@ -52,6 +52,10 @@ export default function SignInPage() {
             redirectUrl="/dashboard"
             signUpUrl="/sign-up"
             afterSignInUrl="/dashboard"
+            initialValues={{
+              emailAddress: '',
+              password: ''
+            }}
           />
         </div>
 
