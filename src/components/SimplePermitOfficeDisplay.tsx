@@ -879,6 +879,167 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
                   const error = formErrors[officeKey];
                   const loading = loadingForms[officeKey];
 
+                  // PRIORITY 1: Check for database forms FIRST (always show if available)
+                  if (office.downloadableApplications) {
+                    const hasAnyForms = Object.values(office.downloadableApplications).some(
+                      formArray => formArray && formArray.length > 0
+                    );
+
+                    if (hasAnyForms) {
+                      return (
+                        <div className="bg-slate-50 rounded-lg p-4">
+                          <div className="space-y-4">
+                            {office.downloadableApplications.general && office.downloadableApplications.general.length > 0 && (
+                              <div>
+                                <h5 className="font-medium text-gray-900 mb-2">General Applications</h5>
+                                <div className="space-y-2">
+                                  {office.downloadableApplications.general.map((formName, idx) => (
+                                    <div
+                                      key={idx}
+                                      className="flex items-center p-2 bg-white rounded border border-gray-200"
+                                    >
+                                      <CheckCircle className="w-4 h-4 mr-2 text-green-600 flex-shrink-0" />
+                                      <span className="text-sm text-gray-700">{formName}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {office.downloadableApplications.building && office.downloadableApplications.building.length > 0 && (
+                              <div>
+                                <h5 className="font-medium text-gray-900 mb-2">Building Permit Applications</h5>
+                                <div className="space-y-2">
+                                  {office.downloadableApplications.building.map((formName, idx) => (
+                                    <div
+                                      key={idx}
+                                      className="flex items-center p-2 bg-white rounded border border-gray-200"
+                                    >
+                                      <CheckCircle className="w-4 h-4 mr-2 text-blue-600 flex-shrink-0" />
+                                      <span className="text-sm text-gray-700">{formName}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {office.downloadableApplications.electrical && office.downloadableApplications.electrical.length > 0 && (
+                              <div>
+                                <h5 className="font-medium text-gray-900 mb-2">Electrical Permit Applications</h5>
+                                <div className="space-y-2">
+                                  {office.downloadableApplications.electrical.map((formName, idx) => (
+                                    <div
+                                      key={idx}
+                                      className="flex items-center p-2 bg-white rounded border border-gray-200"
+                                    >
+                                      <CheckCircle className="w-4 h-4 mr-2 text-yellow-600 flex-shrink-0" />
+                                      <span className="text-sm text-gray-700">{formName}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {office.downloadableApplications.plumbing && office.downloadableApplications.plumbing.length > 0 && (
+                              <div>
+                                <h5 className="font-medium text-gray-900 mb-2">Plumbing Permit Applications</h5>
+                                <div className="space-y-2">
+                                  {office.downloadableApplications.plumbing.map((formName, idx) => (
+                                    <div
+                                      key={idx}
+                                      className="flex items-center p-2 bg-white rounded border border-gray-200"
+                                    >
+                                      <CheckCircle className="w-4 h-4 mr-2 text-cyan-600 flex-shrink-0" />
+                                      <span className="text-sm text-gray-700">{formName}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {office.downloadableApplications.mechanical && office.downloadableApplications.mechanical.length > 0 && (
+                              <div>
+                                <h5 className="font-medium text-gray-900 mb-2">Mechanical Permit Applications</h5>
+                                <div className="space-y-2">
+                                  {office.downloadableApplications.mechanical.map((formName, idx) => (
+                                    <div
+                                      key={idx}
+                                      className="flex items-center p-2 bg-white rounded border border-gray-200"
+                                    >
+                                      <CheckCircle className="w-4 h-4 mr-2 text-purple-600 flex-shrink-0" />
+                                      <span className="text-sm text-gray-700">{formName}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {office.downloadableApplications.zoning && office.downloadableApplications.zoning.length > 0 && (
+                              <div>
+                                <h5 className="font-medium text-gray-900 mb-2">Zoning Permit Applications</h5>
+                                <div className="space-y-2">
+                                  {office.downloadableApplications.zoning.map((formName, idx) => (
+                                    <div
+                                      key={idx}
+                                      className="flex items-center p-2 bg-white rounded border border-gray-200"
+                                    >
+                                      <CheckCircle className="w-4 h-4 mr-2 text-green-600 flex-shrink-0" />
+                                      <span className="text-sm text-gray-700">{formName}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {office.downloadableApplications.specialized && office.downloadableApplications.specialized.length > 0 && (
+                              <div>
+                                <h5 className="font-medium text-gray-900 mb-2">Specialized Permits</h5>
+                                <div className="space-y-2">
+                                  {office.downloadableApplications.specialized.map((formName, idx) => (
+                                    <div
+                                      key={idx}
+                                      className="flex items-center p-2 bg-white rounded border border-gray-200"
+                                    >
+                                      <CheckCircle className="w-4 h-4 mr-2 text-indigo-600 flex-shrink-0" />
+                                      <span className="text-sm text-gray-700">{formName}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {office.downloadableApplications.flood && office.downloadableApplications.flood.length > 0 && (
+                              <div>
+                                <h5 className="font-medium text-gray-900 mb-2">Flood-Related Applications</h5>
+                                <div className="space-y-2">
+                                  {office.downloadableApplications.flood.map((formName, idx) => (
+                                    <div
+                                      key={idx}
+                                      className="flex items-center p-2 bg-white rounded border border-gray-200"
+                                    >
+                                      <CheckCircle className="w-4 h-4 mr-2 text-teal-600 flex-shrink-0" />
+                                      <span className="text-sm text-gray-700">{formName}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          {office.website && (
+                            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                              <p className="text-xs text-blue-800 mb-2">
+                                📋 These forms are available on the permit office website
+                              </p>
+                              <a
+                                href={office.website}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 font-medium"
+                              >
+                                <Globe className="w-4 h-4 mr-1.5" />
+                                Visit website to download forms →
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
+                  }
+
+                  // PRIORITY 2: Check scraping errors (only if no database forms)
                   if (error) {
                     return (
                       <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -890,6 +1051,7 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
                     );
                   }
 
+                  // PRIORITY 3: Check if currently scraping
                   if (loading) {
                     return (
                       <div className="bg-gray-50 rounded-lg p-8 text-center">
@@ -899,6 +1061,7 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
                     );
                   }
 
+                  // PRIORITY 4: Check if scraped forms exist
                   if (forms) {
                     const hasAnyForms = Object.values(forms).some(formArray => formArray.length > 0);
 
@@ -965,183 +1128,7 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
                     );
                   }
 
-                  // Default state - show static forms if available, or encourage form scraping
-                  if (office.downloadableApplications) {
-                    const hasAnyForms = Object.values(office.downloadableApplications).some(
-                      formArray => formArray && formArray.length > 0
-                    );
-
-                    if (!hasAnyForms) {
-                      return (
-                        <div className="bg-gray-50 rounded-lg p-6 text-center">
-                          <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                          <p className="text-sm text-gray-600 mb-3">
-                            {office.website
-                              ? "Click 'Get Forms' to search for downloadable permit applications"
-                              : "No website available for this office"
-                            }
-                          </p>
-                          {!office.website && (
-                            <p className="text-xs text-gray-500">
-                              Contact the office directly for permit applications
-                            </p>
-                          )}
-                        </div>
-                      );
-                    }
-
-                    return (
-                      <div className="bg-slate-50 rounded-lg p-4">
-                        <div className="space-y-4">
-                          {office.downloadableApplications.general && office.downloadableApplications.general.length > 0 && (
-                            <div>
-                              <h5 className="font-medium text-gray-900 mb-2">General Applications</h5>
-                              <div className="space-y-2">
-                                {office.downloadableApplications.general.map((formName, idx) => (
-                                  <div
-                                    key={idx}
-                                    className="flex items-center p-2 bg-white rounded border border-gray-200"
-                                  >
-                                    <CheckCircle className="w-4 h-4 mr-2 text-green-600 flex-shrink-0" />
-                                    <span className="text-sm text-gray-700">{formName}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          {office.downloadableApplications.building && office.downloadableApplications.building.length > 0 && (
-                            <div>
-                              <h5 className="font-medium text-gray-900 mb-2">Building Permit Applications</h5>
-                              <div className="space-y-2">
-                                {office.downloadableApplications.building.map((formName, idx) => (
-                                  <div
-                                    key={idx}
-                                    className="flex items-center p-2 bg-white rounded border border-gray-200"
-                                  >
-                                    <CheckCircle className="w-4 h-4 mr-2 text-blue-600 flex-shrink-0" />
-                                    <span className="text-sm text-gray-700">{formName}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          {office.downloadableApplications.electrical && office.downloadableApplications.electrical.length > 0 && (
-                            <div>
-                              <h5 className="font-medium text-gray-900 mb-2">Electrical Permit Applications</h5>
-                              <div className="space-y-2">
-                                {office.downloadableApplications.electrical.map((formName, idx) => (
-                                  <div
-                                    key={idx}
-                                    className="flex items-center p-2 bg-white rounded border border-gray-200"
-                                  >
-                                    <CheckCircle className="w-4 h-4 mr-2 text-yellow-600 flex-shrink-0" />
-                                    <span className="text-sm text-gray-700">{formName}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          {office.downloadableApplications.plumbing && office.downloadableApplications.plumbing.length > 0 && (
-                            <div>
-                              <h5 className="font-medium text-gray-900 mb-2">Plumbing Permit Applications</h5>
-                              <div className="space-y-2">
-                                {office.downloadableApplications.plumbing.map((formName, idx) => (
-                                  <div
-                                    key={idx}
-                                    className="flex items-center p-2 bg-white rounded border border-gray-200"
-                                  >
-                                    <CheckCircle className="w-4 h-4 mr-2 text-cyan-600 flex-shrink-0" />
-                                    <span className="text-sm text-gray-700">{formName}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          {office.downloadableApplications.mechanical && office.downloadableApplications.mechanical.length > 0 && (
-                            <div>
-                              <h5 className="font-medium text-gray-900 mb-2">Mechanical Permit Applications</h5>
-                              <div className="space-y-2">
-                                {office.downloadableApplications.mechanical.map((formName, idx) => (
-                                  <div
-                                    key={idx}
-                                    className="flex items-center p-2 bg-white rounded border border-gray-200"
-                                  >
-                                    <CheckCircle className="w-4 h-4 mr-2 text-purple-600 flex-shrink-0" />
-                                    <span className="text-sm text-gray-700">{formName}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          {office.downloadableApplications.zoning && office.downloadableApplications.zoning.length > 0 && (
-                            <div>
-                              <h5 className="font-medium text-gray-900 mb-2">Zoning Permit Applications</h5>
-                              <div className="space-y-2">
-                                {office.downloadableApplications.zoning.map((formName, idx) => (
-                                  <div
-                                    key={idx}
-                                    className="flex items-center p-2 bg-white rounded border border-gray-200"
-                                  >
-                                    <CheckCircle className="w-4 h-4 mr-2 text-green-600 flex-shrink-0" />
-                                    <span className="text-sm text-gray-700">{formName}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          {office.downloadableApplications.specialized && office.downloadableApplications.specialized.length > 0 && (
-                            <div>
-                              <h5 className="font-medium text-gray-900 mb-2">Specialized Permits</h5>
-                              <div className="space-y-2">
-                                {office.downloadableApplications.specialized.map((formName, idx) => (
-                                  <div
-                                    key={idx}
-                                    className="flex items-center p-2 bg-white rounded border border-gray-200"
-                                  >
-                                    <CheckCircle className="w-4 h-4 mr-2 text-indigo-600 flex-shrink-0" />
-                                    <span className="text-sm text-gray-700">{formName}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          {office.downloadableApplications.flood && office.downloadableApplications.flood.length > 0 && (
-                            <div>
-                              <h5 className="font-medium text-gray-900 mb-2">Flood-Related Applications</h5>
-                              <div className="space-y-2">
-                                {office.downloadableApplications.flood.map((formName, idx) => (
-                                  <div
-                                    key={idx}
-                                    className="flex items-center p-2 bg-white rounded border border-gray-200"
-                                  >
-                                    <CheckCircle className="w-4 h-4 mr-2 text-teal-600 flex-shrink-0" />
-                                    <span className="text-sm text-gray-700">{formName}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        {office.website && (
-                          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                            <p className="text-xs text-blue-800 mb-2">
-                              📋 These forms are available on the permit office website
-                            </p>
-                            <a
-                              href={office.website}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 font-medium"
-                            >
-                              <Globe className="w-4 h-4 mr-1.5" />
-                              Visit website to download forms →
-                            </a>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  }
-
+                  // PRIORITY 5: Default fallback state
                   return (
                     <div className="bg-gray-50 rounded-lg p-6 text-center">
                       <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
