@@ -46,6 +46,15 @@ interface PermitOffice {
     mechanical?: { amount?: number; description?: string; unit?: string };
     zoning?: { amount?: number; description?: string; unit?: string };
     general?: { amount?: number; description?: string; unit?: string };
+    structure?: string;
+    minimum?: string;
+    technologyFee?: string;
+    fireProtection?: string;
+    miscellaneous?: string;
+    masterHomePlan?: string;
+    billboardSign?: string;
+    sitePlanReview?: string;
+    notes?: string;
   } | null;
   instructions?: {
     general?: string;
@@ -54,8 +63,11 @@ interface PermitOffice {
     plumbing?: string;
     mechanical?: string;
     zoning?: string;
+    residential?: string;
+    commercial?: string;
     requiredDocuments?: string[];
     applicationProcess?: string;
+    specialRequirements?: string[];
   } | null;
   processingTimes?: {
     building?: { min?: number; max?: number; unit?: string; description?: string };
@@ -64,6 +76,7 @@ interface PermitOffice {
     mechanical?: { min?: number; max?: number; unit?: string; description?: string };
     zoning?: { min?: number; max?: number; unit?: string; description?: string };
     general?: { min?: number; max?: number; unit?: string; description?: string };
+    meetings?: { bpr?: string; spr?: string };
   } | null;
   downloadableApplications?: {
     building?: string[];
@@ -72,6 +85,8 @@ interface PermitOffice {
     mechanical?: string[];
     zoning?: string[];
     general?: string[];
+    specialized?: string[];
+    flood?: string[];
   } | null;
   latitude?: string | null;
   longitude?: string | null;
@@ -517,6 +532,54 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
                   </h4>
                   <div className="bg-blue-50 rounded-lg p-4">
                     <div className="space-y-3">
+                      {office.permitFees.structure && (
+                        <div className="pb-3 border-b border-blue-100 last:border-0">
+                          <div className="font-medium text-gray-900 mb-1">Building Permit Fee</div>
+                          <div className="text-sm text-gray-700">{office.permitFees.structure}</div>
+                        </div>
+                      )}
+                      {office.permitFees.minimum && (
+                        <div className="pb-3 border-b border-blue-100 last:border-0">
+                          <div className="font-medium text-gray-900 mb-1">Minimum Fee</div>
+                          <div className="text-sm text-gray-700">{office.permitFees.minimum}</div>
+                        </div>
+                      )}
+                      {office.permitFees.technologyFee && (
+                        <div className="pb-3 border-b border-blue-100 last:border-0">
+                          <div className="font-medium text-gray-900 mb-1">Technology Fee</div>
+                          <div className="text-sm text-gray-700">{office.permitFees.technologyFee}</div>
+                        </div>
+                      )}
+                      {office.permitFees.fireProtection && (
+                        <div className="pb-3 border-b border-blue-100 last:border-0">
+                          <div className="font-medium text-gray-900 mb-1">Fire Protection Systems</div>
+                          <div className="text-sm text-gray-700">{office.permitFees.fireProtection}</div>
+                        </div>
+                      )}
+                      {office.permitFees.miscellaneous && (
+                        <div className="pb-3 border-b border-blue-100 last:border-0">
+                          <div className="font-medium text-gray-900 mb-1">Miscellaneous Work</div>
+                          <div className="text-sm text-gray-700">{office.permitFees.miscellaneous}</div>
+                        </div>
+                      )}
+                      {office.permitFees.masterHomePlan && (
+                        <div className="pb-3 border-b border-blue-100 last:border-0">
+                          <div className="font-medium text-gray-900 mb-1">Master Home Plan</div>
+                          <div className="text-sm text-gray-700">{office.permitFees.masterHomePlan}</div>
+                        </div>
+                      )}
+                      {office.permitFees.billboardSign && (
+                        <div className="pb-3 border-b border-blue-100 last:border-0">
+                          <div className="font-medium text-gray-900 mb-1">Billboard Sign</div>
+                          <div className="text-sm text-gray-700">{office.permitFees.billboardSign}</div>
+                        </div>
+                      )}
+                      {office.permitFees.sitePlanReview && (
+                        <div className="pb-3 border-b border-blue-100 last:border-0">
+                          <div className="font-medium text-gray-900 mb-1">Site Plan Review</div>
+                          <div className="text-sm text-gray-700">{office.permitFees.sitePlanReview}</div>
+                        </div>
+                      )}
                       {office.permitFees.building && (
                         <div className="pb-3 border-b border-blue-100 last:border-0">
                           <div className="font-medium text-gray-900 mb-1">Building Permit</div>
@@ -551,6 +614,11 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
                         <div className="pb-3 border-b border-blue-100 last:border-0">
                           <div className="font-medium text-gray-900 mb-1">General Fees</div>
                           <div className="text-sm text-gray-700">{formatFee(office.permitFees.general)}</div>
+                        </div>
+                      )}
+                      {office.permitFees.notes && (
+                        <div className="pt-3 border-t border-blue-200">
+                          <div className="text-xs text-gray-600 italic">{office.permitFees.notes}</div>
                         </div>
                       )}
                     </div>
@@ -633,6 +701,19 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
                           <span className="text-sm font-medium text-amber-700">{formatProcessingTime(office.processingTimes.general)}</span>
                         </div>
                       )}
+                      {office.processingTimes.meetings && (
+                        <div className="pt-3 border-t border-amber-200">
+                          <div className="font-medium text-gray-900 mb-2">Review Meetings</div>
+                          <div className="space-y-1 text-sm text-gray-700">
+                            {office.processingTimes.meetings.bpr && (
+                              <div><span className="font-medium">BPR:</span> {office.processingTimes.meetings.bpr}</div>
+                            )}
+                            {office.processingTimes.meetings.spr && (
+                              <div><span className="font-medium">SPR:</span> {office.processingTimes.meetings.spr}</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -694,6 +775,22 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
                       </div>
                     )}
 
+                    {/* Residential Permit Instructions */}
+                    {office.instructions.residential && (
+                      <div className="bg-amber-50 rounded-lg p-4 border-l-4 border-amber-400">
+                        <h5 className="font-medium text-gray-900 mb-2">Residential Permit Instructions</h5>
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{office.instructions.residential}</p>
+                      </div>
+                    )}
+
+                    {/* Commercial Permit Instructions */}
+                    {office.instructions.commercial && (
+                      <div className="bg-indigo-50 rounded-lg p-4 border-l-4 border-indigo-400">
+                        <h5 className="font-medium text-gray-900 mb-2">Commercial Permit Instructions</h5>
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{office.instructions.commercial}</p>
+                      </div>
+                    )}
+
                     {/* Required Documents */}
                     {office.instructions.requiredDocuments && office.instructions.requiredDocuments.length > 0 && (
                       <div className="bg-indigo-50 rounded-lg p-4">
@@ -724,6 +821,24 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
                           Application Process
                         </h5>
                         <p className="text-sm text-gray-700 whitespace-pre-wrap">{office.instructions.applicationProcess}</p>
+                      </div>
+                    )}
+
+                    {/* Special Requirements */}
+                    {office.instructions.specialRequirements && office.instructions.specialRequirements.length > 0 && (
+                      <div className="bg-red-50 rounded-lg p-4">
+                        <h5 className="font-medium text-gray-900 mb-3 flex items-center">
+                          <AlertCircle className="w-4 h-4 mr-2 text-red-600" />
+                          Special Requirements
+                        </h5>
+                        <ul className="space-y-2">
+                          {office.instructions.specialRequirements.map((req, idx) => (
+                            <li key={idx} className="flex items-start">
+                              <AlertCircle className="w-4 h-4 text-red-600 mr-2 mt-0.5 flex-shrink-0" />
+                              <span className="text-sm text-gray-700">{req}</span>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     )}
                   </div>
@@ -852,30 +967,177 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
 
                   // Default state - show static forms if available, or encourage form scraping
                   if (office.downloadableApplications) {
+                    const hasAnyForms = Object.values(office.downloadableApplications).some(
+                      formArray => formArray && formArray.length > 0
+                    );
+
+                    if (!hasAnyForms) {
+                      return (
+                        <div className="bg-gray-50 rounded-lg p-6 text-center">
+                          <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                          <p className="text-sm text-gray-600 mb-3">
+                            {office.website
+                              ? "Click 'Get Forms' to search for downloadable permit applications"
+                              : "No website available for this office"
+                            }
+                          </p>
+                          {!office.website && (
+                            <p className="text-xs text-gray-500">
+                              Contact the office directly for permit applications
+                            </p>
+                          )}
+                        </div>
+                      );
+                    }
+
                     return (
                       <div className="bg-slate-50 rounded-lg p-4">
-                        <div className="space-y-3">
-                          {office.downloadableApplications.building && office.downloadableApplications.building.length > 0 && (
+                        <div className="space-y-4">
+                          {office.downloadableApplications.general && office.downloadableApplications.general.length > 0 && (
                             <div>
-                              <h5 className="font-medium text-gray-900 mb-2">Building Permit Applications</h5>
-                              <div className="space-y-1">
-                                {office.downloadableApplications.building.map((url, idx) => (
-                                  <a
+                              <h5 className="font-medium text-gray-900 mb-2">General Applications</h5>
+                              <div className="space-y-2">
+                                {office.downloadableApplications.general.map((formName, idx) => (
+                                  <div
                                     key={idx}
-                                    href={url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                                    className="flex items-center p-2 bg-white rounded border border-gray-200"
                                   >
-                                    <FileText className="w-4 h-4 mr-2" />
-                                    Building Permit Form {idx + 1}
-                                  </a>
+                                    <CheckCircle className="w-4 h-4 mr-2 text-green-600 flex-shrink-0" />
+                                    <span className="text-sm text-gray-700">{formName}</span>
+                                  </div>
                                 ))}
                               </div>
                             </div>
                           )}
-                          {/* Add other static form types here if needed */}
+                          {office.downloadableApplications.building && office.downloadableApplications.building.length > 0 && (
+                            <div>
+                              <h5 className="font-medium text-gray-900 mb-2">Building Permit Applications</h5>
+                              <div className="space-y-2">
+                                {office.downloadableApplications.building.map((formName, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="flex items-center p-2 bg-white rounded border border-gray-200"
+                                  >
+                                    <CheckCircle className="w-4 h-4 mr-2 text-blue-600 flex-shrink-0" />
+                                    <span className="text-sm text-gray-700">{formName}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {office.downloadableApplications.electrical && office.downloadableApplications.electrical.length > 0 && (
+                            <div>
+                              <h5 className="font-medium text-gray-900 mb-2">Electrical Permit Applications</h5>
+                              <div className="space-y-2">
+                                {office.downloadableApplications.electrical.map((formName, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="flex items-center p-2 bg-white rounded border border-gray-200"
+                                  >
+                                    <CheckCircle className="w-4 h-4 mr-2 text-yellow-600 flex-shrink-0" />
+                                    <span className="text-sm text-gray-700">{formName}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {office.downloadableApplications.plumbing && office.downloadableApplications.plumbing.length > 0 && (
+                            <div>
+                              <h5 className="font-medium text-gray-900 mb-2">Plumbing Permit Applications</h5>
+                              <div className="space-y-2">
+                                {office.downloadableApplications.plumbing.map((formName, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="flex items-center p-2 bg-white rounded border border-gray-200"
+                                  >
+                                    <CheckCircle className="w-4 h-4 mr-2 text-cyan-600 flex-shrink-0" />
+                                    <span className="text-sm text-gray-700">{formName}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {office.downloadableApplications.mechanical && office.downloadableApplications.mechanical.length > 0 && (
+                            <div>
+                              <h5 className="font-medium text-gray-900 mb-2">Mechanical Permit Applications</h5>
+                              <div className="space-y-2">
+                                {office.downloadableApplications.mechanical.map((formName, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="flex items-center p-2 bg-white rounded border border-gray-200"
+                                  >
+                                    <CheckCircle className="w-4 h-4 mr-2 text-purple-600 flex-shrink-0" />
+                                    <span className="text-sm text-gray-700">{formName}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {office.downloadableApplications.zoning && office.downloadableApplications.zoning.length > 0 && (
+                            <div>
+                              <h5 className="font-medium text-gray-900 mb-2">Zoning Permit Applications</h5>
+                              <div className="space-y-2">
+                                {office.downloadableApplications.zoning.map((formName, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="flex items-center p-2 bg-white rounded border border-gray-200"
+                                  >
+                                    <CheckCircle className="w-4 h-4 mr-2 text-green-600 flex-shrink-0" />
+                                    <span className="text-sm text-gray-700">{formName}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {office.downloadableApplications.specialized && office.downloadableApplications.specialized.length > 0 && (
+                            <div>
+                              <h5 className="font-medium text-gray-900 mb-2">Specialized Permits</h5>
+                              <div className="space-y-2">
+                                {office.downloadableApplications.specialized.map((formName, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="flex items-center p-2 bg-white rounded border border-gray-200"
+                                  >
+                                    <CheckCircle className="w-4 h-4 mr-2 text-indigo-600 flex-shrink-0" />
+                                    <span className="text-sm text-gray-700">{formName}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {office.downloadableApplications.flood && office.downloadableApplications.flood.length > 0 && (
+                            <div>
+                              <h5 className="font-medium text-gray-900 mb-2">Flood-Related Applications</h5>
+                              <div className="space-y-2">
+                                {office.downloadableApplications.flood.map((formName, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="flex items-center p-2 bg-white rounded border border-gray-200"
+                                  >
+                                    <CheckCircle className="w-4 h-4 mr-2 text-teal-600 flex-shrink-0" />
+                                    <span className="text-sm text-gray-700">{formName}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
+                        {office.website && (
+                          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <p className="text-xs text-blue-800 mb-2">
+                              📋 These forms are available on the permit office website
+                            </p>
+                            <a
+                              href={office.website}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 font-medium"
+                            >
+                              <Globe className="w-4 h-4 mr-1.5" />
+                              Visit website to download forms →
+                            </a>
+                          </div>
+                        )}
                       </div>
                     );
                   }
