@@ -172,6 +172,29 @@ This now shows:
 ✅ **Formatting:** All code properly formatted
 ✅ **Type Safety:** All props correctly typed
 
+### 4. ✅ Modal Usage State Update Fix
+**Problem:** Upgrade modal showed "0 searches used" when user had actually used their free search.
+
+**Root Cause:** In `src/app/search/page.tsx`, when the upgrade modal was shown (user cannot search), the `searchesUsed` state wasn't being updated with the current usage from the API response.
+
+**Fix:** Updated the search handler to set usage state even when showing the upgrade modal:
+```typescript
+// Before:
+if (!data.success || !data.canSearch) {
+  setShowUpgradeModal(true);
+  return; // Missing usage state update
+}
+
+// After:
+if (!data.success || !data.canSearch) {
+  setShowUpgradeModal(true);
+  setSearchesUsed(data.usage.used); // Update usage display even when showing modal
+  return;
+}
+```
+
+**Result:** Modal now correctly shows "1 searches used" for free users who have exhausted their search limit.
+
 ## Summary
 
 All issues have been fixed:
@@ -181,6 +204,7 @@ All issues have been fixed:
 3. ✅ Upgrade modal recommends Enterprise for Pro users needing more
 4. ✅ Pricing page accurately shows search limits
 5. ✅ Button text is clear and action-oriented
+6. ✅ Modal usage state updates correctly when showing upgrade prompt
 
 The user experience flow is now complete:
 - **Free → Pro:** Clear upgrade path with 40 searches/month

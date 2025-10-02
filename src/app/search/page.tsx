@@ -163,6 +163,7 @@ export default function SearchPage() {
         // Show upgrade modal if user cannot search
         if (!data.success || !data.canSearch) {
           setShowUpgradeModal(true);
+          setSearchesUsed(data.usage.used); // Update usage display even when showing modal
           return;
         }
 
