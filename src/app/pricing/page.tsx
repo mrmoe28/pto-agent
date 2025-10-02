@@ -201,15 +201,6 @@ export default function PricingPage() {
           )}
         </div>
 
-        {!isAuthenticated && (
-          <div className="mb-12 max-w-3xl mx-auto bg-blue-50 border border-blue-200 rounded-xl px-6 py-4 text-blue-800">
-            <p className="font-semibold">Browsing plans without an account</p>
-            <p className="text-sm text-blue-700">
-              You can continue using the free search tools without signing in. Create an account when you&apos;re ready to upgrade or save favorites.
-            </p>
-          </div>
-        )}
-
         {/* Pricing Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
           {pricingPlans.map((plan) => (
@@ -375,7 +366,7 @@ export default function PricingPage() {
             </div>
             <div>
               <h4 className="font-semibold text-gray-900 mb-2">What payment methods do you accept?</h4>
-              <p className="text-gray-600">We accept all major credit cards, PayPal, and bank transfers for Enterprise plans.</p>
+              <p className="text-gray-600">We accept all major credit cards for Enterprise plans.</p>
             </div>
             <div>
               <h4 className="font-semibold text-gray-900 mb-2">Can I cancel anytime?</h4>
