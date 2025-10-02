@@ -65,8 +65,9 @@ async function main() {
       LIMIT 10
     `
 
-    sampleCounties.forEach((county: { county: string; city: string; department_name: string }) => {
-      console.log(`   ${county.county} County → ${county.city} (${county.department_name})`)
+    sampleCounties.forEach((county) => {
+      const c = county as { county: string; city: string; department_name: string }
+      console.log(`   ${c.county} County → ${c.city} (${c.department_name})`)
     })
 
     console.log('\n✅ Database seeding complete!')

@@ -11,7 +11,7 @@ async function main() {
   `
 
   console.log(`\n📊 Georgia Counties in Database (${result.length} total):\n`)
-  result.forEach((r: { county: string }) => console.log(`   ✓ ${r.county} County`))
+  result.forEach((r) => console.log(`   ✓ ${(r as { county: string }).county} County`))
 
   const allOffices = await sql`
     SELECT county, city, jurisdiction_type, department_name
@@ -21,8 +21,9 @@ async function main() {
   `
 
   console.log(`\n\n🏛️  All Georgia Offices (${allOffices.length} total):\n`)
-  allOffices.forEach((office: { county: string; city: string; jurisdiction_type: string; department_name: string }) => {
-    console.log(`   ${office.county} → ${office.city} (${office.jurisdiction_type}) - ${office.department_name}`)
+  allOffices.forEach((office) => {
+    const o = office as { county: string; city: string; jurisdiction_type: string; department_name: string }
+    console.log(`   ${o.county} → ${o.city} (${o.jurisdiction_type}) - ${o.department_name}`)
   })
 }
 
