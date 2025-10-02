@@ -3,7 +3,7 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-01-27.acacia',
+  apiVersion: '2025-09-30.clover',
 });
 
 export async function POST(request: NextRequest) {

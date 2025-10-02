@@ -68,7 +68,7 @@ export default function AdminSubscriptionPage() {
       } else {
         setMessage({ type: 'error', text: data.error || 'Failed to get user info' });
       }
-    } catch (error) {
+    } catch {
       setMessage({ type: 'error', text: 'Network error' });
     } finally {
       setLoading(false);
@@ -105,7 +105,7 @@ export default function AdminSubscriptionPage() {
       } else {
         setMessage({ type: 'error', text: data.error || 'Failed to update subscription' });
       }
-    } catch (error) {
+    } catch {
       setMessage({ type: 'error', text: 'Network error' });
     } finally {
       setLoading(false);
@@ -155,13 +155,13 @@ export default function AdminSubscriptionPage() {
           <CardHeader>
             <CardTitle>Update Subscription</CardTitle>
             <CardDescription>
-              Change a user's subscription plan
+              Change a user&apos;s subscription plan
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <Label htmlFor="plan">Plan</Label>
-              <Select value={selectedPlan} onValueChange={(value: any) => setSelectedPlan(value)}>
+              <Select value={selectedPlan} onValueChange={(value: 'free' | 'pro' | 'enterprise' | 'admin') => setSelectedPlan(value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -243,7 +243,7 @@ export default function AdminSubscriptionPage() {
             {subscriptionInfo.clerkPlan !== subscriptionInfo.dbPlan && (
               <Alert className="mt-4 border-yellow-500">
                 <AlertDescription>
-                  ⚠️ Plan mismatch detected! Clerk shows "{subscriptionInfo.clerkPlan}" but database shows "{subscriptionInfo.dbPlan}". 
+                  ⚠️ Plan mismatch detected! Clerk shows &quot;{subscriptionInfo.clerkPlan}&quot; but database shows &quot;{subscriptionInfo.dbPlan}&quot;.
                   This is likely the cause of the subscription display issue.
                 </AlertDescription>
               </Alert>
@@ -261,17 +261,17 @@ export default function AdminSubscriptionPage() {
           <div>
             <h4 className="font-semibold">Common Issue:</h4>
             <p className="text-sm text-gray-600">
-              Users who upgraded to Enterprise may see "0 of null monthly searches" because their Clerk metadata 
-              wasn't updated during the upgrade process.
+              Users who upgraded to Enterprise may see &quot;0 of null monthly searches&quot; because their Clerk metadata
+              wasn&apos;t updated during the upgrade process.
             </p>
           </div>
           <div>
             <h4 className="font-semibold">Solution:</h4>
             <ol className="text-sm text-gray-600 list-decimal list-inside space-y-1">
               <li>Look up the user by their User ID (found in Clerk dashboard)</li>
-              <li>Check if there's a plan mismatch between Clerk and database</li>
-              <li>Update their subscription to "enterprise" to sync both systems</li>
-              <li>The user should now see "Unlimited searches" instead of the error</li>
+              <li>Check if there&apos;s a plan mismatch between Clerk and database</li>
+              <li>Update their subscription to &quot;enterprise&quot; to sync both systems</li>
+              <li>The user should now see &quot;Unlimited searches&quot; instead of the error</li>
             </ol>
           </div>
         </CardContent>
