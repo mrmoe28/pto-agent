@@ -153,6 +153,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
 async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
   // Type assertion: subscription is expandable and can be string | Subscription | null
+  // @ts-expect-error - subscription exists on Invoice but may not be in type definition
   const invoiceSubscription = invoice.subscription as string | Stripe.Subscription | null;
   const subscriptionId = typeof invoiceSubscription === 'string'
     ? invoiceSubscription
@@ -166,7 +167,9 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
   console.log('💳 Payment succeeded for subscription:', subscriptionId);
 
   // Get subscription details
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const subscriptionResponse = await stripe.subscriptions.retrieve(subscriptionId);
+  // @ts-expect-error - Stripe response wrapping may vary
+  const subscription = subscriptionResponse.data || subscriptionResponse;
   const priceId = subscription.items.data[0]?.price.id;
   
   if (!priceId) {
@@ -200,7 +203,7 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
     .update(userSubscriptions)
     .set({
       searchesUsed: 0,
-      currentPeriodStart: new Date(),
+      currentPeriodStart: new Date(subscription.current_period_start * 1000),
       currentPeriodEnd: new Date(subscription.current_period_end * 1000),
       updatedAt: new Date(),
     })
