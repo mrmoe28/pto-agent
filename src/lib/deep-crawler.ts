@@ -92,13 +92,16 @@ export class DeepPermitCrawler {
   private visited = new Set<string>()
   private crawledData: CrawledData[] = []
 
-  private solarKeywords = [
-    'solar', 'photovoltaic', 'pv', 'renewable', 'panel',
-    'electrical', 'interconnection', 'net metering'
+  private electricalKeywords = [
+    'electrical', 'electrical permit', 'electrical application',
+    'solar', 'photovoltaic', 'pv', 'solar permit', 'solar electrical',
+    'renewable', 'panel', 'interconnection', 'net metering',
+    'wiring', 'electrical installation', 'electrical service'
   ]
 
   private targetPaths = [
-    '/permit', '/solar', '/electrical', '/renewable', '/energy',
+    '/permit', '/electrical', '/electrical-permit', '/electrical-application',
+    '/solar', '/solar-permit', '/renewable', '/energy',
     '/application', '/form', '/fee', '/requirement', '/instruction',
     '/how-to', '/guide', '/checklist', '/process', '/timeline',
     '/contact', '/staff', '/department', '/submit', '/apply'
@@ -225,9 +228,37 @@ export class DeepPermitCrawler {
     $('a').each((_, elem): void => {
       const href = $(elem).attr('href')
       const text = $(elem).text().toLowerCase()
+      const title = $(elem).attr('title')?.toLowerCase() || ''
+      const combinedText = `${text} ${title} ${href}`.toLowerCase()
 
-      if (href && (href.endsWith('.pdf') || text.includes('pdf'))) {
-        pdfs.push(href)
+      if (href && href.toLowerCase().endsWith('.pdf')) {
+        // Only include PDFs that are likely to be electrical permit applications
+        const isElectricalPermit = this.electricalKeywords.some(keyword =>
+          combinedText.includes(keyword)
+        ) && (combinedText.includes('permit') ||
+              combinedText.includes('application') ||
+              combinedText.includes('form'))
+
+        const isExcluded = combinedText.includes('ordinance') ||
+                          combinedText.includes('code') ||
+                          combinedText.includes('regulation') ||
+                          combinedText.includes('policy') ||
+                          combinedText.includes('manual') ||
+                          combinedText.includes('guide') ||
+                          combinedText.includes('instruction') ||
+                          combinedText.includes('checklist') ||
+                          combinedText.includes('requirement') ||
+                          combinedText.includes('fee schedule') ||
+                          combinedText.includes('calendar') ||
+                          combinedText.includes('meeting') ||
+                          combinedText.includes('minutes') ||
+                          combinedText.includes('agenda') ||
+                          combinedText.includes('report') ||
+                          combinedText.includes('brochure')
+
+        if (isElectricalPermit && !isExcluded) {
+          pdfs.push(href)
+        }
       }
     })
 
@@ -331,9 +362,9 @@ export class DeepPermitCrawler {
 
       if (!href) return
 
-      // Check if link text or href contains relevant keywords
+      // Check if link text or href contains electrical permit keywords
       const isRelevant =
-        this.solarKeywords.some(kw => text.includes(kw) || href.toLowerCase().includes(kw)) ||
+        this.electricalKeywords.some(kw => text.includes(kw) || href.toLowerCase().includes(kw)) ||
         this.targetPaths.some(path => href.includes(path))
 
       if (isRelevant) {
@@ -377,9 +408,9 @@ export class DeepPermitCrawler {
     // Has PDF links
     if ($('a[href$=".pdf"]').length > 0) score += 1
 
-    // Has solar keywords
+    // Has electrical/solar keywords
     const text = $('body').text().toLowerCase()
-    if (this.solarKeywords.some(kw => text.includes(kw))) score += 2
+    if (this.electricalKeywords.some(kw => text.includes(kw))) score += 2
 
     return score / maxScore
   }
@@ -513,10 +544,10 @@ export class DeepPermitCrawler {
           maxDays: match[2] ? parseInt(match[2]) : undefined
         }
 
-        // Check if specific to solar
+        // Check if specific to electrical/solar
         const context = content.slice(Math.max(0, match.index - 100), match.index + 100)
-        if (this.solarKeywords.some(kw => context.toLowerCase().includes(kw))) {
-          timeline.permitType = 'solar'
+        if (this.electricalKeywords.some(kw => context.toLowerCase().includes(kw))) {
+          timeline.permitType = 'electrical'
         }
 
         timelines.push(timeline)
@@ -563,8 +594,9 @@ export async function deepCrawlPermitOffice(websiteUrl: string): Promise<PermitR
     maxPages: 15,
     followExternal: false,
     targetPaths: [
-      '/permit', '/solar', '/electrical', '/renewable',
-      '/application', '/form', '/fee', '/requirement'
+      '/permit', '/electrical', '/electrical-permit', '/solar',
+      '/solar-permit', '/renewable', '/application', '/form',
+      '/fee', '/requirement'
     ],
     extractPDFs: true
   }

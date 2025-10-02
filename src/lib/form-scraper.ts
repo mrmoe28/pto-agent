@@ -4,7 +4,7 @@ import { chromium } from 'playwright';
 interface PermitForm {
   name: string;
   url: string;
-  type: 'building' | 'electrical' | 'plumbing';
+  type: 'electrical';
   description?: string;
   fileType?: string;
 }
@@ -20,30 +20,18 @@ interface BusinessHours {
 }
 
 interface ScrapedForms {
-  building: PermitForm[];
   electrical: PermitForm[];
-  plumbing: PermitForm[];
   businessHours?: BusinessHours;
 }
 
-// Common permit form keywords to search for (only electrical, building, and plumbing)
-const FORM_KEYWORDS = {
-  building: [
-    'building permit', 'construction permit', 'residential permit',
-    'commercial permit', 'building application', 'construction application',
-    'new construction', 'renovation permit', 'remodel permit'
-  ],
-  electrical: [
-    'electrical permit', 'electrical application', 'electrical work',
-    'wiring permit', 'electrical inspection', 'electrical installation',
-    'electrical service', 'electrical upgrade'
-  ],
-  plumbing: [
-    'plumbing permit', 'plumbing application', 'water heater',
-    'sewer permit', 'plumbing inspection', 'plumbing installation',
-    'water line', 'sewer line', 'plumbing repair'
-  ]
-};
+// Electrical permit form keywords only
+const ELECTRICAL_KEYWORDS = [
+  'electrical permit', 'electrical application', 'electrical work',
+  'wiring permit', 'electrical inspection', 'electrical installation',
+  'electrical service', 'electrical upgrade', 'electric permit',
+  'electrical contractor', 'electrical form', 'solar electrical',
+  'photovoltaic electrical', 'pv electrical', 'solar permit'
+];
 
 // File extensions that indicate downloadable forms
 const FORM_EXTENSIONS = ['.pdf', '.doc', '.docx', '.xlsx', '.xls'];
@@ -58,9 +46,7 @@ const HOURS_KEYWORDS = [
 
 export async function scrapePermitForms(websiteUrl: string): Promise<ScrapedForms> {
   const forms: ScrapedForms = {
-    building: [],
-    electrical: [],
-    plumbing: []
+    electrical: []
   };
 
   try {
@@ -77,26 +63,25 @@ export async function scrapePermitForms(websiteUrl: string): Promise<ScrapedForm
 
       if (href && isLikelyFormLink(href, text, title)) {
         const fullUrl = resolveUrl(href, websiteUrl);
-        const formType = determineFormType(text, title, href);
         const form: PermitForm = {
           name: cleanFormName($(element).text()),
           url: fullUrl,
-          type: formType,
+          type: 'electrical',
           fileType: getFileType(href)
         };
 
-        forms[formType].push(form);
+        forms.electrical.push(form);
       }
     });
 
-    // If we didn't find many forms with static scraping, try dynamic scraping
-    if (getTotalFormsCount(forms) < 3) {
+    // If we didn't find forms with static scraping, try dynamic scraping
+    if (getTotalFormsCount(forms) === 0) {
       const dynamicForms = await scrapeDynamicContent(websiteUrl);
       mergeForms(forms, dynamicForms);
     }
 
-    // Look for common permit pages if we still don't have enough forms
-    if (getTotalFormsCount(forms) < 3) {
+    // Look for common permit pages if we still don't have forms
+    if (getTotalFormsCount(forms) === 0) {
       const permitPageForms = await scrapeCommonPermitPages(websiteUrl);
       mergeForms(forms, permitPageForms);
     }
@@ -110,9 +95,7 @@ export async function scrapePermitForms(websiteUrl: string): Promise<ScrapedForm
 
 async function scrapeDynamicContent(websiteUrl: string): Promise<ScrapedForms> {
   const forms: ScrapedForms = {
-    building: [],
-    electrical: [],
-    plumbing: []
+    electrical: []
   };
 
   try {
@@ -135,15 +118,14 @@ async function scrapeDynamicContent(websiteUrl: string): Promise<ScrapedForms> {
 
     for (const link of links) {
       if (link.href && isLikelyFormLink(link.href, link.text.toLowerCase(), link.title.toLowerCase())) {
-        const formType = determineFormType(link.text.toLowerCase(), link.title.toLowerCase(), link.href);
         const form: PermitForm = {
           name: cleanFormName(link.text),
           url: link.href,
-          type: formType,
+          type: 'electrical',
           fileType: getFileType(link.href)
         };
 
-        forms[formType].push(form);
+        forms.electrical.push(form);
       }
     }
 
@@ -204,16 +186,15 @@ async function scrapeDynamicContent(websiteUrl: string): Promise<ScrapedForms> {
 
 async function scrapeCommonPermitPages(baseUrl: string): Promise<ScrapedForms> {
   const forms: ScrapedForms = {
-    building: [],
-    electrical: [],
-    plumbing: []
+    electrical: []
   };
 
-  // Common permit page paths
+  // Common electrical permit page paths
   const commonPaths = [
     '/permits',
-    '/building',
-    '/building-permits',
+    '/electrical',
+    '/electrical-permits',
+    '/electrical-forms',
     '/forms',
     '/applications',
     '/downloads',
@@ -221,9 +202,10 @@ async function scrapeCommonPermitPages(baseUrl: string): Promise<ScrapedForms> {
     '/documents',
     '/permit-forms',
     '/permit-applications',
-    '/building-department',
-    '/planning-zoning',
-    '/development-services'
+    '/electrical-department',
+    '/solar',
+    '/solar-permits',
+    '/renewable-energy'
   ];
 
   for (const path of commonPaths) {
@@ -242,19 +224,18 @@ async function scrapeCommonPermitPages(baseUrl: string): Promise<ScrapedForms> {
 
           if (href && isLikelyFormLink(href, text, title)) {
             const fullUrl = resolveUrl(href, url);
-            const formType = determineFormType(text, title, href);
 
             // Check if we already have this form
-            const exists = forms[formType].some(f => f.url === fullUrl);
+            const exists = forms.electrical.some(f => f.url === fullUrl);
             if (!exists) {
               const form: PermitForm = {
                 name: cleanFormName($(element).text()),
                 url: fullUrl,
-                type: formType,
+                type: 'electrical',
                 fileType: getFileType(href)
               };
 
-              forms[formType].push(form);
+              forms.electrical.push(form);
             }
           }
         });
@@ -273,34 +254,39 @@ function isLikelyFormLink(href: string, text: string, title: string): boolean {
   // Check if it's a downloadable file
   const hasFormExtension = FORM_EXTENSIONS.some(ext => href.toLowerCase().includes(ext));
 
-  // Check if text contains form-related keywords
+  if (!hasFormExtension) return false;
+
+  // MUST contain electrical-related keywords
+  const hasElectricalKeyword = ELECTRICAL_KEYWORDS.some(keyword =>
+    combinedText.includes(keyword)
+  );
+
   const hasFormKeyword = combinedText.includes('form') ||
-                         combinedText.includes('application') ||
-                         combinedText.includes('permit') ||
-                         combinedText.includes('download') ||
-                         combinedText.includes('pdf');
+                        combinedText.includes('application') ||
+                        combinedText.includes('apply');
 
-  return hasFormExtension && hasFormKeyword;
-}
+  // EXCLUDE common non-application documents
+  const isExcluded = combinedText.includes('ordinance') ||
+                    combinedText.includes('code') ||
+                    combinedText.includes('regulation') ||
+                    combinedText.includes('policy') ||
+                    combinedText.includes('manual') ||
+                    combinedText.includes('guide') ||
+                    combinedText.includes('instruction') ||
+                    combinedText.includes('checklist') ||
+                    combinedText.includes('requirement') ||
+                    combinedText.includes('fee schedule') ||
+                    combinedText.includes('fee sheet') ||
+                    combinedText.includes('calendar') ||
+                    combinedText.includes('meeting') ||
+                    combinedText.includes('minutes') ||
+                    combinedText.includes('agenda') ||
+                    combinedText.includes('report') ||
+                    combinedText.includes('plan') ||
+                    combinedText.includes('brochure') ||
+                    combinedText.includes('flyer');
 
-function determineFormType(text: string, title: string, href: string): 'building' | 'electrical' | 'plumbing' {
-  const combinedText = `${text} ${title} ${href}`.toLowerCase();
-
-  // Check each category's keywords (prioritize electrical and plumbing first for specificity)
-  if (FORM_KEYWORDS.electrical.some(keyword => combinedText.includes(keyword))) {
-    return 'electrical';
-  }
-
-  if (FORM_KEYWORDS.plumbing.some(keyword => combinedText.includes(keyword))) {
-    return 'plumbing';
-  }
-
-  if (FORM_KEYWORDS.building.some(keyword => combinedText.includes(keyword))) {
-    return 'building';
-  }
-
-  // Default to building if no specific type is found (since it's the most general)
-  return 'building';
+  return hasFormExtension && hasElectricalKeyword && hasFormKeyword && !isExcluded;
 }
 
 function resolveUrl(href: string, baseUrl: string): string {
@@ -347,19 +333,12 @@ function mergeForms(target: ScrapedForms, source: ScrapedForms): void {
     target.businessHours = source.businessHours;
   }
 
-  // Merge form arrays
-  const formTypes: (keyof Omit<ScrapedForms, 'businessHours'>)[] = ['building', 'electrical', 'plumbing'];
-
-  for (const type of formTypes) {
-    const sourceForms = source[type];
-    const targetForms = target[type];
-
-    for (const form of sourceForms) {
-      // Check if form URL already exists
-      const exists = targetForms.some(f => f.url === form.url);
-      if (!exists) {
-        targetForms.push(form);
-      }
+  // Merge electrical forms
+  for (const form of source.electrical) {
+    // Check if form URL already exists
+    const exists = target.electrical.some(f => f.url === form.url);
+    if (!exists) {
+      target.electrical.push(form);
     }
   }
 }

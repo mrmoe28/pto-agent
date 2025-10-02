@@ -54,7 +54,9 @@ export default function UpgradeModal({
               ? `You've used ${searchesUsed} of ${searchesLimit} free search${searchesLimit === 1 ? '' : 'es'}. Upgrade to Pro for 40 searches per month!`
               : currentPlan === 'pro'
                 ? `You've used ${searchesUsed} of ${searchesLimit} monthly searches. Upgrade to Enterprise for unlimited searches!`
-                : `You've used ${searchesUsed} of ${searchesLimit} monthly searches.`
+                : currentPlan === 'enterprise'
+                  ? `You have unlimited searches with your Enterprise plan!`
+                  : `You've used ${searchesUsed} of ${searchesLimit || '∞'} monthly searches.`
             }
           </DialogDescription>
         </DialogHeader>
@@ -64,14 +66,25 @@ export default function UpgradeModal({
           <div className="bg-gray-50 rounded-lg p-4 text-center">
             <div className="text-sm text-gray-600 mb-2">Current Usage</div>
             <div className="text-2xl font-bold text-gray-900">
-              {searchesUsed} / {searchesLimit || '∞'} searches used
+              {searchesLimit === null 
+                ? `${searchesUsed} searches used (Unlimited)`
+                : `${searchesUsed} / ${searchesLimit} searches used`
+              }
             </div>
             {searchesLimit && (
               <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
                 <div 
-                  className="bg-red-500 h-2 rounded-full transition-all duration-300"
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    searchesUsed >= searchesLimit ? 'bg-red-500' : 
+                    searchesUsed / searchesLimit > 0.8 ? 'bg-yellow-500' : 'bg-green-500'
+                  }`}
                   style={{ width: `${Math.min(100, (searchesUsed / searchesLimit) * 100)}%` }}
                 />
+              </div>
+            )}
+            {searchesLimit === null && (
+              <div className="w-full bg-green-200 rounded-full h-2 mt-2">
+                <div className="bg-green-500 h-2 rounded-full w-full" />
               </div>
             )}
           </div>

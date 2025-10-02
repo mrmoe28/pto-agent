@@ -72,7 +72,32 @@ export async function getUserPlanFromClerk(): Promise<PlanType> {
 
     // Check if user has subscription metadata from Clerk
     const subscriptionPlan = user.publicMetadata?.subscriptionPlan as PlanType;
-    return subscriptionPlan || 'free';
+    
+    // If Clerk metadata exists, use it
+    if (subscriptionPlan) {
+      return subscriptionPlan;
+    }
+
+    // Fallback: Check database for subscription plan
+    try {
+      const subscription = await db
+        .select()
+        .from(userSubscriptions)
+        .where(eq(userSubscriptions.userId, user.id))
+        .limit(1);
+
+      if (subscription[0] && subscription[0].plan !== 'free') {
+        console.log('[getUserPlanFromClerk] Using database fallback:', {
+          userId: user.id,
+          plan: subscription[0].plan
+        });
+        return subscription[0].plan as PlanType;
+      }
+    } catch (dbError) {
+      console.error('Error checking database for subscription plan:', dbError);
+    }
+
+    return 'free';
   } catch (error) {
     console.error('Error getting user plan from Clerk:', error);
     return 'free';
