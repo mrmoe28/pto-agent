@@ -6,7 +6,7 @@ import { db } from '@/lib/db';
 import { userSubscriptions } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_dummy_key', {
   apiVersion: '2025-09-30.clover',
 });
 

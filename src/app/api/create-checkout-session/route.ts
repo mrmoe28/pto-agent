@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_dummy_key', {
   apiVersion: '2025-09-30.clover',
 });
 
@@ -29,8 +29,8 @@ export async function POST(request: NextRequest) {
 
     // Define price IDs (these should match your Stripe products)
     const priceIds: Record<string, string> = {
-      pro: process.env.STRIPE_PRO_PRICE_ID!,
-      enterprise: process.env.STRIPE_ENTERPRISE_PRICE_ID!,
+      pro: process.env.STRIPE_PRO_PRICE_ID || '',
+      enterprise: process.env.STRIPE_ENTERPRISE_PRICE_ID || '',
     };
 
     const priceId = priceIds[planId];
