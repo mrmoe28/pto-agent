@@ -1,4 +1,47 @@
+'use client'
+
+import { useUser } from '@clerk/nextjs'
+import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+
 export default function HowItWorks() {
+  const { user, isLoaded } = useUser()
+  const router = useRouter()
+  const [searchesUsed, setSearchesUsed] = useState(0)
+  const [searchesLimit, setSearchesLimit] = useState<number | null>(1)
+
+  // Fetch user's subscription status
+  useEffect(() => {
+    if (isLoaded && user) {
+      fetch('/api/subscription/check', { method: 'GET' })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setSearchesUsed(data.usage.used)
+            setSearchesLimit(data.usage.limit)
+          }
+        })
+        .catch(err => console.error('Failed to check subscription:', err))
+    }
+  }, [isLoaded, user])
+
+  const handleGetStarted = () => {
+    // If user is not logged in, go to search page (will prompt for sign-in)
+    if (!user) {
+      router.push('/search')
+      return
+    }
+
+    // If user has used their free search (or is at limit), go to pricing
+    if (searchesLimit !== null && searchesUsed >= searchesLimit) {
+      router.push('/pricing')
+      return
+    }
+
+    // Otherwise, go to search page
+    router.push('/search')
+  }
+
   const steps = [
     {
       number: "1",
@@ -81,7 +124,10 @@ export default function HowItWorks() {
             <p className="text-gray-600 mb-6">
               Join thousands of property owners and contractors who save time with our service.
             </p>
-            <button className="px-8 py-4 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 transition-colors duration-200">
+            <button
+              onClick={handleGetStarted}
+              className="px-8 py-4 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
+            >
               Get Started Now
             </button>
           </div>
