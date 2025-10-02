@@ -122,9 +122,10 @@ interface ScrapedForms {
 
 interface SimplePermitOfficeDisplayProps {
   offices: PermitOffice[];
+  permitTypeFilter?: string;
 }
 
-export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOfficeDisplayProps) {
+export default function SimplePermitOfficeDisplay({ offices, permitTypeFilter = 'all' }: SimplePermitOfficeDisplayProps) {
   const [scrapedForms, setScrapedForms] = useState<Record<string, ScrapedForms>>({});
   const [loadingForms, setLoadingForms] = useState<Record<string, boolean>>({});
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -310,14 +311,26 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
   return (
     <div className="space-y-6">
       {offices.map((office, index) => {
-        const services = [];
-        if (office.building_permits) services.push({ name: 'Building', key: 'building' });
-        if (office.electrical_permits) services.push({ name: 'Electrical', key: 'electrical' });
-        if (office.plumbing_permits) services.push({ name: 'Plumbing', key: 'plumbing' });
-        if (office.mechanical_permits) services.push({ name: 'Mechanical', key: 'mechanical' });
-        if (office.zoning_permits) services.push({ name: 'Zoning', key: 'zoning' });
-        if (office.planning_review) services.push({ name: 'Planning', key: 'planning' });
-        if (office.inspections) services.push({ name: 'Inspections', key: 'inspections' });
+        // Filter services based on permitTypeFilter
+        const allServices = [];
+        if (office.building_permits) allServices.push({ name: 'Building', key: 'building' });
+        if (office.electrical_permits) allServices.push({ name: 'Electrical', key: 'electrical' });
+        if (office.plumbing_permits) allServices.push({ name: 'Plumbing', key: 'plumbing' });
+        if (office.mechanical_permits) allServices.push({ name: 'Mechanical', key: 'mechanical' });
+        if (office.zoning_permits) allServices.push({ name: 'Zoning', key: 'zoning' });
+        if (office.planning_review) allServices.push({ name: 'Planning', key: 'planning' });
+        if (office.inspections) allServices.push({ name: 'Inspections', key: 'inspections' });
+
+        // Apply filter if not "all"
+        const services = permitTypeFilter === 'all'
+          ? allServices
+          : allServices.filter(service => service.key === permitTypeFilter);
+
+        // Helper function to check if a section should be shown based on permit type filter
+        const shouldShowSection = (sectionType: string) => {
+          if (permitTypeFilter === 'all') return true;
+          return sectionType === permitTypeFilter || sectionType === 'general';
+        };
 
         const onlineServices = [];
         if (office.online_applications) onlineServices.push('Online Applications');
@@ -580,31 +593,31 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
                           <div className="text-sm text-gray-700">{office.permitFees.sitePlanReview}</div>
                         </div>
                       )}
-                      {office.permitFees.building && (
+                      {office.permitFees.building && shouldShowSection('building') && (
                         <div className="pb-3 border-b border-blue-100 last:border-0">
                           <div className="font-medium text-gray-900 mb-1">Building Permit</div>
                           <div className="text-sm text-gray-700">{formatFee(office.permitFees.building)}</div>
                         </div>
                       )}
-                      {office.permitFees.electrical && (
+                      {office.permitFees.electrical && shouldShowSection('electrical') && (
                         <div className="pb-3 border-b border-blue-100 last:border-0">
                           <div className="font-medium text-gray-900 mb-1">Electrical Permit</div>
                           <div className="text-sm text-gray-700">{formatFee(office.permitFees.electrical)}</div>
                         </div>
                       )}
-                      {office.permitFees.plumbing && (
+                      {office.permitFees.plumbing && shouldShowSection('plumbing') && (
                         <div className="pb-3 border-b border-blue-100 last:border-0">
                           <div className="font-medium text-gray-900 mb-1">Plumbing Permit</div>
                           <div className="text-sm text-gray-700">{formatFee(office.permitFees.plumbing)}</div>
                         </div>
                       )}
-                      {office.permitFees.mechanical && (
+                      {office.permitFees.mechanical && shouldShowSection('mechanical') && (
                         <div className="pb-3 border-b border-blue-100 last:border-0">
                           <div className="font-medium text-gray-900 mb-1">Mechanical Permit</div>
                           <div className="text-sm text-gray-700">{formatFee(office.permitFees.mechanical)}</div>
                         </div>
                       )}
-                      {office.permitFees.zoning && (
+                      {office.permitFees.zoning && shouldShowSection('zoning') && (
                         <div className="pb-3 border-b border-blue-100 last:border-0">
                           <div className="font-medium text-gray-900 mb-1">Zoning Permit</div>
                           <div className="text-sm text-gray-700">{formatFee(office.permitFees.zoning)}</div>
@@ -736,7 +749,7 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
                     )}
 
                     {/* Building Permit Instructions */}
-                    {office.instructions.building && (
+                    {office.instructions.building && shouldShowSection('building') && (
                       <div className="bg-blue-50 rounded-lg p-4 border-l-4 border-blue-400">
                         <h5 className="font-medium text-gray-900 mb-2">Building Permit Instructions</h5>
                         <p className="text-sm text-gray-700 whitespace-pre-wrap">{office.instructions.building}</p>
@@ -744,7 +757,7 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
                     )}
 
                     {/* Electrical Permit Instructions */}
-                    {office.instructions.electrical && (
+                    {office.instructions.electrical && shouldShowSection('electrical') && (
                       <div className="bg-yellow-50 rounded-lg p-4 border-l-4 border-yellow-400">
                         <h5 className="font-medium text-gray-900 mb-2">Electrical Permit Instructions</h5>
                         <p className="text-sm text-gray-700 whitespace-pre-wrap">{office.instructions.electrical}</p>
@@ -752,7 +765,7 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
                     )}
 
                     {/* Plumbing Permit Instructions */}
-                    {office.instructions.plumbing && (
+                    {office.instructions.plumbing && shouldShowSection('plumbing') && (
                       <div className="bg-cyan-50 rounded-lg p-4 border-l-4 border-cyan-400">
                         <h5 className="font-medium text-gray-900 mb-2">Plumbing Permit Instructions</h5>
                         <p className="text-sm text-gray-700 whitespace-pre-wrap">{office.instructions.plumbing}</p>
@@ -760,7 +773,7 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
                     )}
 
                     {/* Mechanical Permit Instructions */}
-                    {office.instructions.mechanical && (
+                    {office.instructions.mechanical && shouldShowSection('mechanical') && (
                       <div className="bg-purple-50 rounded-lg p-4 border-l-4 border-purple-400">
                         <h5 className="font-medium text-gray-900 mb-2">Mechanical Permit Instructions</h5>
                         <p className="text-sm text-gray-700 whitespace-pre-wrap">{office.instructions.mechanical}</p>
@@ -768,7 +781,7 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
                     )}
 
                     {/* Zoning Permit Instructions */}
-                    {office.instructions.zoning && (
+                    {office.instructions.zoning && shouldShowSection('zoning') && (
                       <div className="bg-green-50 rounded-lg p-4 border-l-4 border-green-400">
                         <h5 className="font-medium text-gray-900 mb-2">Zoning Permit Instructions</h5>
                         <p className="text-sm text-gray-700 whitespace-pre-wrap">{office.instructions.zoning}</p>
@@ -905,7 +918,7 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
                                 </div>
                               </div>
                             )}
-                            {office.downloadableApplications.building && office.downloadableApplications.building.length > 0 && (
+                            {office.downloadableApplications.building && office.downloadableApplications.building.length > 0 && shouldShowSection('building') && (
                               <div>
                                 <h5 className="font-medium text-gray-900 mb-2">Building Permit Applications</h5>
                                 <div className="space-y-2">
@@ -921,7 +934,7 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
                                 </div>
                               </div>
                             )}
-                            {office.downloadableApplications.electrical && office.downloadableApplications.electrical.length > 0 && (
+                            {office.downloadableApplications.electrical && office.downloadableApplications.electrical.length > 0 && shouldShowSection('electrical') && (
                               <div>
                                 <h5 className="font-medium text-gray-900 mb-2">Electrical Permit Applications</h5>
                                 <div className="space-y-2">
@@ -937,7 +950,7 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
                                 </div>
                               </div>
                             )}
-                            {office.downloadableApplications.plumbing && office.downloadableApplications.plumbing.length > 0 && (
+                            {office.downloadableApplications.plumbing && office.downloadableApplications.plumbing.length > 0 && shouldShowSection('plumbing') && (
                               <div>
                                 <h5 className="font-medium text-gray-900 mb-2">Plumbing Permit Applications</h5>
                                 <div className="space-y-2">
@@ -953,7 +966,7 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
                                 </div>
                               </div>
                             )}
-                            {office.downloadableApplications.mechanical && office.downloadableApplications.mechanical.length > 0 && (
+                            {office.downloadableApplications.mechanical && office.downloadableApplications.mechanical.length > 0 && shouldShowSection('mechanical') && (
                               <div>
                                 <h5 className="font-medium text-gray-900 mb-2">Mechanical Permit Applications</h5>
                                 <div className="space-y-2">
@@ -969,7 +982,7 @@ export default function SimplePermitOfficeDisplay({ offices }: SimplePermitOffic
                                 </div>
                               </div>
                             )}
-                            {office.downloadableApplications.zoning && office.downloadableApplications.zoning.length > 0 && (
+                            {office.downloadableApplications.zoning && office.downloadableApplications.zoning.length > 0 && shouldShowSection('zoning') && (
                               <div>
                                 <h5 className="font-medium text-gray-900 mb-2">Zoning Permit Applications</h5>
                                 <div className="space-y-2">
