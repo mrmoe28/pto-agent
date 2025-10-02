@@ -7,14 +7,15 @@ import { userSubscriptions } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-06-20',
+  apiVersion: '2025-09-30.clover',
 });
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
-  const signature = headers().get('stripe-signature');
+  const headersList = await headers();
+  const signature = headersList.get('stripe-signature');
 
   if (!signature) {
     console.error('❌ Missing Stripe signature');
@@ -106,7 +107,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   }
 
   // Find user by email in Clerk
-  const users = await clerkClient.users.getUserList({
+  const client = await clerkClient();
+  const { data: users } = await client.users.getUserList({
     emailAddress: [customerEmail],
   });
 
@@ -119,7 +121,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   console.log('👤 Found user:', { userId: user.id, email: customerEmail });
 
   // Update Clerk metadata
-  await clerkClient.users.updateUserMetadata(user.id, {
+  await client.users.updateUserMetadata(user.id, {
     publicMetadata: {
       subscriptionPlan: plan,
       stripeCustomerId: customerId,
@@ -128,7 +130,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   });
 
   // Update database
-  const searchesLimit = plan === 'free' ? 1 : plan === 'pro' ? 40 : null;
+  const searchesLimit = plan === 'pro' ? 40 : null; // enterprise has unlimited
   
   await db
     .update(userSubscriptions)
@@ -175,11 +177,12 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
   }
 
   // Find user by subscription ID in Clerk metadata
-  const users = await clerkClient.users.getUserList({
+  const client = await clerkClient();
+  const { data: users } = await client.users.getUserList({
     limit: 100, // Adjust as needed
   });
 
-  const user = users.find(u => 
+  const user = users.find(u =>
     u.publicMetadata?.stripeSubscriptionId === subscriptionId
   );
 
@@ -222,11 +225,12 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   }
 
   // Find user by subscription ID
-  const users = await clerkClient.users.getUserList({
+  const client = await clerkClient();
+  const { data: users } = await client.users.getUserList({
     limit: 100,
   });
 
-  const user = users.find(u => 
+  const user = users.find(u =>
     u.publicMetadata?.stripeSubscriptionId === subscriptionId
   );
 
@@ -236,7 +240,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   }
 
   // Update Clerk metadata
-  await clerkClient.users.updateUserMetadata(user.id, {
+  await client.users.updateUserMetadata(user.id, {
     publicMetadata: {
       ...user.publicMetadata,
       subscriptionPlan: plan,
@@ -244,7 +248,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   });
 
   // Update database
-  const searchesLimit = plan === 'free' ? 1 : plan === 'pro' ? 40 : null;
+  const searchesLimit = plan === 'pro' ? 40 : null; // enterprise has unlimited
   
   await db
     .update(userSubscriptions)
@@ -267,11 +271,12 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   const subscriptionId = subscription.id;
 
   // Find user by subscription ID
-  const users = await clerkClient.users.getUserList({
+  const client = await clerkClient();
+  const { data: users } = await client.users.getUserList({
     limit: 100,
   });
 
-  const user = users.find(u => 
+  const user = users.find(u =>
     u.publicMetadata?.stripeSubscriptionId === subscriptionId
   );
 
@@ -281,7 +286,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   }
 
   // Downgrade to free plan
-  await clerkClient.users.updateUserMetadata(user.id, {
+  await client.users.updateUserMetadata(user.id, {
     publicMetadata: {
       ...user.publicMetadata,
       subscriptionPlan: 'free',

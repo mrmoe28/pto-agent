@@ -18,11 +18,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if current user is admin
-    const currentUser = await clerkClient.users.getUser(currentUserId);
+    const client = await clerkClient();
+    const currentUser = await client.users.getUser(currentUserId);
     const primaryEmail = currentUser.emailAddresses.find(
       (email) => email.id === currentUser.primaryEmailAddressId
     );
-    
+
     if (primaryEmail?.emailAddress !== ADMIN_EMAIL) {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
     }
@@ -30,25 +31,25 @@ export async function POST(request: NextRequest) {
     const { targetUserId, plan } = await request.json();
 
     if (!targetUserId || !plan) {
-      return NextResponse.json({ 
-        error: 'Missing required fields: targetUserId and plan' 
+      return NextResponse.json({
+        error: 'Missing required fields: targetUserId and plan'
       }, { status: 400 });
     }
 
     if (!['free', 'pro', 'enterprise', 'admin'].includes(plan)) {
-      return NextResponse.json({ 
-        error: 'Invalid plan. Must be: free, pro, enterprise, or admin' 
+      return NextResponse.json({
+        error: 'Invalid plan. Must be: free, pro, enterprise, or admin'
       }, { status: 400 });
     }
 
     // Get target user
-    const targetUser = await clerkClient.users.getUser(targetUserId);
+    const targetUser = await client.users.getUser(targetUserId);
     if (!targetUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     // Update Clerk metadata
-    await clerkClient.users.updateUserMetadata(targetUserId, {
+    await client.users.updateUserMetadata(targetUserId, {
       publicMetadata: {
         ...targetUser.publicMetadata,
         subscriptionPlan: plan,
@@ -99,11 +100,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if current user is admin
-    const currentUser = await clerkClient.users.getUser(currentUserId);
+    const client = await clerkClient();
+    const currentUser = await client.users.getUser(currentUserId);
     const primaryEmail = currentUser.emailAddresses.find(
       (email) => email.id === currentUser.primaryEmailAddressId
     );
-    
+
     if (primaryEmail?.emailAddress !== ADMIN_EMAIL) {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
     }
@@ -112,13 +114,13 @@ export async function GET(request: NextRequest) {
     const targetUserId = searchParams.get('userId');
 
     if (!targetUserId) {
-      return NextResponse.json({ 
-        error: 'Missing userId parameter' 
+      return NextResponse.json({
+        error: 'Missing userId parameter'
       }, { status: 400 });
     }
 
     // Get user details
-    const targetUser = await clerkClient.users.getUser(targetUserId);
+    const targetUser = await client.users.getUser(targetUserId);
     if (!targetUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
