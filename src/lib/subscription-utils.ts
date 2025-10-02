@@ -4,22 +4,56 @@ import { eq } from 'drizzle-orm';
 import { PLAN_LIMITS, type PlanType, type PlanLimits } from './subscription-types';
 
 // Admin email (update this with your actual email)
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'edwardsteel.0@gmail.com';
+const ADMIN_EMAIL = 'edwardsteel.0@gmail.com';
+
+// Admin user IDs (as backup in case email detection fails)
+const ADMIN_USER_IDS: string[] = [];
 
 // Check if user is admin
-function isAdminUser(user: { emailAddresses?: Array<{ id: string; emailAddress: string }>; primaryEmailAddressId?: string | null }): boolean {
+function isAdminUser(user: {
+  id?: string;
+  emailAddresses?: Array<{ id: string; emailAddress: string }>;
+  primaryEmailAddressId?: string | null
+}): boolean {
   const primaryEmail = user.emailAddresses?.find((email) => email.id === user.primaryEmailAddressId);
   const userEmail = primaryEmail?.emailAddress;
 
+  // Normalize emails for comparison (lowercase, trim)
+  const normalizedUserEmail = userEmail?.toLowerCase().trim();
+  const normalizedAdminEmail = ADMIN_EMAIL.toLowerCase().trim();
+
   console.log('[Admin Check]', {
+    userId: user.id,
     userEmail,
+    normalizedUserEmail,
     adminEmail: ADMIN_EMAIL,
-    isMatch: userEmail === ADMIN_EMAIL,
-    allEmails: user.emailAddresses?.map(e => e.emailAddress)
+    normalizedAdminEmail,
+    primaryEmailMatch: normalizedUserEmail === normalizedAdminEmail,
+    allEmails: user.emailAddresses?.map(e => e.emailAddress),
+    allEmailsMatch: user.emailAddresses?.some(e => e.emailAddress.toLowerCase().trim() === normalizedAdminEmail),
+    userIdMatch: user.id ? ADMIN_USER_IDS.includes(user.id) : false
   });
 
-  // Check primary email or any email address
-  return userEmail === ADMIN_EMAIL || user.emailAddresses?.some(e => e.emailAddress === ADMIN_EMAIL) || false;
+  // Check by user ID first (most reliable)
+  if (user.id && ADMIN_USER_IDS.includes(user.id)) {
+    console.log('[Admin Check] ✅ Matched by user ID');
+    return true;
+  }
+
+  // Check primary email (normalized)
+  if (normalizedUserEmail === normalizedAdminEmail) {
+    console.log('[Admin Check] ✅ Matched by primary email');
+    return true;
+  }
+
+  // Check any email address (normalized)
+  if (user.emailAddresses?.some(e => e.emailAddress.toLowerCase().trim() === normalizedAdminEmail)) {
+    console.log('[Admin Check] ✅ Matched by any email address');
+    return true;
+  }
+
+  console.log('[Admin Check] ❌ No match found');
+  return false;
 }
 
 // Get user's subscription plan from Clerk metadata (server-side only)
