@@ -97,6 +97,15 @@ export async function canUserSearch(userId: string): Promise<{
     const canSearch = limits.searchesLimit === null || searchesUsed < limits.searchesLimit;
     const remaining = limits.searchesLimit === null ? null : Math.max(0, limits.searchesLimit - searchesUsed);
 
+    console.log('[canUserSearch]', {
+      userId,
+      plan,
+      searchesUsed,
+      searchesLimit: limits.searchesLimit,
+      canSearch,
+      remaining
+    });
+
     return {
       canSearch,
       plan,
@@ -123,9 +132,17 @@ export async function incrementSearchUsage(userId: string): Promise<{
   usage: { used: number; limit: number | null; remaining: number | null }
 }> {
   try {
-    const { canSearch, usage } = await canUserSearch(userId);
+    const { canSearch, usage, plan } = await canUserSearch(userId);
+
+    console.log('[incrementSearchUsage]', {
+      userId,
+      plan,
+      canSearch,
+      usage
+    });
 
     if (!canSearch) {
+      console.log('[incrementSearchUsage] User cannot search - limit reached');
       return {
         success: false,
         canSearch: false,
@@ -141,6 +158,8 @@ export async function incrementSearchUsage(userId: string): Promise<{
         updatedAt: new Date(),
       })
       .where(eq(userSubscriptions.userId, userId));
+
+    console.log('[incrementSearchUsage] Search usage incremented successfully');
 
     return {
       success: true,
