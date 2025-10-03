@@ -1,9 +1,51 @@
-import { pgTable, text, timestamp, uuid, boolean, integer, jsonb, unique, index } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, boolean, integer, jsonb, unique, index, primaryKey } from 'drizzle-orm/pg-core';
 
-// User profile and application-specific tables (using Clerk user IDs)
+// Auth.js (NextAuth) authentication tables
+export const users = pgTable('users', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text('name'),
+  email: text('email').notNull().unique(),
+  emailVerified: timestamp('email_verified', { mode: 'date' }),
+  image: text('image'),
+  password: text('password'), // Hashed password for credentials provider
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow(),
+});
+
+export const accounts = pgTable('accounts', {
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  type: text('type').notNull(),
+  provider: text('provider').notNull(),
+  providerAccountId: text('provider_account_id').notNull(),
+  refresh_token: text('refresh_token'),
+  access_token: text('access_token'),
+  expires_at: integer('expires_at'),
+  token_type: text('token_type'),
+  scope: text('scope'),
+  id_token: text('id_token'),
+  session_state: text('session_state'),
+}, (table) => ({
+  compoundKey: primaryKey({ columns: [table.provider, table.providerAccountId] }),
+}));
+
+export const sessions = pgTable('sessions', {
+  sessionToken: text('session_token').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  expires: timestamp('expires', { mode: 'date' }).notNull(),
+});
+
+export const verificationTokens = pgTable('verification_tokens', {
+  identifier: text('identifier').notNull(),
+  token: text('token').notNull(),
+  expires: timestamp('expires', { mode: 'date' }).notNull(),
+}, (table) => ({
+  compoundKey: primaryKey({ columns: [table.identifier, table.token] }),
+}));
+
+// User profile and application-specific tables (using Auth.js user IDs)
 export const userProfiles = pgTable('user_profiles', {
   id: uuid('id').defaultRandom().primaryKey(),
-  userId: text('user_id').unique().notNull(), // Clerk user ID (string)
+  userId: text('user_id').unique().notNull().references(() => users.id, { onDelete: 'cascade' }), // Auth.js user ID
   firstName: text('first_name'),
   lastName: text('last_name'),
   bio: text('bio'),
@@ -23,7 +65,7 @@ export const userProfiles = pgTable('user_profiles', {
 
 export const userPermitSearches = pgTable('user_permit_searches', {
   id: uuid('id').defaultRandom().primaryKey(),
-  userId: text('user_id').notNull(), // Clerk user ID (string)
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }), // Auth.js user ID
   searchName: text('search_name'),
   searchQuery: text('search_query'),
   locationData: jsonb('location_data').$type<{
@@ -41,7 +83,7 @@ export const userPermitSearches = pgTable('user_permit_searches', {
 
 export const userFavorites = pgTable('user_favorites', {
   id: uuid('id').defaultRandom().primaryKey(),
-  userId: text('user_id').notNull(), // Clerk user ID (string)
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }), // Auth.js user ID
   permitOfficeId: uuid('permit_office_id').notNull(),
   notes: text('notes'),
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
@@ -56,7 +98,7 @@ export const userFavorites = pgTable('user_favorites', {
 
 export const userSubscriptions = pgTable('user_subscriptions', {
   id: uuid('id').defaultRandom().primaryKey(),
-  userId: text('user_id').unique().notNull(), // Clerk user ID (string)
+  userId: text('user_id').unique().notNull().references(() => users.id, { onDelete: 'cascade' }), // Auth.js user ID
   plan: text('plan').notNull().default('free'), // 'free', 'pro', 'enterprise'
   status: text('status').notNull().default('active'), // 'active', 'cancelled', 'expired'
   currentPeriodStart: timestamp('current_period_start', { mode: 'date' }).defaultNow(),
@@ -154,7 +196,7 @@ export const teams = pgTable('teams', {
   id: uuid('id').defaultRandom().primaryKey(),
   name: text('name').notNull(),
   description: text('description'),
-  ownerId: text('owner_id').notNull(), // Clerk user ID of team owner
+  ownerId: text('owner_id').notNull().references(() => users.id, { onDelete: 'cascade' }), // Auth.js user ID of team owner
   isActive: boolean('is_active').default(true),
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow(),
@@ -165,10 +207,10 @@ export const teams = pgTable('teams', {
 export const teamMembers = pgTable('team_members', {
   id: uuid('id').defaultRandom().primaryKey(),
   teamId: uuid('team_id').notNull().references(() => teams.id, { onDelete: 'cascade' }),
-  userId: text('user_id').notNull(), // Clerk user ID
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }), // Auth.js user ID
   role: text('role').notNull().default('member'), // 'owner', 'admin', 'member'
   status: text('status').notNull().default('pending'), // 'pending', 'active', 'inactive'
-  invitedBy: text('invited_by'), // Clerk user ID of who invited this member
+  invitedBy: text('invited_by').references(() => users.id, { onDelete: 'set null' }), // Auth.js user ID of who invited this member
   joinedAt: timestamp('joined_at', { mode: 'date' }),
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow(),
@@ -185,7 +227,7 @@ export const teamInvitations = pgTable('team_invitations', {
   teamId: uuid('team_id').notNull().references(() => teams.id, { onDelete: 'cascade' }),
   email: text('email').notNull(),
   role: text('role').notNull().default('member'), // 'admin', 'member'
-  invitedBy: text('invited_by').notNull(), // Clerk user ID
+  invitedBy: text('invited_by').notNull().references(() => users.id, { onDelete: 'cascade' }), // Auth.js user ID
   token: text('token').notNull().unique(), // Unique invitation token
   status: text('status').notNull().default('pending'), // 'pending', 'accepted', 'expired', 'cancelled'
   expiresAt: timestamp('expires_at', { mode: 'date' }).notNull(),
@@ -223,7 +265,7 @@ export const scrapeJobs = pgTable('scrape_jobs', {
 export const sharedSearches = pgTable('shared_searches', {
   id: uuid('id').defaultRandom().primaryKey(),
   teamId: uuid('team_id').notNull().references(() => teams.id, { onDelete: 'cascade' }),
-  sharedBy: text('shared_by').notNull(), // Clerk user ID
+  sharedBy: text('shared_by').notNull().references(() => users.id, { onDelete: 'cascade' }), // Auth.js user ID
   searchQuery: text('search_query').notNull(),
   searchResults: jsonb('search_results').notNull(), // Store the search results as JSON
   title: text('title').notNull(),
@@ -241,7 +283,7 @@ export const sharedFavorites = pgTable('shared_favorites', {
   id: uuid('id').defaultRandom().primaryKey(),
   teamId: uuid('team_id').notNull().references(() => teams.id, { onDelete: 'cascade' }),
   permitOfficeId: uuid('permit_office_id').notNull(),
-  addedBy: text('added_by').notNull(), // Clerk user ID
+  addedBy: text('added_by').notNull().references(() => users.id, { onDelete: 'cascade' }), // Auth.js user ID
   notes: text('notes'),
   tags: text('tags'), // Comma-separated tags
   isPublic: boolean('is_public').default(true), // Whether favorite is visible to all team members
@@ -258,7 +300,7 @@ export const sharedFavorites = pgTable('shared_favorites', {
 export const teamActivity = pgTable('team_activity', {
   id: uuid('id').defaultRandom().primaryKey(),
   teamId: uuid('team_id').notNull().references(() => teams.id, { onDelete: 'cascade' }),
-  userId: text('user_id').notNull(), // Clerk user ID
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }), // Auth.js user ID
   action: text('action').notNull(), // 'search', 'favorite', 'export', 'invite', 'join', 'leave'
   description: text('description').notNull(),
   metadata: jsonb('metadata'), // Additional data about the action

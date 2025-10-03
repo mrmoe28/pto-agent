@@ -52,7 +52,7 @@
     "seed:ga-counties": "tsx scripts/seed-georgia-counties.ts"
   },
   "dependencies": {
-    "@clerk/nextjs": "^6.32.0",
+    "@auth/prisma-adapter": "^2.8.0",
     "@googlemaps/js-api-loader": "^1.16.10",
     "@neondatabase/serverless": "^1.0.1",
     "@radix-ui/react-avatar": "^1.1.10",
@@ -67,6 +67,7 @@
     "@upstash/ratelimit": "^2.0.6",
     "@upstash/redis": "^1.35.3",
     "axios": "^1.11.0",
+    "bcrypt": "^5.1.1",
     "better-sqlite3": "^12.2.0",
     "cheerio": "^1.1.2",
     "class-variance-authority": "^0.7.1",
@@ -78,6 +79,7 @@
     "jspdf-autotable": "^5.0.2",
     "lucide-react": "^0.544.0",
     "next": "^15.5.2",
+    "next-auth": "5.0.0-beta.25",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "robots-parser": "^3.0.1",
@@ -92,6 +94,7 @@
     "@next/bundle-analyzer": "^15.5.2",
     "@playwright/test": "^1.55.0",
     "@tailwindcss/postcss": "^4",
+    "@types/bcrypt": "^5.0.2",
     "@types/better-sqlite3": "^7.6.13",
     "@types/google.maps": "^3.58.1",
     "@types/node": "^20",
