@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { canUserAccessFeature, getUserPlanFromAuth } from '@/lib/subscription-utils';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
@@ -108,12 +108,12 @@ export async function POST(request: NextRequest) {
       case 'csv':
         return exportToCSV(searchResults, filename, searchQuery);
       case 'excel':
-        return exportToExcel(searchResults, filename, searchQuery);
+        return await exportToExcel(searchResults, filename, searchQuery);
       case 'pdf':
         return exportToPDF(searchResults, filename, searchQuery);
       default:
-        return NextResponse.json({ 
-          error: 'Unsupported export format' 
+        return NextResponse.json({
+          error: 'Unsupported export format'
         }, { status: 400 });
     }
   } catch (error) {
@@ -200,51 +200,94 @@ function exportToCSV(data: PermitOffice[], filename: string, searchQuery?: strin
   });
 }
 
-function exportToExcel(data: PermitOffice[], filename: string, searchQuery?: string): NextResponse {
-  const worksheetData = data.map(office => ({
-    'Department Name': office.department_name,
-    'City': office.city,
-    'County': office.county,
-    'State': office.state,
-    'Address': office.address,
-    'Phone': office.phone || '',
-    'Email': office.email || '',
-    'Website': office.website || '',
-    'Office Type': office.office_type,
-    'Jurisdiction Type': office.jurisdiction_type,
-    'Building Permits': office.building_permits ? 'Yes' : 'No',
-    'Electrical Permits': office.electrical_permits ? 'Yes' : 'No',
-    'Plumbing Permits': office.plumbing_permits ? 'Yes' : 'No',
-    'Mechanical Permits': office.mechanical_permits ? 'Yes' : 'No',
-    'Zoning Permits': office.zoning_permits ? 'Yes' : 'No',
-    'Planning Review': office.planning_review ? 'Yes' : 'No',
-    'Inspections': office.inspections ? 'Yes' : 'No',
-    'Online Applications': office.online_applications ? 'Yes' : 'No',
-    'Online Payments': office.online_payments ? 'Yes' : 'No',
-    'Permit Tracking': office.permit_tracking ? 'Yes' : 'No',
-    'Online Portal URL': office.online_portal_url || '',
-    'Hours - Monday': office.hours_monday || '',
-    'Hours - Tuesday': office.hours_tuesday || '',
-    'Hours - Wednesday': office.hours_wednesday || '',
-    'Hours - Thursday': office.hours_thursday || '',
-    'Hours - Friday': office.hours_friday || '',
-    'Hours - Saturday': office.hours_saturday || '',
-    'Hours - Sunday': office.hours_sunday || ''
-  }));
+async function exportToExcel(data: PermitOffice[], filename: string, searchQuery?: string): Promise<NextResponse> {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Permit Offices');
 
-  const workbook = XLSX.utils.book_new();
-  const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+  // Define columns
+  worksheet.columns = [
+    { header: 'Department Name', key: 'department_name', width: 30 },
+    { header: 'City', key: 'city', width: 15 },
+    { header: 'County', key: 'county', width: 15 },
+    { header: 'State', key: 'state', width: 10 },
+    { header: 'Address', key: 'address', width: 35 },
+    { header: 'Phone', key: 'phone', width: 15 },
+    { header: 'Email', key: 'email', width: 25 },
+    { header: 'Website', key: 'website', width: 30 },
+    { header: 'Office Type', key: 'office_type', width: 20 },
+    { header: 'Jurisdiction Type', key: 'jurisdiction_type', width: 20 },
+    { header: 'Building Permits', key: 'building_permits', width: 15 },
+    { header: 'Electrical Permits', key: 'electrical_permits', width: 15 },
+    { header: 'Plumbing Permits', key: 'plumbing_permits', width: 15 },
+    { header: 'Mechanical Permits', key: 'mechanical_permits', width: 15 },
+    { header: 'Zoning Permits', key: 'zoning_permits', width: 15 },
+    { header: 'Planning Review', key: 'planning_review', width: 15 },
+    { header: 'Inspections', key: 'inspections', width: 15 },
+    { header: 'Online Applications', key: 'online_applications', width: 15 },
+    { header: 'Online Payments', key: 'online_payments', width: 15 },
+    { header: 'Permit Tracking', key: 'permit_tracking', width: 15 },
+    { header: 'Online Portal URL', key: 'online_portal_url', width: 30 },
+    { header: 'Hours - Monday', key: 'hours_monday', width: 20 },
+    { header: 'Hours - Tuesday', key: 'hours_tuesday', width: 20 },
+    { header: 'Hours - Wednesday', key: 'hours_wednesday', width: 20 },
+    { header: 'Hours - Thursday', key: 'hours_thursday', width: 20 },
+    { header: 'Hours - Friday', key: 'hours_friday', width: 20 },
+    { header: 'Hours - Saturday', key: 'hours_saturday', width: 20 },
+    { header: 'Hours - Sunday', key: 'hours_sunday', width: 20 }
+  ];
 
   // Add search query info if provided
   if (searchQuery) {
-    XLSX.utils.sheet_add_aoa(worksheet, [['Search Query:', searchQuery]], { origin: 'A1' });
-    XLSX.utils.sheet_add_aoa(worksheet, [['']], { origin: 'A2' });
-    XLSX.utils.sheet_add_aoa(worksheet, [['']], { origin: 'A3' });
+    worksheet.insertRow(1, ['Search Query:', searchQuery]);
+    worksheet.insertRow(2, ['']);
   }
 
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Permit Offices');
-  
-  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
+  // Add data rows
+  data.forEach(office => {
+    worksheet.addRow({
+      department_name: office.department_name,
+      city: office.city,
+      county: office.county,
+      state: office.state,
+      address: office.address,
+      phone: office.phone || '',
+      email: office.email || '',
+      website: office.website || '',
+      office_type: office.office_type,
+      jurisdiction_type: office.jurisdiction_type,
+      building_permits: office.building_permits ? 'Yes' : 'No',
+      electrical_permits: office.electrical_permits ? 'Yes' : 'No',
+      plumbing_permits: office.plumbing_permits ? 'Yes' : 'No',
+      mechanical_permits: office.mechanical_permits ? 'Yes' : 'No',
+      zoning_permits: office.zoning_permits ? 'Yes' : 'No',
+      planning_review: office.planning_review ? 'Yes' : 'No',
+      inspections: office.inspections ? 'Yes' : 'No',
+      online_applications: office.online_applications ? 'Yes' : 'No',
+      online_payments: office.online_payments ? 'Yes' : 'No',
+      permit_tracking: office.permit_tracking ? 'Yes' : 'No',
+      online_portal_url: office.online_portal_url || '',
+      hours_monday: office.hours_monday || '',
+      hours_tuesday: office.hours_tuesday || '',
+      hours_wednesday: office.hours_wednesday || '',
+      hours_thursday: office.hours_thursday || '',
+      hours_friday: office.hours_friday || '',
+      hours_saturday: office.hours_saturday || '',
+      hours_sunday: office.hours_sunday || ''
+    });
+  });
+
+  // Style header row
+  const headerRow = worksheet.getRow(searchQuery ? 3 : 1);
+  headerRow.font = { bold: true };
+  headerRow.fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FF3B82F6' }
+  };
+  headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+
+  // Generate buffer
+  const excelBuffer = await workbook.xlsx.writeBuffer();
 
   return new NextResponse(excelBuffer, {
     headers: {
