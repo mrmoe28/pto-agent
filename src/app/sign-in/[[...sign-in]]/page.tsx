@@ -3,7 +3,7 @@ import Link from 'next/link'
 
 export default function SignInPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative z-0">
       <div className="max-w-md w-full space-y-8">
         {/* Header Section */}
         <div className="text-center">
@@ -24,7 +24,7 @@ export default function SignInPage() {
         </div>
 
         {/* Sign In Form */}
-        <div className="mt-8">
+        <div className="mt-8 relative z-10">
           <SignIn
             appearance={{
               elements: {
