@@ -1,5 +1,5 @@
-import { NextRequest } from 'next/server';
 import { headers } from 'next/headers';
+import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { clerkClient } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
@@ -10,23 +10,29 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_dummy_key');
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
 
-export async function POST(req: NextRequest) {
-  const body = await req.text();
+// Configure route to handle raw body for webhook signature verification
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+export async function POST(request: Request) {
+  // Get the raw body as text (this preserves the exact format needed for signature verification)
+  const rawBody = await request.text();
+
   const headersList = await headers();
   const signature = headersList.get('stripe-signature');
 
   if (!signature) {
     console.error('❌ Missing Stripe signature');
-    return new Response('Missing signature', { status: 400 });
+    return NextResponse.json({ error: 'Missing signature' }, { status: 400 });
   }
 
   let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+    event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
   } catch (err) {
     console.error('❌ Webhook signature verification failed:', err);
-    return new Response('Invalid signature', { status: 400 });
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
   console.log('✅ Stripe webhook received:', event.type);
@@ -57,10 +63,10 @@ export async function POST(req: NextRequest) {
         console.log(`Unhandled event type: ${event.type}`);
     }
 
-    return new Response('OK', { status: 200 });
+    return NextResponse.json({ received: true }, { status: 200 });
   } catch (error) {
     console.error('❌ Error processing webhook:', error);
-    return new Response('Webhook processing failed', { status: 500 });
+    return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });
   }
 }
 
