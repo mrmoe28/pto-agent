@@ -14,8 +14,7 @@
     "@next/swc-win32-x64-msvc": "15.5.2"
   },
   "scripts": {
-    "predev": "tsx scripts/check-env.ts",
-    "prebuild": "tsx scripts/check-env.ts",
+    "predev": "node scripts/check-env.js",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
