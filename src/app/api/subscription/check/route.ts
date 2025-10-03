@@ -1,17 +1,19 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth } from '@/auth';
 import { canUserSearch, incrementSearchUsage } from '@/lib/subscription-utils';
 
 export async function GET() {
   try {
-    const { userId } = await auth();
-    
-    if (!userId) {
+    const session = await auth();
+
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const userId = session.user.id;
+
     const searchCapability = await canUserSearch(userId);
-    
+
     return NextResponse.json({
       success: true,
       canSearch: searchCapability.canSearch,
@@ -26,14 +28,16 @@ export async function GET() {
 
 export async function POST() {
   try {
-    const { userId } = await auth();
-    
-    if (!userId) {
+    const session = await auth();
+
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const userId = session.user.id;
+
     const result = await incrementSearchUsage(userId);
-    
+
     return NextResponse.json({
       success: result.success,
       canSearch: result.canSearch,

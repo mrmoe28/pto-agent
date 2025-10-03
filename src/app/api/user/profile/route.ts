@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
+import { auth } from '@/auth'
 import { db, userProfiles, type NewUserProfile } from '@/lib/db'
 import { eq } from 'drizzle-orm'
 
@@ -39,11 +39,13 @@ function sanitizeProfilePayload(payload: unknown) {
 }
 
 export async function GET() {
-  const { userId } = await auth()
+  const session = await auth()
 
-  if (!userId) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  const userId = session.user.id
 
   try {
     const profile = await db
@@ -60,11 +62,13 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const { userId } = await auth()
+  const session = await auth()
 
-  if (!userId) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  const userId = session.user.id
 
   try {
     const payload = sanitizeProfilePayload(await request.json())
@@ -95,11 +99,13 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-  const { userId } = await auth()
+  const session = await auth()
 
-  if (!userId) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  const userId = session.user.id
 
   try {
     const payload = sanitizeProfilePayload(await request.json())

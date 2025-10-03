@@ -1,6 +1,6 @@
 'use client';
 
-import { useUser } from '@clerk/nextjs';
+import { useSession } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,7 +31,9 @@ interface ApiKey {
 }
 
 export default function ApiSettingsPage() {
-  const { user, isLoaded } = useUser();
+  const { data: session, status } = useSession();
+  const user = session?.user;
+  const isLoaded = status !== 'loading';
   const router = useRouter();
   const [userPlan, setUserPlan] = useState<string>('free');
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
@@ -42,7 +44,7 @@ export default function ApiSettingsPage() {
 
   useEffect(() => {
     if (isLoaded && user) {
-      const subscriptionPlan = user.publicMetadata?.subscriptionPlan as string;
+      const subscriptionPlan = user?.subscriptionPlan as string;
       setUserPlan(subscriptionPlan || 'free');
 
       if (subscriptionPlan === 'enterprise') {

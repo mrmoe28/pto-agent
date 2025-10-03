@@ -1,6 +1,6 @@
 'use client';
 
-import { useUser } from '@clerk/nextjs';
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -102,7 +102,9 @@ const pricingPlans: PricingPlan[] = [
 ];
 
 export default function PricingPage() {
-  const { user, isLoaded } = useUser();
+  const { data: session, status } = useSession();
+  const user = session?.user;
+  const isLoaded = status !== 'loading';
   const router = useRouter();
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -112,8 +114,8 @@ export default function PricingPage() {
     if (!isLoaded) return;
 
     if (user) {
-      // Get subscription plan from Clerk user metadata
-      const subscriptionPlan = user.publicMetadata?.subscriptionPlan as string;
+      // Get subscription plan from user metadata
+      const subscriptionPlan = user?.subscriptionPlan as string;
       setCurrentPlan(subscriptionPlan || 'free');
     } else {
       setCurrentPlan(null);

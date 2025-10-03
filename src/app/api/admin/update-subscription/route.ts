@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
-import { clerkClient } from '@clerk/nextjs/server';
+import { auth } from '@/auth';
 import { db } from '@/lib/db';
-import { userSubscriptions } from '@/lib/db/schema';
+import { userSubscriptions, users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { type PlanType } from '@/lib/subscription-types';
 
@@ -11,20 +10,17 @@ const ADMIN_EMAIL = 'edwardsteel.0@gmail.com';
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId: currentUserId } = await auth();
-    
-    if (!currentUserId) {
+    const session = await auth();
+
+    if (!session?.user?.id || !session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if current user is admin
-    const client = await clerkClient();
-    const currentUser = await client.users.getUser(currentUserId);
-    const primaryEmail = currentUser.emailAddresses.find(
-      (email) => email.id === currentUser.primaryEmailAddressId
-    );
+    const currentUserId = session.user.id;
+    const currentUserEmail = session.user.email;
 
-    if (primaryEmail?.emailAddress !== ADMIN_EMAIL) {
+    // Check if current user is admin
+    if (currentUserEmail !== ADMIN_EMAIL) {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
     }
 
@@ -43,18 +39,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Get target user
-    const targetUser = await client.users.getUser(targetUserId);
+    const targetUser = await db.query.users.findFirst({
+      where: eq(users.id, targetUserId),
+    });
     if (!targetUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
-
-    // Update Clerk metadata
-    await client.users.updateUserMetadata(targetUserId, {
-      publicMetadata: {
-        ...targetUser.publicMetadata,
-        subscriptionPlan: plan,
-      },
-    });
 
     // Update database
     const searchesLimit = plan === 'free' ? 1 : plan === 'pro' ? 40 : null;
@@ -93,20 +83,16 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const { userId: currentUserId } = await auth();
-    
-    if (!currentUserId) {
+    const session = await auth();
+
+    if (!session?.user?.id || !session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if current user is admin
-    const client = await clerkClient();
-    const currentUser = await client.users.getUser(currentUserId);
-    const primaryEmail = currentUser.emailAddresses.find(
-      (email) => email.id === currentUser.primaryEmailAddressId
-    );
+    const currentUserEmail = session.user.email;
 
-    if (primaryEmail?.emailAddress !== ADMIN_EMAIL) {
+    // Check if current user is admin
+    if (currentUserEmail !== ADMIN_EMAIL) {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
     }
 
@@ -120,7 +106,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user details
-    const targetUser = await client.users.getUser(targetUserId);
+    const targetUser = await db.query.users.findFirst({
+      where: eq(users.id, targetUserId),
+    });
     if (!targetUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
@@ -132,13 +120,11 @@ export async function GET(request: NextRequest) {
       .where(eq(userSubscriptions.userId, targetUserId))
       .limit(1);
 
-    const clerkPlan = targetUser.publicMetadata?.subscriptionPlan as PlanType;
     const dbPlan = subscription[0]?.plan as PlanType;
 
     return NextResponse.json({
       userId: targetUserId,
-      email: targetUser.emailAddresses.find(e => e.id === targetUser.primaryEmailAddressId)?.emailAddress,
-      clerkPlan: clerkPlan || 'free',
+      email: targetUser.email,
       dbPlan: dbPlan || 'free',
       searchesUsed: subscription[0]?.searchesUsed || 0,
       searchesLimit: subscription[0]?.searchesLimit || 1,

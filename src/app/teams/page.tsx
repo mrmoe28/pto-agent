@@ -1,6 +1,6 @@
 'use client';
 
-import { useUser } from '@clerk/nextjs';
+import { useSession } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Users, Heart, Search, Loader2 } from 'lucide-react';
@@ -24,7 +24,9 @@ interface Team {
 }
 
 export default function TeamsPage() {
-  const { user, isLoaded } = useUser();
+  const { data: session, status } = useSession();
+  const user = session?.user;
+  const isLoaded = status !== 'loading';
   const router = useRouter();
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,7 +34,7 @@ export default function TeamsPage() {
 
   useEffect(() => {
     if (isLoaded && user) {
-      const subscriptionPlan = user.publicMetadata?.subscriptionPlan as string;
+      const subscriptionPlan = user?.subscriptionPlan as string;
       setUserPlan(subscriptionPlan || 'free');
 
       if (subscriptionPlan === 'enterprise') {

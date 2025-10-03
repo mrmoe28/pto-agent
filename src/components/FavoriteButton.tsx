@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { useSession } from 'next-auth/react';
 import { Heart, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -12,13 +12,15 @@ interface FavoriteButtonProps {
   showText?: boolean;
 }
 
-export default function FavoriteButton({ 
-  permitOfficeId, 
-  className = '', 
+export default function FavoriteButton({
+  permitOfficeId,
+  className = '',
   size = 'default',
-  showText = false 
+  showText = false
 }: FavoriteButtonProps) {
-  const { user, isLoaded } = useUser();
+  const { data: session, status } = useSession();
+  const user = session?.user;
+  const isLoaded = status !== 'loading';
   const [isFavorite, setIsFavorite] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
@@ -27,7 +29,7 @@ export default function FavoriteButton({
   // Check if user has Enterprise plan
   useEffect(() => {
     if (isLoaded && user) {
-      const subscriptionPlan = user.publicMetadata?.subscriptionPlan as string;
+      const subscriptionPlan = user?.subscriptionPlan as string;
       setUserPlan(subscriptionPlan || 'free');
     }
   }, [isLoaded, user]);

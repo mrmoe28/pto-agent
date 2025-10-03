@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,7 +21,9 @@ interface SubscriptionInfo {
 }
 
 export default function AdminSubscriptionPage() {
-  const { user, isLoaded } = useUser();
+  const { data: session, status } = useSession();
+  const user = session?.user;
+  const isLoaded = status !== 'loading';
   const [targetUserId, setTargetUserId] = useState('');
   const [selectedPlan, setSelectedPlan] = useState<'free' | 'pro' | 'enterprise' | 'admin'>('free');
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
@@ -29,9 +31,7 @@ export default function AdminSubscriptionPage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Check if current user is admin
-  const isAdmin = user?.emailAddresses?.find(
-    (email) => email.id === user.primaryEmailAddressId
-  )?.emailAddress === 'edwardsteel.0@gmail.com';
+  const isAdmin = user?.email === 'edwardsteel.0@gmail.com';
 
   if (!isLoaded) {
     return <div>Loading...</div>;

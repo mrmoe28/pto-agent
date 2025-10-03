@@ -1,18 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
+import { auth } from '@/auth'
 import { and, eq } from 'drizzle-orm'
 import { db, userFavorites } from '@/lib/db'
-import { canUserAccessFeature, getUserPlanFromClerk } from '@/lib/subscription-utils'
+import { canUserAccessFeature, getUserPlanFromAuth } from '@/lib/subscription-utils'
 
 export async function GET() {
-  const { userId } = await auth()
+  const session = await auth()
 
-  if (!userId) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const userId = session.user.id
+
   // Check if user has Enterprise plan access
-  const userPlan = await getUserPlanFromClerk()
+  const userPlan = await getUserPlanFromAuth()
   const hasAccess = canUserAccessFeature(userPlan, 'canSaveFavorites')
   if (!hasAccess) {
     return NextResponse.json({ 
@@ -35,14 +37,16 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const { userId } = await auth()
+  const session = await auth()
 
-  if (!userId) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const userId = session.user.id
+
   // Check if user has Enterprise plan access
-  const userPlan = await getUserPlanFromClerk()
+  const userPlan = await getUserPlanFromAuth()
   const hasAccess = canUserAccessFeature(userPlan, 'canSaveFavorites')
   if (!hasAccess) {
     return NextResponse.json({ 

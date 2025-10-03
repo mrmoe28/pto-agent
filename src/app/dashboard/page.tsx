@@ -1,6 +1,6 @@
 'use client';
 
-import { useUser, useClerk } from '@clerk/nextjs';
+import { useSession, signOut } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -46,8 +46,9 @@ interface UserProfile {
 }
 
 export default function Dashboard() {
-  const { user, isLoaded } = useUser();
-  const { signOut } = useClerk();
+  const { data: session, status } = useSession();
+  const user = session?.user;
+  const isLoaded = status !== 'loading';
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -84,7 +85,7 @@ export default function Dashboard() {
   };
 
   const handleSignOut = () => {
-    signOut();
+    signOut({ callbackUrl: '/' });
   };
 
   if (!isLoaded || loading) {
@@ -104,7 +105,7 @@ export default function Dashboard() {
 
   const userName = profile?.firstName && profile?.lastName
     ? `${profile.firstName} ${profile.lastName}`
-    : user.fullName || 'User';
+    : user?.name || 'User';
 
   const userInitials = userName
     .split(' ')
@@ -160,14 +161,14 @@ export default function Dashboard() {
                 <CardContent className="p-6">
                   <div className="flex items-center space-x-4 mb-4">
                     <Avatar className="h-16 w-16">
-                      <AvatarImage src={user.imageUrl || ''} alt={userName} />
+                      <AvatarImage src={user?.image || ''} alt={userName} />
                       <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-lg font-bold">
                         {userInitials}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
                       <h3 className="text-lg font-semibold text-gray-900">{userName}</h3>
-                      <p className="text-sm text-gray-500">{user.primaryEmailAddress?.emailAddress}</p>
+                      <p className="text-sm text-gray-500">{user?.email}</p>
                       <Badge variant="secondary" className="mt-1">
                         <User className="h-3 w-3 mr-1" />
                         Premium User

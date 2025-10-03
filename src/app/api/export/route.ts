@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
-import { canUserAccessFeature, getUserPlanFromClerk } from '@/lib/subscription-utils';
+import { auth } from '@/auth';
+import { canUserAccessFeature, getUserPlanFromAuth } from '@/lib/subscription-utils';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -71,17 +71,17 @@ interface PermitOffice {
 }
 
 export async function POST(request: NextRequest) {
-  const { userId } = await auth();
+  const session = await auth();
 
-  if (!userId) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   // Check if user has Enterprise plan access
-  const userPlan = await getUserPlanFromClerk();
+  const userPlan = await getUserPlanFromAuth();
   const hasAccess = canUserAccessFeature(userPlan, 'canExportResults');
   if (!hasAccess) {
-    return NextResponse.json({ 
+    return NextResponse.json({
       error: 'Export feature requires Enterprise plan',
       code: 'UPGRADE_REQUIRED'
     }, { status: 403 });

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { useSession } from 'next-auth/react';
 import { Download, FileText, FileSpreadsheet, File, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -66,13 +66,15 @@ interface ExportButtonProps {
   size?: 'sm' | 'default' | 'lg';
 }
 
-export default function ExportButton({ 
-  searchResults, 
+export default function ExportButton({
+  searchResults,
   searchQuery,
-  className = '', 
+  className = '',
   size = 'default'
 }: ExportButtonProps) {
-  const { user, isLoaded } = useUser();
+  const { data: session, status } = useSession();
+  const user = session?.user;
+  const isLoaded = status !== 'loading';
   const [isExporting, setIsExporting] = useState(false);
   const [, setExportFormat] = useState<string>('');
 
@@ -82,7 +84,7 @@ export default function ExportButton({
   }
 
   // Check if user has Enterprise plan
-  const userPlan = user.publicMetadata?.subscriptionPlan as string;
+  const userPlan = user?.subscriptionPlan as string | undefined;
   const hasAccess = userPlan === 'enterprise';
 
   const handleExport = async (format: 'csv' | 'excel' | 'pdf') => {

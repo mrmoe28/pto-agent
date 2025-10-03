@@ -1,9 +1,8 @@
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { clerkClient } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
-import { userSubscriptions } from '@/lib/db/schema';
+import { userSubscriptions, users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_dummy_key');
@@ -110,38 +109,29 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     return;
   }
 
-  // Find user by email in Clerk
-  const client = await clerkClient();
-  const { data: users } = await client.users.getUserList({
-    emailAddress: [customerEmail],
+  // Find user by email in database
+  const user = await db.query.users.findFirst({
+    where: eq(users.email, customerEmail),
   });
 
-  if (users.length === 0) {
+  if (!user) {
     console.error('❌ No user found with email:', customerEmail);
     return;
   }
 
-  const user = users[0];
   console.log('👤 Found user:', { userId: user.id, email: customerEmail });
-
-  // Update Clerk metadata
-  await client.users.updateUserMetadata(user.id, {
-    publicMetadata: {
-      subscriptionPlan: plan,
-      stripeCustomerId: customerId,
-      stripeSubscriptionId: subscriptionId,
-    },
-  });
 
   // Update database
   const searchesLimit = plan === 'pro' ? 40 : null; // enterprise has unlimited
-  
+
   await db
     .update(userSubscriptions)
     .set({
       plan,
       searchesLimit,
       status: 'active',
+      stripeCustomerId: customerId,
+      stripeSubscriptionId: subscriptionId,
       updatedAt: new Date(),
     })
     .where(eq(userSubscriptions.userId, user.id));
@@ -187,18 +177,22 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
     return;
   }
 
-  // Find user by subscription ID in Clerk metadata
-  const client = await clerkClient();
-  const { data: users } = await client.users.getUserList({
-    limit: 100, // Adjust as needed
+  // Find user by subscription ID in database
+  const userSubscription = await db.query.userSubscriptions.findFirst({
+    where: eq(userSubscriptions.stripeSubscriptionId, subscriptionId),
   });
 
-  const user = users.find(u =>
-    u.publicMetadata?.stripeSubscriptionId === subscriptionId
-  );
+  if (!userSubscription) {
+    console.error('❌ No user found with subscription ID:', subscriptionId);
+    return;
+  }
+
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, userSubscription.userId),
+  });
 
   if (!user) {
-    console.error('❌ No user found with subscription ID:', subscriptionId);
+    console.error('❌ No user found with ID:', userSubscription.userId);
     return;
   }
 
@@ -235,28 +229,24 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     return;
   }
 
-  // Find user by subscription ID
-  const client = await clerkClient();
-  const { data: users } = await client.users.getUserList({
-    limit: 100,
+  // Find user by subscription ID in database
+  const userSubscription = await db.query.userSubscriptions.findFirst({
+    where: eq(userSubscriptions.stripeSubscriptionId, subscriptionId),
   });
 
-  const user = users.find(u =>
-    u.publicMetadata?.stripeSubscriptionId === subscriptionId
-  );
-
-  if (!user) {
+  if (!userSubscription) {
     console.error('❌ No user found with subscription ID:', subscriptionId);
     return;
   }
 
-  // Update Clerk metadata
-  await client.users.updateUserMetadata(user.id, {
-    publicMetadata: {
-      ...user.publicMetadata,
-      subscriptionPlan: plan,
-    },
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, userSubscription.userId),
   });
+
+  if (!user) {
+    console.error('❌ No user found with ID:', userSubscription.userId);
+    return;
+  }
 
   // Update database
   const searchesLimit = plan === 'pro' ? 40 : null; // enterprise has unlimited
@@ -281,28 +271,24 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   const subscriptionId = subscription.id;
 
-  // Find user by subscription ID
-  const client = await clerkClient();
-  const { data: users } = await client.users.getUserList({
-    limit: 100,
+  // Find user by subscription ID in database
+  const userSubscription = await db.query.userSubscriptions.findFirst({
+    where: eq(userSubscriptions.stripeSubscriptionId, subscriptionId),
   });
 
-  const user = users.find(u =>
-    u.publicMetadata?.stripeSubscriptionId === subscriptionId
-  );
-
-  if (!user) {
+  if (!userSubscription) {
     console.error('❌ No user found with subscription ID:', subscriptionId);
     return;
   }
 
-  // Downgrade to free plan
-  await client.users.updateUserMetadata(user.id, {
-    publicMetadata: {
-      ...user.publicMetadata,
-      subscriptionPlan: 'free',
-    },
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, userSubscription.userId),
   });
+
+  if (!user) {
+    console.error('❌ No user found with ID:', userSubscription.userId);
+    return;
+  }
 
   // Update database
   await db

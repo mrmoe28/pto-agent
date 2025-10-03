@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
-import { canUserAccessFeature, getUserPlanFromClerk } from '@/lib/subscription-utils';
+import { auth } from '@/auth';
+import { canUserAccessFeature, getUserPlanFromAuth } from '@/lib/subscription-utils';
 import { db, teamMembers, teamInvitations } from '@/lib/db';
 import { eq, and } from 'drizzle-orm';
 import { randomBytes } from 'crypto';
@@ -12,15 +12,17 @@ interface RouteParams {
 }
 
 export async function GET(_request: NextRequest, { params }: RouteParams) {
-  const { userId } = await auth();
+  const session = await auth();
   const { teamId } = await params;
 
-  if (!userId) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const userId = session.user.id;
+
   // Check if user has Enterprise plan access
-  const userPlan = await getUserPlanFromClerk();
+  const userPlan = await getUserPlanFromAuth();
   const hasAccess = canUserAccessFeature(userPlan, 'hasTeamCollaboration');
   if (!hasAccess) {
     return NextResponse.json({ 
@@ -65,15 +67,17 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 }
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
-  const { userId } = await auth();
+  const session = await auth();
   const { teamId } = await params;
 
-  if (!userId) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const userId = session.user.id;
+
   // Check if user has Enterprise plan access
-  const userPlan = await getUserPlanFromClerk();
+  const userPlan = await getUserPlanFromAuth();
   const hasAccess = canUserAccessFeature(userPlan, 'hasTeamCollaboration');
   if (!hasAccess) {
     return NextResponse.json({ 
