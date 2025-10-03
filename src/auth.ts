@@ -1,18 +1,21 @@
 import NextAuth from 'next-auth';
-import { DrizzleAdapter } from '@auth/drizzle-adapter';
+// import { DrizzleAdapter } from '@auth/drizzle-adapter';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { db } from '@/lib/db';
-import { users, accounts, sessions, verificationTokens } from '@/lib/db/schema';
+import { users } from '@/lib/db/schema';
+// import { users, accounts, sessions, verificationTokens } from '@/lib/db/schema';
 import bcrypt from 'bcrypt';
 import { eq } from 'drizzle-orm';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: DrizzleAdapter(db, {
-    usersTable: users,
-    accountsTable: accounts,
-    sessionsTable: sessions,
-    verificationTokensTable: verificationTokens,
-  }),
+  // Note: Adapter is commented out for Edge runtime compatibility in middleware
+  // Uncomment if you need database sessions (not compatible with Edge middleware)
+  // adapter: DrizzleAdapter(db, {
+  //   usersTable: users,
+  //   accountsTable: accounts,
+  //   sessionsTable: sessions,
+  //   verificationTokensTable: verificationTokens,
+  // }),
   session: {
     strategy: 'jwt',
   },
