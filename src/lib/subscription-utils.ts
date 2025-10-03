@@ -27,8 +27,6 @@ function isAdminUser(user: {
     adminEmail: ADMIN_EMAIL,
     normalizedAdminEmail,
     primaryEmailMatch: normalizedUserEmail === normalizedAdminEmail,
-    allEmails: user.emailAddresses?.map(e => e.emailAddress),
-    allEmailsMatch: user.emailAddresses?.some(e => e.emailAddress.toLowerCase().trim() === normalizedAdminEmail),
     userIdMatch: user.id ? ADMIN_USER_IDS.includes(user.id) : false
   });
 
@@ -41,12 +39,6 @@ function isAdminUser(user: {
   // Check primary email (normalized)
   if (normalizedUserEmail === normalizedAdminEmail) {
     console.log('[Admin Check] ✅ Matched by primary email');
-    return true;
-  }
-
-  // Check any email address (normalized)
-  if (user.emailAddresses?.some(e => e.emailAddress.toLowerCase().trim() === normalizedAdminEmail)) {
-    console.log('[Admin Check] ✅ Matched by any email address');
     return true;
   }
 
