@@ -1,22 +1,34 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+import { auth } from '@/auth';
+import { NextResponse } from 'next/server';
 
-const isPublicRoute = createRouteMatcher([
-  '/',
-  '/sign-in(.*)',
-  '/sign-up(.*)',
-  '/forgot-password(.*)',
-  '/pricing(.*)',
-  '/search(.*)',
-  '/api/permit-offices(.*)',
-  '/api/geocode(.*)',
-  '/api/webhooks/stripe(.*)'
-])
+export default auth((req) => {
+  const { pathname } = req.nextUrl;
 
-export default clerkMiddleware(async (auth, req) => {
-  if (!isPublicRoute(req)) {
-    await auth.protect()
+  // Public routes that don't require authentication
+  const publicRoutes = [
+    '/',
+    '/sign-in',
+    '/sign-up',
+    '/forgot-password',
+    '/pricing',
+    '/search',
+    '/api/permit-offices',
+    '/api/geocode',
+    '/api/webhooks/stripe',
+    '/api/auth',
+  ];
+
+  const isPublicRoute = publicRoutes.some((route) =>
+    pathname.startsWith(route)
+  );
+
+  if (!isPublicRoute && !req.auth) {
+    const newUrl = new URL('/sign-in', req.nextUrl.origin);
+    return NextResponse.redirect(newUrl);
   }
-})
+
+  return NextResponse.next();
+});
 
 export const config = {
   matcher: [
@@ -25,4 +37,4 @@ export const config = {
     // Always run for API routes
     '/(api|trpc)(.*)',
   ],
-}
+};

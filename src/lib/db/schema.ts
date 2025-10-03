@@ -101,6 +101,8 @@ export const userSubscriptions = pgTable('user_subscriptions', {
   userId: text('user_id').unique().notNull().references(() => users.id, { onDelete: 'cascade' }), // Auth.js user ID
   plan: text('plan').notNull().default('free'), // 'free', 'pro', 'enterprise'
   status: text('status').notNull().default('active'), // 'active', 'cancelled', 'expired'
+  stripeCustomerId: text('stripe_customer_id'),
+  stripeSubscriptionId: text('stripe_subscription_id'),
   currentPeriodStart: timestamp('current_period_start', { mode: 'date' }).defaultNow(),
   currentPeriodEnd: timestamp('current_period_end', { mode: 'date' }),
   searchesUsed: integer('searches_used').default(0),

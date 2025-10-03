@@ -1,11 +1,13 @@
 'use client'
 
-import { useUser } from '@clerk/nextjs'
+import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 
 export default function HowItWorks() {
-  const { user, isLoaded } = useUser()
+  const { data: session, status } = useSession()
+  const user = session?.user
+  const isLoaded = status !== 'loading'
   const router = useRouter()
   const [searchesUsed, setSearchesUsed] = useState(0)
   const [searchesLimit, setSearchesLimit] = useState<number | null>(1)

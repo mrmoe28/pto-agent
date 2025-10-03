@@ -1,6 +1,6 @@
 'use client';
 
-import { useUser } from '@clerk/nextjs';
+import { useSession } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,13 +21,15 @@ import {
 } from 'lucide-react';
 
 export default function SettingsPage() {
-  const { user, isLoaded } = useUser();
+  const { data: session, status } = useSession();
+  const user = session?.user;
+  const isLoaded = status !== 'loading';
   const router = useRouter();
   const [userPlan, setUserPlan] = useState<string>('free');
 
   useEffect(() => {
     if (isLoaded && user) {
-      const subscriptionPlan = user.publicMetadata?.subscriptionPlan as string;
+      const subscriptionPlan = user?.subscriptionPlan as string;
       setUserPlan(subscriptionPlan || 'free');
     }
   }, [isLoaded, user]);

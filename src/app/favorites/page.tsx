@@ -1,6 +1,6 @@
 'use client';
 
-import { useUser } from '@clerk/nextjs';
+import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import EnhancedPermitOfficeTable from '@/components/EnhancedPermitOfficeTable';
@@ -95,7 +95,9 @@ interface PermitOffice {
 }
 
 export default function FavoritesPage() {
-  const { user, isLoaded } = useUser();
+  const { data: session, status } = useSession();
+  const user = session?.user;
+  const isLoaded = status !== 'loading';
   const router = useRouter();
   const [favorites, setFavorites] = useState<UserFavorite[]>([]);
   const [offices, setOffices] = useState<Record<string, PermitOffice>>({});
@@ -113,7 +115,7 @@ export default function FavoritesPage() {
     }
 
     // Check user's subscription plan
-    const subscriptionPlan = user.publicMetadata?.subscriptionPlan as PlanType;
+    const subscriptionPlan = user?.subscriptionPlan as PlanType | undefined;
     const plan = subscriptionPlan || 'free';
     setUserPlan(plan);
 

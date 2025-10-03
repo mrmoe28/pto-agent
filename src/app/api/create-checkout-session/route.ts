@@ -1,20 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth, currentUser } from '@clerk/nextjs/server';
+import { auth } from '@/auth';
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_dummy_key');
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
-    const user = await currentUser();
+    const session = await auth();
 
-    if (!userId || !user) {
+    if (!session?.user?.id || !session?.user?.email) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
+
+    const userId = session.user.id;
+    const userEmail = session.user.email;
 
     const { planId } = await request.json();
 
@@ -41,8 +43,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Create Stripe checkout session
-    const session = await stripe.checkout.sessions.create({
-      customer_email: user.primaryEmailAddress?.emailAddress,
+    const stripeSession = await stripe.checkout.sessions.create({
+      customer_email: userEmail,
       client_reference_id: userId,
       line_items: [
         {
@@ -59,7 +61,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ sessionId: session.id, url: session.url });
+    return NextResponse.json({ sessionId: stripeSession.id, url: stripeSession.url });
   } catch (error) {
     console.error('Error creating checkout session:', error);
     return NextResponse.json(

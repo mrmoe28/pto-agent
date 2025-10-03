@@ -1,6 +1,6 @@
 'use client';
 
-import { useUser } from '@clerk/nextjs';
+import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
@@ -72,7 +72,9 @@ const plans: Record<string, Plan> = {
 };
 
 function CheckoutPageContent() {
-  const { user, isLoaded } = useUser();
+  const { data: session, status } = useSession();
+  const user = session?.user;
+  const isLoaded = status !== 'loading';
   const router = useRouter();
   const searchParams = useSearchParams();
   const planId = searchParams.get('plan');
@@ -250,7 +252,7 @@ function CheckoutPageContent() {
                         </label>
                         <input
                           type="email"
-                          value={user?.primaryEmailAddress?.emailAddress || ''}
+                          value={user?.email || ''}
                           disabled
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
                         />
@@ -261,7 +263,7 @@ function CheckoutPageContent() {
                         </label>
                         <input
                           type="text"
-                          value={user?.fullName || ''}
+                          value={user?.name || ''}
                           disabled
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
                         />

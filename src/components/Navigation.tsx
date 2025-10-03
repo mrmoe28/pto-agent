@@ -4,12 +4,13 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Menu, X, User } from 'lucide-react'
-import { useUser, useClerk } from '@clerk/nextjs'
+import { useSession, signOut } from 'next-auth/react'
 
 export default function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const { isSignedIn, user } = useUser()
-  const { signOut } = useClerk()
+  const { data: session, status } = useSession()
+  const isSignedIn = status === 'authenticated'
+  const user = session?.user
 
   return (
     <nav className="bg-white shadow-sm border-b border-gray-200 relative z-50">
@@ -83,10 +84,10 @@ export default function Navigation() {
                 <div className="flex items-center space-x-2">
                   <div className="flex items-center space-x-2 text-gray-700">
                     <User className="h-4 w-4" />
-                    <span className="text-sm font-medium">{user?.firstName || 'User'}</span>
+                    <span className="text-sm font-medium">{user?.name?.split(' ')[0] || 'User'}</span>
                   </div>
                   <Button
-                    onClick={() => signOut()}
+                    onClick={() => signOut({ callbackUrl: '/' })}
                     variant="outline"
                     size="sm"
                     className="text-gray-700 border-gray-300 hover:border-gray-400"
@@ -155,11 +156,11 @@ export default function Navigation() {
                   <div className="px-3 py-2">
                     <div className="flex items-center space-x-2 text-gray-600 mb-2">
                       <User className="h-4 w-4" />
-                      <span className="text-sm font-medium">{user?.firstName || 'User'}</span>
+                      <span className="text-sm font-medium">{user?.name?.split(' ')[0] || 'User'}</span>
                     </div>
                     <Button
                       onClick={() => {
-                        signOut()
+                        signOut({ callbackUrl: '/' })
                         setMobileMenuOpen(false)
                       }}
                       variant="outline"

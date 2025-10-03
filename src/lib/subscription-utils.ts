@@ -12,11 +12,9 @@ const ADMIN_USER_IDS: string[] = [];
 // Check if user is admin
 function isAdminUser(user: {
   id?: string;
-  emailAddresses?: Array<{ id: string; emailAddress: string }>;
-  primaryEmailAddressId?: string | null
+  email?: string | null;
 }): boolean {
-  const primaryEmail = user.emailAddresses?.find((email) => email.id === user.primaryEmailAddressId);
-  const userEmail = primaryEmail?.emailAddress;
+  const userEmail = user.email;
 
   // Normalize emails for comparison (lowercase, trim)
   const normalizedUserEmail = userEmail?.toLowerCase().trim();
@@ -56,24 +54,26 @@ function isAdminUser(user: {
   return false;
 }
 
-// Get user's subscription plan from Clerk metadata (server-side only)
-export async function getUserPlanFromClerk(): Promise<PlanType> {
+// Get user's subscription plan from Auth.js session (server-side only)
+export async function getUserPlanFromAuth(): Promise<PlanType> {
   try {
     // This function should only be called from server components or API routes
     // For client components, use the subscription check API instead
-    const { currentUser } = await import('@clerk/nextjs/server');
-    const user = await currentUser();
-    if (!user) return 'free';
+    const { auth } = await import('@/auth');
+    const session = await auth();
+    if (!session?.user) return 'free';
+
+    const user = session.user;
 
     // Check if user is admin first
     if (isAdminUser(user)) {
       return 'admin';
     }
 
-    // Check if user has subscription metadata from Clerk
-    const subscriptionPlan = user.publicMetadata?.subscriptionPlan as PlanType;
-    
-    // If Clerk metadata exists, use it
+    // Check if user has subscription metadata
+    const subscriptionPlan = user?.subscriptionPlan as PlanType | undefined;
+
+    // If metadata exists, use it
     if (subscriptionPlan) {
       return subscriptionPlan;
     }
@@ -83,11 +83,11 @@ export async function getUserPlanFromClerk(): Promise<PlanType> {
       const subscription = await db
         .select()
         .from(userSubscriptions)
-        .where(eq(userSubscriptions.userId, user.id))
+        .where(eq(userSubscriptions.userId, user.id!))
         .limit(1);
 
       if (subscription[0] && subscription[0].plan !== 'free') {
-        console.log('[getUserPlanFromClerk] Using database fallback:', {
+        console.log('[getUserPlanFromAuth] Using database fallback:', {
           userId: user.id,
           plan: subscription[0].plan
         });
@@ -99,7 +99,7 @@ export async function getUserPlanFromClerk(): Promise<PlanType> {
 
     return 'free';
   } catch (error) {
-    console.error('Error getting user plan from Clerk:', error);
+    console.error('Error getting user plan from Auth.js:', error);
     return 'free';
   }
 }
@@ -149,7 +149,7 @@ export async function canUserSearch(userId: string): Promise<{
   usage: { used: number; limit: number | null; remaining: number | null }
 }> {
   try {
-    const plan = await getUserPlanFromClerk();
+    const plan = await getUserPlanFromAuth();
     const { searchesUsed } = await getUserSearchUsage(userId);
     const limits = PLAN_LIMITS[plan];
 
