@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { SessionProvider } from 'next-auth/react';
+import Providers from '@/components/Providers';
 import Navigation from '@/components/Navigation';
 import "./globals.css";
 
@@ -24,10 +24,10 @@ export default function RootLayout({
       <body
         className={`${inter.variable} antialiased`}
       >
-        <SessionProvider>
+        <Providers>
           <Navigation />
           {children}
-        </SessionProvider>
+        </Providers>
       </body>
     </html>
   );
