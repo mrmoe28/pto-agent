@@ -11,9 +11,9 @@ const nextConfig = {
   //   dynamicIO: true,  // Requires Next.js canary version
   // },
 
-  // Temporarily ignore TypeScript errors during build (React 19 + Radix UI compatibility)
+  // TypeScript configuration
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
 
   // Webpack configuration
