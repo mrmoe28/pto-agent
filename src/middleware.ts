@@ -1,36 +1,7 @@
-import { auth } from '@/auth';
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import type { Session } from 'next-auth';
+import NextAuth from 'next-auth';
+import { authConfig } from '@/auth.config';
 
-export default auth((req: NextRequest & { auth: Session | null }) => {
-  const { pathname } = req.nextUrl;
-
-  // Public routes that don't require authentication
-  const publicRoutes = [
-    '/',
-    '/sign-in',
-    '/sign-up',
-    '/forgot-password',
-    '/pricing',
-    '/search',
-    '/api/permit-offices',
-    '/api/geocode',
-    '/api/webhooks/stripe',
-    '/api/auth',
-  ];
-
-  const isPublicRoute = publicRoutes.some((route) =>
-    pathname.startsWith(route)
-  );
-
-  if (!isPublicRoute && !req.auth) {
-    const newUrl = new URL('/sign-in', req.nextUrl.origin);
-    return NextResponse.redirect(newUrl);
-  }
-
-  return NextResponse.next();
-});
+export default NextAuth(authConfig).auth;
 
 export const config = {
   matcher: [
