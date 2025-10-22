@@ -266,7 +266,7 @@ export default function PermitOfficeCard({ office }: PermitOfficeCardProps) {
         <div className="space-y-3">
           <h4 className="font-semibold text-gray-900 flex items-center text-lg">
             <DollarSign className="h-5 w-5 mr-2 text-green-600" />
-            Sample Fees
+            Permit Fees
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {Object.entries(office.permitFees).slice(0, 6).map(([type, fee]) => {

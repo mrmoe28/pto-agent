@@ -1,5 +1,6 @@
 import * as cheerio from 'cheerio';
 import { GovernmentPatternMatcher, COMMON_GOV_PATHS } from './government-patterns';
+import { PDFExtractor } from './pdf-extractor';
 
 type PlaywrightChromium = typeof import('playwright')['chromium'];
 
@@ -141,6 +142,7 @@ export class EnhancedWebScraper {
   private readonly MAX_RETRIES = 3;
   private readonly TIMEOUT = 30000;
   private readonly patternMatcher = new GovernmentPatternMatcher();
+  private readonly pdfExtractor = new PDFExtractor();
   private playwrightChromium: PlaywrightChromium | null = null;
   private warnedAboutChromium = false;
   private dynamicDisabledLogged = false;
@@ -213,8 +215,11 @@ export class EnhancedWebScraper {
       // Crawl related government pages for more comprehensive data
       const relatedPagesInfo = await this.scrapeRelatedGovernmentPages(websiteUrl);
 
+      // Extract PDF documents for fee and instruction data
+      const pdfInfo = await this.extractPDFData(websiteUrl);
+
       // Merge all information sources
-      const mergedInfo = this.mergeOfficeInfo(staticInfo, dynamicInfo, relatedPagesInfo);
+      const mergedInfo = this.mergeOfficeInfo(staticInfo, dynamicInfo, relatedPagesInfo, pdfInfo);
 
       // Calculate data completeness
       mergedInfo.metadata.dataCompleteness = this.calculateDataCompleteness(mergedInfo);
@@ -1003,7 +1008,7 @@ export class EnhancedWebScraper {
     }
   }
 
-  private mergeOfficeInfo(staticInfo: Partial<DetailedOfficeInfo>, dynamic: Partial<DetailedOfficeInfo>, related?: Partial<DetailedOfficeInfo>): DetailedOfficeInfo {
+  private mergeOfficeInfo(staticInfo: Partial<DetailedOfficeInfo>, dynamic: Partial<DetailedOfficeInfo>, related?: Partial<DetailedOfficeInfo>, pdf?: Partial<DetailedOfficeInfo>): DetailedOfficeInfo {
     // Merge the two data sources, preferring more complete data
     const merged: DetailedOfficeInfo = {
       officeName: dynamic.officeName || staticInfo.officeName || '',
@@ -1051,7 +1056,7 @@ export class EnhancedWebScraper {
         ...dynamic.onlineServices
       },
       portals: { ...staticInfo.portals, ...dynamic.portals },
-      feeStructure: { ...staticInfo.feeStructure, ...dynamic.feeStructure },
+      feeStructure: { ...staticInfo.feeStructure, ...dynamic.feeStructure, ...pdf?.feeStructure },
       staffContacts: { ...staticInfo.staffContacts, ...dynamic.staffContacts },
       forms: {
         building: [...(staticInfo.forms?.building || []), ...(dynamic.forms?.building || []), ...(related?.forms?.building || [])],
@@ -1063,6 +1068,7 @@ export class EnhancedWebScraper {
         other: [...(staticInfo.forms?.other || []), ...(dynamic.forms?.other || []), ...(related?.forms?.other || [])]
       },
       processInfo: { ...staticInfo.processInfo, ...dynamic.processInfo },
+      instructions: { ...staticInfo.instructions, ...dynamic.instructions, ...pdf?.instructions },
       additionalInfo: { ...staticInfo.additionalInfo, ...dynamic.additionalInfo },
       metadata: {
         lastScraped: new Date().toISOString(),
@@ -1123,5 +1129,60 @@ export class EnhancedWebScraper {
     score += (processCount / Object.keys(info.processInfo).length) * 5;
 
     return Math.round((score / maxScore) * 100);
+  }
+
+  /**
+   * Extract PDF data for fees and instructions
+   */
+  private async extractPDFData(websiteUrl: string): Promise<Partial<DetailedOfficeInfo>> {
+    try {
+      console.log(`📄 Extracting PDF data from: ${websiteUrl}`);
+      
+      // Find PDF links on the website
+      const pdfLinks = await this.pdfExtractor.findPDFLinks(websiteUrl);
+      
+      if (pdfLinks.length === 0) {
+        console.log('No PDF links found');
+        return {};
+      }
+      
+      console.log(`Found ${pdfLinks.length} PDF links:`, pdfLinks);
+      
+      // Extract data from the most relevant PDFs
+      const pdfData: Partial<DetailedOfficeInfo> = {
+        feeStructure: {},
+        instructions: {}
+      };
+      
+      // Process up to 3 PDFs to avoid timeout
+      for (const pdfUrl of pdfLinks.slice(0, 3)) {
+        try {
+          console.log(`Processing PDF: ${pdfUrl}`);
+          
+          // Extract fees from PDF
+          const fees = await this.pdfExtractor.extractFeesFromPDF(pdfUrl);
+          if (Object.keys(fees).length > 0) {
+            Object.assign(pdfData.feeStructure!, fees);
+            console.log(`✓ Extracted fees from PDF: ${Object.keys(fees).join(', ')}`);
+          }
+          
+          // Extract instructions from PDF
+          const instructions = await this.pdfExtractor.extractInstructionsFromPDF(pdfUrl);
+          if (Object.keys(instructions).length > 0) {
+            Object.assign(pdfData.instructions!, instructions);
+            console.log(`✓ Extracted instructions from PDF: ${Object.keys(instructions).join(', ')}`);
+          }
+          
+        } catch (error) {
+          console.warn(`⚠️ Error processing PDF ${pdfUrl}:`, error);
+        }
+      }
+      
+      return pdfData;
+      
+    } catch (error) {
+      console.error(`❌ Error extracting PDF data from ${websiteUrl}:`, error);
+      return {};
+    }
   }
 }

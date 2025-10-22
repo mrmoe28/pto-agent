@@ -144,7 +144,7 @@ export default function EnhancedPermitOfficeTable({ offices }: EnhancedPermitOff
     return services;
   };
 
-  const getSampleFees = (office: PermitOffice) => {
+  const getPermitFees = (office: PermitOffice) => {
     if (!office.permitFees) return [];
     const fees = [];
     if (office.permitFees.building) fees.push({ type: 'Building', fee: office.permitFees.building });
@@ -296,7 +296,7 @@ export default function EnhancedPermitOfficeTable({ offices }: EnhancedPermitOff
               {sortedOffices.map((office, index) => {
                 const isExpanded = expandedRows.has(office.id || index.toString());
                 const services = getAvailableServices(office);
-                const sampleFees = getSampleFees(office);
+                const permitFees = getPermitFees(office);
                 const operatingHours = getOperatingHours(office);
                 const onlineServices = getOnlineServices(office);
                 const downloadableApps = getDownloadableApps(office);
@@ -358,12 +358,12 @@ export default function EnhancedPermitOfficeTable({ offices }: EnhancedPermitOff
                             </div>
                           </div>
                           
-                          {/* Sample Fees */}
+                          {/* Permit Fees */}
                           <div>
-                            <div className="text-xs font-medium text-gray-700 mb-1">Sample Fees:</div>
+                            <div className="text-xs font-medium text-gray-700 mb-1">Permit Fees:</div>
                             <div className="space-y-1">
-                              {sampleFees.length > 0 ? (
-                                sampleFees.map((fee, idx) => (
+                              {permitFees.length > 0 ? (
+                                permitFees.map((fee, idx) => (
                                   <div key={idx} className="text-xs text-gray-600">
                                     <span className="font-medium">{fee.type}:</span> {formatFee(fee.fee)}
                                   </div>

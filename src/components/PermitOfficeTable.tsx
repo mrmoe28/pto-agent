@@ -125,7 +125,7 @@ export default function PermitOfficeTable({ offices }: PermitOfficeTableProps) {
     return services.join(', ');
   };
 
-  const getSampleFees = (office: PermitOffice) => {
+  const getPermitFees = (office: PermitOffice) => {
     if (!office.permitFees) return 'Not Applicable';
     const fees = [];
     if (office.permitFees.building) fees.push(`Building: ${formatFee(office.permitFees.building)}`);
@@ -171,7 +171,7 @@ export default function PermitOfficeTable({ offices }: PermitOfficeTableProps) {
               Online Services
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-              Sample Fees
+              Permit Fees
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
               Applications & Links
@@ -280,10 +280,10 @@ export default function PermitOfficeTable({ offices }: PermitOfficeTableProps) {
                 </div>
               </td>
 
-              {/* Sample Fees */}
+              {/* Permit Fees */}
               <td className="px-4 py-4 border-b">
                 <div className="text-xs text-gray-700">
-                  {getSampleFees(office)}
+                  {getPermitFees(office)}
                 </div>
               </td>
 

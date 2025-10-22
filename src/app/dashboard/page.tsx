@@ -265,8 +265,8 @@ export default function Dashboard() {
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">Recent Activity</h3>
               <p className="text-gray-600 mb-4">Track your recent searches and interactions</p>
-              <Button 
-                onClick={() => router.push('/search')} 
+              <Button
+                onClick={() => router.push('/activity')}
                 className="w-full bg-green-600 hover:bg-green-700 text-white"
               >
                 View Activity
