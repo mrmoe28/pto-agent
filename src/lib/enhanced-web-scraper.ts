@@ -1068,7 +1068,6 @@ export class EnhancedWebScraper {
         other: [...(staticInfo.forms?.other || []), ...(dynamic.forms?.other || []), ...(related?.forms?.other || [])]
       },
       processInfo: { ...staticInfo.processInfo, ...dynamic.processInfo },
-      instructions: { ...staticInfo.instructions, ...dynamic.instructions, ...pdf?.instructions },
       additionalInfo: { ...staticInfo.additionalInfo, ...dynamic.additionalInfo },
       metadata: {
         lastScraped: new Date().toISOString(),
