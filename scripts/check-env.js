@@ -1,10 +1,10 @@
-// Safe Stripe env validation for local + Vercel (Node 20/22). No imports required.
+// Environment validation for local + Vercel (Node 20/22). No Stripe required.
 const requiredAlways = [
-  "STRIPE_SECRET_KEY",
-  "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
+  // Add any required env vars here
+  // "DATABASE_URL", // Example
 ];
 const requiredProdOnly = [
-  "STRIPE_WEBHOOK_SECRET", // required for production builds
+  // Add production-only required vars here
 ];
 
 const vercelEnv = process.env.VERCEL_ENV; // "development" | "preview" | "production" | undefined
@@ -32,5 +32,5 @@ if (missing.length) {
   console.error(header + "\n" + list + hint);
   process.exit(1);
 } else {
-  console.log("✅ Env check passed. Stripe vars present for", vercelEnv ?? "local");
+  console.log("✅ Environment check passed for", vercelEnv ?? "local");
 }
