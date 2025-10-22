@@ -8,6 +8,7 @@ export const users = pgTable('users', {
   emailVerified: timestamp('email_verified', { mode: 'date' }),
   image: text('image'),
   password: text('password'), // Hashed password for credentials provider
+  isAdmin: boolean('is_admin').default(false), // Admin users bypass paywalls
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow(),
 });
