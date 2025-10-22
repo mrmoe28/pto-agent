@@ -42,6 +42,7 @@ export class PDFExtractor {
       
       // Extract text from PDF
       const pdfData = await new PDFParse(pdfBuffer)
+      // @ts-expect-error - pdf-parse result has text property but TypeScript doesn't know about it
       const text = pdfData.text || ''
       
       console.log(`✓ Extracted ${text.length} characters from PDF`)
@@ -72,6 +73,7 @@ export class PDFExtractor {
       
       // Extract text from PDF
       const pdfData = await new PDFParse(pdfBuffer)
+      // @ts-expect-error - pdf-parse result has text property but TypeScript doesn't know about it
       const text = pdfData.text || ''
       
       console.log(`✓ Extracted ${text.length} characters from PDF`)
