@@ -604,7 +604,7 @@ export class DeepPermitCrawler {
     const rangeMatch = feeText.match(/\$(\d+(?:,\d{3})*(?:\.\d{2})?)\s*[-–—to]\s*\$(\d+(?:,\d{3})*(?:\.\d{2})?)/)
     if (rangeMatch) {
       const minFee = parseFloat(rangeMatch[1].replace(/,/g, ''))
-      const maxFee = parseFloat(rangeMatch[2].replace(/,/g, ''))
+      const _maxFee = parseFloat(rangeMatch[2].replace(/,/g, ''))
       // Use the minimum fee as the base fee
       return { baseFee: minFee }
     }
