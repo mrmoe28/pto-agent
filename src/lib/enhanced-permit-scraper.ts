@@ -118,9 +118,18 @@ async function extractSolarPermitInfo(url: string): Promise<SolarPermitInfo> {
         maxPages: 15,
         followExternal: false,
         targetPaths: [
-          '/permit', '/solar', '/electrical', '/renewable',
-          '/application', '/form', '/fee', '/requirement',
-          '/instruction', '/timeline', '/process'
+          // Permit-related pages
+          '/permit', '/solar', '/electrical', '/renewable', '/building', '/construction',
+          '/plumbing', '/mechanical', '/hvac', '/zoning', '/planning',
+          // Fee-related pages
+          '/fee', '/fees', '/fee-schedule', '/fee-structure', '/fees-and-charges',
+          '/pricing', '/cost', '/charges', '/rates',
+          // Process-related pages
+          '/application', '/form', '/requirement', '/instruction', '/timeline', '/process',
+          '/how-to', '/apply', '/submit', '/procedures',
+          // Department pages
+          '/development', '/development-services', '/building-department', '/building-dept',
+          '/community-development', '/building-safety', '/inspections', '/code-enforcement'
         ],
         extractPDFs: true
       })

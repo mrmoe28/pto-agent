@@ -834,19 +834,60 @@ export class EnhancedWebScraper {
   }
 
   private parseFeeInfo(line: string): { amount?: number; description?: string; unit?: string } | null {
-    // Extract dollar amounts (handles $1,234.56 format)
-    const amountMatch = line.match(/\$(\d+(?:,\d{3})*(?:\.\d{2})?)/);
-    const amount = amountMatch ? parseFloat(amountMatch[1].replace(/,/g, '')) : undefined;
+    const lowerLine = line.toLowerCase();
+
+    // Handle "No fee", "Waived", "N/A"
+    if (lowerLine.includes('no fee') ||
+        lowerLine.includes('waived') ||
+        lowerLine.includes('no charge') ||
+        lowerLine.includes('free')) {
+      return {
+        amount: 0,
+        description: line.trim().replace(/\s+/g, ' ')
+      };
+    }
+
+    // Handle fee ranges: "$50-$100", "$50 to $100"
+    const rangeMatch = line.match(/\$(\d+(?:,\d{3})*(?:\.\d{2})?)\s*[-–—to]\s*\$(\d+(?:,\d{3})*(?:\.\d{2})?)/);
+    if (rangeMatch) {
+      const minFee = parseFloat(rangeMatch[1].replace(/,/g, ''));
+      return {
+        amount: minFee,
+        description: line.trim().replace(/\s+/g, ' ')
+      };
+    }
+
+    // Handle percentage-based fees: "2% of project value"
+    const percentMatch = line.match(/(\d+(?:\.\d+)?)\s*%/);
+    if (percentMatch) {
+      return {
+        amount: parseFloat(percentMatch[1]),
+        unit: 'percent',
+        description: line.trim().replace(/\s+/g, ' ')
+      };
+    }
 
     // Extract unit (per kW, per SF, per unit, etc.)
-    const unitMatch = line.match(/(?:per|\/)\s*(\w+(?:\s+\w+)?)/i);
-    const unit = unitMatch ? unitMatch[1].toLowerCase() : undefined;
+    const unitMatch = line.match(/(?:per|\/)\s*([\w\s]+?)(?:\s|$)/i);
+    const unit = unitMatch ? unitMatch[1].trim().toLowerCase() : undefined;
+
+    // Extract dollar amounts (handles $1,234.56 format)
+    const amountMatch = line.match(/\$(\d+(?:,\d{3})*(?:\.\d{2})?)/);
+    let amount = amountMatch ? parseFloat(amountMatch[1].replace(/,/g, '')) : undefined;
+
+    // If no dollar sign, try to find standalone numbers that might be fees
+    if (!amount && lowerLine.match(/fee|cost|charge/)) {
+      const numberMatch = line.match(/(\d+(?:,\d{3})*(?:\.\d{2})?)/);
+      if (numberMatch) {
+        amount = parseFloat(numberMatch[1].replace(/,/g, ''));
+      }
+    }
 
     // Use the full line as description, cleaned up
     const description = line.trim().replace(/\s+/g, ' ');
 
-    // Only return if we found at least an amount
-    if (amount === undefined && !description.includes('$')) {
+    // Only return if we found at least an amount or it's explicitly about fees
+    if (amount === undefined && !description.includes('$') && !lowerLine.includes('fee')) {
       return null;
     }
 
