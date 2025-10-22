@@ -488,39 +488,164 @@ export class DeepPermitCrawler {
   private extractFeesFromTable(table: TableData): FeeStructure[] {
     const fees: FeeStructure[] = []
 
-    // Check if this is a fee table
+    // Check if this is a fee table - be more flexible with keywords
     const headerText = table.headers.join(' ').toLowerCase()
-    if (!headerText.includes('fee') && !headerText.includes('cost') && !headerText.includes('price')) {
+    const isFeeTable = headerText.includes('fee') ||
+                       headerText.includes('cost') ||
+                       headerText.includes('price') ||
+                       headerText.includes('charge') ||
+                       headerText.includes('amount') ||
+                       headerText.includes('permit type')
+
+    if (!isFeeTable) {
+      return fees
+    }
+
+    // Intelligently detect which column contains permit types and which contains fees
+    const permitTypeColumnIndex = this.findPermitTypeColumn(table.headers)
+    const feeColumnIndices = this.findFeeColumns(table.headers)
+
+    // If we can't find appropriate columns, skip this table
+    if (permitTypeColumnIndex === -1 || feeColumnIndices.length === 0) {
       return fees
     }
 
     for (const row of table.rows) {
-      const permitType = row[0] || ''
-      const feeText = row[1] || ''
+      // Skip empty rows or header rows in tbody
+      if (row.length === 0 || row.every(cell => !cell.trim())) {
+        continue
+      }
 
-      // Parse fee amount
-      const match = feeText.match(/\$(\d+(?:,\d{3})*(?:\.\d{2})?)/)
-      const baseFee = match ? parseFloat(match[1].replace(/,/g, '')) : undefined
+      const permitType = row[permitTypeColumnIndex]?.trim() || ''
 
-      // Check for variable fees (per kW, per SF, etc.)
-      const variableMatch = feeText.match(/\$(\d+(?:\.\d{2})?)\s*(?:per|\/)\s*(\w+)/i)
-      const variableFee = variableMatch ? {
-        amount: parseFloat(variableMatch[1]),
-        unit: variableMatch[2],
-        description: feeText
-      } : undefined
+      // Skip if this looks like a header row
+      if (permitType.toLowerCase().includes('permit type') ||
+          permitType.toLowerCase().includes('description')) {
+        continue
+      }
 
-      if (permitType && (baseFee || variableFee)) {
-        fees.push({
-          permitType,
-          baseFee,
-          variableFee,
-          description: feeText
-        })
+      // Try each fee column
+      for (const feeColIndex of feeColumnIndices) {
+        const feeText = row[feeColIndex]?.trim() || ''
+        if (!feeText) continue
+
+        // Parse fee amount - handle multiple formats
+        const parsedFee = this.parseFeeAmount(feeText)
+
+        if (permitType && parsedFee && (parsedFee.baseFee || parsedFee.variableFee)) {
+          fees.push({
+            permitType,
+            baseFee: parsedFee.baseFee,
+            variableFee: parsedFee.variableFee,
+            description: feeText,
+            applicableTo: parsedFee.applicableTo
+          })
+          break // Found a valid fee for this row, move to next row
+        }
       }
     }
 
     return fees
+  }
+
+  private findPermitTypeColumn(headers: string[]): number {
+    const permitTypeKeywords = ['permit', 'type', 'service', 'description', 'item', 'category']
+
+    for (let i = 0; i < headers.length; i++) {
+      const header = headers[i].toLowerCase()
+      if (permitTypeKeywords.some(keyword => header.includes(keyword))) {
+        return i
+      }
+    }
+
+    // Default to first column if no match found
+    return 0
+  }
+
+  private findFeeColumns(headers: string[]): number[] {
+    const feeColumns: number[] = []
+    const feeKeywords = ['fee', 'cost', 'price', 'charge', 'amount', 'rate']
+
+    for (let i = 0; i < headers.length; i++) {
+      const header = headers[i].toLowerCase()
+      // Skip permit type column
+      if (header.includes('permit') && header.includes('type')) continue
+
+      if (feeKeywords.some(keyword => header.includes(keyword))) {
+        feeColumns.push(i)
+      }
+    }
+
+    // If no fee columns found, check all columns except first
+    if (feeColumns.length === 0) {
+      for (let i = 1; i < headers.length; i++) {
+        feeColumns.push(i)
+      }
+    }
+
+    return feeColumns
+  }
+
+  private parseFeeAmount(feeText: string): {
+    baseFee?: number;
+    variableFee?: { unit: string; amount: number; description: string };
+    applicableTo?: string[];
+  } | null {
+    // Handle "No fee", "Waived", "N/A", etc.
+    const lowerFeeText = feeText.toLowerCase()
+    if (lowerFeeText.includes('no fee') ||
+        lowerFeeText.includes('waived') ||
+        lowerFeeText.includes('n/a') ||
+        lowerFeeText === '-') {
+      return { baseFee: 0 }
+    }
+
+    // Handle fee ranges: "$50-$100" or "$50 - $100"
+    const rangeMatch = feeText.match(/\$(\d+(?:,\d{3})*(?:\.\d{2})?)\s*[-–—to]\s*\$(\d+(?:,\d{3})*(?:\.\d{2})?)/)
+    if (rangeMatch) {
+      const minFee = parseFloat(rangeMatch[1].replace(/,/g, ''))
+      const maxFee = parseFloat(rangeMatch[2].replace(/,/g, ''))
+      // Use the minimum fee as the base fee
+      return { baseFee: minFee }
+    }
+
+    // Handle variable fees: "$5 per kW", "$0.10/SF", "50 per unit"
+    const variableMatch = feeText.match(/\$?(\d+(?:\.\d{2})?)\s*(?:per|\/)\s*([\w\s]+?)(?:\s|$)/i)
+    if (variableMatch) {
+      return {
+        variableFee: {
+          amount: parseFloat(variableMatch[1]),
+          unit: variableMatch[2].trim(),
+          description: feeText
+        }
+      }
+    }
+
+    // Handle standard dollar amounts: "$1,234.56"
+    const dollarMatch = feeText.match(/\$(\d+(?:,\d{3})*(?:\.\d{2})?)/)
+    if (dollarMatch) {
+      return { baseFee: parseFloat(dollarMatch[1].replace(/,/g, '')) }
+    }
+
+    // Handle numbers without dollar signs: "100.00", "1,234"
+    const numberMatch = feeText.match(/^(\d+(?:,\d{3})*(?:\.\d{2})?)$/)
+    if (numberMatch) {
+      return { baseFee: parseFloat(numberMatch[1].replace(/,/g, '')) }
+    }
+
+    // Handle percentage-based fees: "2% of project value"
+    const percentMatch = feeText.match(/(\d+(?:\.\d+)?)\s*%/)
+    if (percentMatch) {
+      return {
+        variableFee: {
+          amount: parseFloat(percentMatch[1]),
+          unit: 'percent',
+          description: feeText
+        }
+      }
+    }
+
+    return null
   }
 
   private extractTimelinesFromContent(content: string): Timeline[] {
