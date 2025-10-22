@@ -26,6 +26,7 @@
     "analyze": "ANALYZE=true next build",
     "process:scrape-jobs": "tsx scripts/process-scrape-jobs.ts",
     "migrate:db": "tsx scripts/run-migration.ts",
+    "migrate:password-reset": "tsx scripts/migrate-password-reset.ts",
     "verify:db": "tsx scripts/verify-database.ts",
     "chrome:debug": "chmod +x scripts/launch-chrome-debug.sh && ./scripts/launch-chrome-debug.sh",
     "qa:audit": "tsx qa/run-qa-audit.ts",

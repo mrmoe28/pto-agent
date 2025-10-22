@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,7 +11,6 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +34,7 @@ export default function ForgotPasswordPage() {
       } else {
         setError(data.error || 'Failed to send reset email');
       }
-    } catch (err) {
+    } catch (_err) {
       setError('Network error. Please try again.');
     } finally {
       setLoading(false);
@@ -51,7 +49,7 @@ export default function ForgotPasswordPage() {
             Forgot Password
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Enter your email address and we'll send you a link to reset your password.
+            Enter your email address and we&apos;ll send you a link to reset your password.
           </p>
         </div>
 
@@ -59,7 +57,7 @@ export default function ForgotPasswordPage() {
           <CardHeader>
             <CardTitle>Reset Password</CardTitle>
             <CardDescription>
-              We'll send you a secure link to reset your password
+              We&apos;ll send you a secure link to reset your password
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -102,7 +100,7 @@ export default function ForgotPasswordPage() {
             </Link>
           </p>
           <p className="text-sm text-gray-500">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <Link
               href="/sign-up"
               className="font-medium text-blue-600 hover:text-blue-700 transition-colors duration-200"

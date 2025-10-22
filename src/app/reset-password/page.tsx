@@ -38,7 +38,7 @@ export default function ResetPasswordPage() {
           setTokenValid(false);
           setError(data.error || 'Invalid or expired reset token');
         }
-      } catch (err) {
+      } catch (_err) {
         setTokenValid(false);
         setError('Failed to validate reset token');
       }
@@ -89,7 +89,7 @@ export default function ResetPasswordPage() {
       } else {
         setError(data.error || 'Failed to reset password');
       }
-    } catch (err) {
+    } catch (_err) {
       setError('Network error. Please try again.');
     } finally {
       setLoading(false);
