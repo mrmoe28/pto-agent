@@ -1,6 +1,6 @@
 import axios from 'axios'
 // @ts-expect-error - pdf-parse doesn't have TypeScript definitions
-import PDFParse from 'pdf-parse'
+const { PDFParse } = require('pdf-parse')
 
 /**
  * PDF Text Extractor for Government Fee Documents
