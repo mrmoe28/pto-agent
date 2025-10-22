@@ -76,10 +76,15 @@ export interface DetailedOfficeInfo {
 
   // Fee Information
   feeStructure: {
-    buildingPermitFees?: string;
-    inspectionFees?: string;
-    planReviewFees?: string;
-    expeditedServiceFees?: string;
+    building?: { amount?: number; description?: string; unit?: string };
+    electrical?: { amount?: number; description?: string; unit?: string };
+    plumbing?: { amount?: number; description?: string; unit?: string };
+    mechanical?: { amount?: number; description?: string; unit?: string };
+    zoning?: { amount?: number; description?: string; unit?: string };
+    inspection?: { amount?: number; description?: string; unit?: string };
+    planReview?: { amount?: number; description?: string; unit?: string };
+    expedited?: { amount?: number; description?: string; unit?: string };
+    general?: { amount?: number; description?: string; unit?: string };
     feeScheduleUrl?: string;
   };
 
@@ -772,18 +777,84 @@ export class EnhancedWebScraper {
     for (const line of lines) {
       const lowerLine = line.toLowerCase();
 
-      if (lowerLine.includes('building permit') && lowerLine.includes('$')) {
-        feeStructure.buildingPermitFees = line.trim();
-      } else if (lowerLine.includes('inspection') && lowerLine.includes('$')) {
-        feeStructure.inspectionFees = line.trim();
-      } else if (lowerLine.includes('plan review') && lowerLine.includes('$')) {
-        feeStructure.planReviewFees = line.trim();
-      } else if (lowerLine.includes('expedite') && lowerLine.includes('$')) {
-        feeStructure.expeditedServiceFees = line.trim();
+      // Skip lines without dollar signs (they're not fees)
+      if (!lowerLine.includes('$')) {
+        // Still check for fee schedule URLs
+        if (lowerLine.includes('fee schedule') || lowerLine.includes('fee structure')) {
+          const urlMatch = line.match(this.PATTERNS.url);
+          if (urlMatch && !feeStructure.feeScheduleUrl) {
+            feeStructure.feeScheduleUrl = urlMatch[0];
+          }
+        }
+        continue;
+      }
+
+      const feeInfo = this.parseFeeInfo(line);
+      if (!feeInfo) continue;
+
+      // Building permit fees
+      if ((lowerLine.includes('building permit') || lowerLine.includes('construction permit')) && !feeStructure.building) {
+        feeStructure.building = feeInfo;
+      }
+      // Electrical permit fees
+      else if (lowerLine.includes('electrical') && !lowerLine.includes('non-electrical') && !feeStructure.electrical) {
+        feeStructure.electrical = feeInfo;
+      }
+      // Plumbing permit fees
+      else if (lowerLine.includes('plumbing') && !feeStructure.plumbing) {
+        feeStructure.plumbing = feeInfo;
+      }
+      // Mechanical/HVAC permit fees
+      else if ((lowerLine.includes('mechanical') || lowerLine.includes('hvac')) && !feeStructure.mechanical) {
+        feeStructure.mechanical = feeInfo;
+      }
+      // Zoning permit fees
+      else if (lowerLine.includes('zoning') && !feeStructure.zoning) {
+        feeStructure.zoning = feeInfo;
+      }
+      // Inspection fees
+      else if (lowerLine.includes('inspection') && !lowerLine.includes('re-inspection') && !feeStructure.inspection) {
+        feeStructure.inspection = feeInfo;
+      }
+      // Plan review fees
+      else if (lowerLine.includes('plan review') && !feeStructure.planReview) {
+        feeStructure.planReview = feeInfo;
+      }
+      // Expedited service fees
+      else if ((lowerLine.includes('expedite') || lowerLine.includes('rush')) && !feeStructure.expedited) {
+        feeStructure.expedited = feeInfo;
+      }
+      // General permit fees (catch-all)
+      else if ((lowerLine.includes('permit fee') || lowerLine.includes('permit cost')) && !feeStructure.general) {
+        feeStructure.general = feeInfo;
       }
     }
 
     return feeStructure;
+  }
+
+  private parseFeeInfo(line: string): { amount?: number; description?: string; unit?: string } | null {
+    // Extract dollar amounts (handles $1,234.56 format)
+    const amountMatch = line.match(/\$(\d+(?:,\d{3})*(?:\.\d{2})?)/);
+    const amount = amountMatch ? parseFloat(amountMatch[1].replace(/,/g, '')) : undefined;
+
+    // Extract unit (per kW, per SF, per unit, etc.)
+    const unitMatch = line.match(/(?:per|\/)\s*(\w+(?:\s+\w+)?)/i);
+    const unit = unitMatch ? unitMatch[1].toLowerCase() : undefined;
+
+    // Use the full line as description, cleaned up
+    const description = line.trim().replace(/\s+/g, ' ');
+
+    // Only return if we found at least an amount
+    if (amount === undefined && !description.includes('$')) {
+      return null;
+    }
+
+    return {
+      amount,
+      description,
+      unit
+    };
   }
 
   private extractStaffFromText(text: string): DetailedOfficeInfo['staffContacts'] {
