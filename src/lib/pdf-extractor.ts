@@ -23,7 +23,7 @@ export interface PDFInstructions {
   plumbing?: string
   mechanical?: string
   zoning?: string
-  requiredDocuments?: string[]
+  requiredDocuments?: string
   applicationProcess?: string
 }
 
