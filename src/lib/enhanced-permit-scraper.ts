@@ -444,13 +444,30 @@ async function buildOfficeData(
   if (solarInfo.fees) {
     permitFees.electrical = solarInfo.fees
   } else if (deepData && deepData.fees.length > 0) {
-    permitFees.electrical = deepData.fees.map(fee => ({
-      permitType: fee.permitType,
-      amount: fee.baseFee,
-      variableFee: fee.variableFee,
-      description: fee.description,
-      applicableTo: fee.applicableTo
-    }))
+    // Map fees by permit type to match database schema
+    for (const fee of deepData.fees) {
+      const permitType = fee.permitType.toLowerCase()
+      const feeData = {
+        amount: fee.baseFee,
+        description: fee.description || fee.permitType,
+        unit: fee.variableFee?.unit
+      }
+
+      if (permitType.includes('building') || permitType.includes('construction')) {
+        if (!permitFees.building) permitFees.building = feeData
+      } else if (permitType.includes('electrical')) {
+        if (!permitFees.electrical) permitFees.electrical = feeData
+      } else if (permitType.includes('plumbing')) {
+        if (!permitFees.plumbing) permitFees.plumbing = feeData
+      } else if (permitType.includes('mechanical') || permitType.includes('hvac')) {
+        if (!permitFees.mechanical) permitFees.mechanical = feeData
+      } else if (permitType.includes('zoning')) {
+        if (!permitFees.zoning) permitFees.zoning = feeData
+      } else {
+        // Catch-all for other permit types
+        if (!permitFees.general) permitFees.general = feeData
+      }
+    }
   }
 
   // Build comprehensive processing times
