@@ -3,14 +3,14 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Menu, X, User } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
 import { useSession, signOut } from 'next-auth/react'
+import ProfileDropdown from '@/components/ProfileDropdown'
 
 export default function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const { data: session, status } = useSession()
+  const { status } = useSession()
   const isSignedIn = status === 'authenticated'
-  const user = session?.user
 
   return (
     <nav className="bg-white shadow-sm border-b border-gray-200 relative z-50">
@@ -74,27 +74,14 @@ export default function Navigation() {
           {/* Authentication Buttons */}
           <div className="flex items-center space-x-4 relative z-10">
             {isSignedIn ? (
-              <div className="flex items-center space-x-3">
+              <div className="hidden md:flex items-center space-x-3">
                 <Link
                   href="/dashboard"
                   className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 hover:bg-gray-100"
                 >
                   Dashboard
                 </Link>
-                <div className="flex items-center space-x-2">
-                  <div className="flex items-center space-x-2 text-gray-700">
-                    <User className="h-4 w-4" />
-                    <span className="text-sm font-medium">{user?.name?.split(' ')[0] || 'User'}</span>
-                  </div>
-                  <Button
-                    onClick={() => signOut({ callbackUrl: '/' })}
-                    variant="outline"
-                    size="sm"
-                    className="text-gray-700 border-gray-300 hover:border-gray-400"
-                  >
-                    Sign Out
-                  </Button>
-                </div>
+                <ProfileDropdown />
               </div>
             ) : (
               <div className="flex items-center space-x-3">
@@ -153,11 +140,14 @@ export default function Navigation() {
                   >
                     Dashboard
                   </Link>
+                  <Link
+                    href="/profile"
+                    className="text-gray-600 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Profile
+                  </Link>
                   <div className="px-3 py-2">
-                    <div className="flex items-center space-x-2 text-gray-600 mb-2">
-                      <User className="h-4 w-4" />
-                      <span className="text-sm font-medium">{user?.name?.split(' ')[0] || 'User'}</span>
-                    </div>
                     <Button
                       onClick={() => {
                         signOut({ callbackUrl: '/' })

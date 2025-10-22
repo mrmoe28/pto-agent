@@ -26,7 +26,7 @@ export default function FavoriteButton({
   const [isChecking, setIsChecking] = useState(true);
   const [userPlan, setUserPlan] = useState<string>('free');
 
-  // Check if user has Enterprise plan
+  // Check if user has Enterprise or Admin plan
   useEffect(() => {
     if (isLoaded && user) {
       const subscriptionPlan = user?.subscriptionPlan as string;
@@ -37,7 +37,7 @@ export default function FavoriteButton({
   // Check if this office is already favorited
   useEffect(() => {
     const checkFavoriteStatus = async () => {
-      if (!isLoaded || !user || userPlan !== 'enterprise') {
+      if (!isLoaded || !user || (userPlan !== 'enterprise' && userPlan !== 'admin')) {
         setIsChecking(false);
         return;
       }
@@ -60,7 +60,7 @@ export default function FavoriteButton({
   }, [isLoaded, user, permitOfficeId, userPlan]);
 
   const handleToggleFavorite = async () => {
-    if (!user || userPlan !== 'enterprise') {
+    if (!user || (userPlan !== 'enterprise' && userPlan !== 'admin')) {
       // Show upgrade modal or redirect to pricing
       window.location.href = '/pricing';
       return;
@@ -100,8 +100,8 @@ export default function FavoriteButton({
     return null;
   }
 
-  // Show upgrade prompt for non-Enterprise users
-  if (userPlan !== 'enterprise') {
+  // Show upgrade prompt for non-Enterprise/Admin users
+  if (userPlan !== 'enterprise' && userPlan !== 'admin') {
     return (
       <Button
         onClick={() => window.location.href = '/pricing'}

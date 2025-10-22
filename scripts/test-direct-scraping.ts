@@ -18,18 +18,18 @@ async function testDirectScraping() {
   // Known permit office websites with fee schedules
   const testUrls = [
     {
-      name: 'Fulton County Development',
-      url: 'https://www.fultoncountyga.gov/services/planning-zoning/development-services',
+      name: 'Fulton County Building Permits',
+      url: 'https://www.fultoncountyga.gov/services/building-permits',
       expectedFees: true
     },
     {
-      name: 'Gwinnett County Building',
-      url: 'https://www.gwinnettcounty.com/web/gwinnett/departments/communitydevelopment/inspections',
+      name: 'Gwinnett County Building Department',
+      url: 'https://www.gwinnettcounty.com/web/gwinnett/departments/communitydevelopment/building',
       expectedFees: true
     },
     {
-      name: 'DeKalb County Planning',
-      url: 'https://www.dekalbcountyga.gov/planning-sustainability',
+      name: 'DeKalb County Building Department',
+      url: 'https://www.dekalbcountyga.gov/building-safety',
       expectedFees: true
     }
   ]
@@ -47,7 +47,7 @@ async function testDirectScraping() {
       // Test basic scraping
       console.log('\n📋 Step 1: Basic Page Scraping...')
       const basicInfo = await scraper.scrapeDetailedOfficeInfo(testSite.url, {
-        allowDynamic: false
+        allowDynamic: true
       })
 
       if (basicInfo) {
