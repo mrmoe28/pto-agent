@@ -1,49 +1,35 @@
 import { db } from './db';
-import { userSubscriptions } from './db/schema';
+import { userSubscriptions, users } from './db/schema';
 import { eq } from 'drizzle-orm';
 import { PLAN_LIMITS, type PlanType, type PlanLimits } from './subscription-types';
 
-// Admin email (update this with your actual email)
-const ADMIN_EMAIL = 'edwardsteel.0@gmail.com';
+// Check if user is admin by querying the database
+async function isAdminUser(userId: string): Promise<boolean> {
+  try {
+    const user = await db
+      .select({ isAdmin: users.isAdmin })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
 
-// Admin user IDs (as backup in case email detection fails)
-const ADMIN_USER_IDS: string[] = [];
+    const isAdmin = user[0]?.isAdmin || false;
 
-// Check if user is admin
-function isAdminUser(user: {
-  id?: string;
-  email?: string | null;
-}): boolean {
-  const userEmail = user.email;
+    console.log('[Admin Check]', {
+      userId,
+      isAdmin,
+    });
 
-  // Normalize emails for comparison (lowercase, trim)
-  const normalizedUserEmail = userEmail?.toLowerCase().trim();
-  const normalizedAdminEmail = ADMIN_EMAIL.toLowerCase().trim();
+    if (isAdmin) {
+      console.log('[Admin Check] ✅ User is admin');
+    } else {
+      console.log('[Admin Check] ❌ User is not admin');
+    }
 
-  console.log('[Admin Check]', {
-    userId: user.id,
-    userEmail,
-    normalizedUserEmail,
-    adminEmail: ADMIN_EMAIL,
-    normalizedAdminEmail,
-    primaryEmailMatch: normalizedUserEmail === normalizedAdminEmail,
-    userIdMatch: user.id ? ADMIN_USER_IDS.includes(user.id) : false
-  });
-
-  // Check by user ID first (most reliable)
-  if (user.id && ADMIN_USER_IDS.includes(user.id)) {
-    console.log('[Admin Check] ✅ Matched by user ID');
-    return true;
+    return isAdmin;
+  } catch (error) {
+    console.error('[Admin Check] Error checking admin status:', error);
+    return false;
   }
-
-  // Check primary email (normalized)
-  if (normalizedUserEmail === normalizedAdminEmail) {
-    console.log('[Admin Check] ✅ Matched by primary email');
-    return true;
-  }
-
-  console.log('[Admin Check] ❌ No match found');
-  return false;
 }
 
 // Get user's subscription plan from Auth.js session (server-side only)
@@ -53,12 +39,12 @@ export async function getUserPlanFromAuth(): Promise<PlanType> {
     // For client components, use the subscription check API instead
     const { auth } = await import('@/auth');
     const session = await auth();
-    if (!session?.user) return 'free';
+    if (!session?.user?.id) return 'free';
 
     const user = session.user;
 
     // Check if user is admin first
-    if (isAdminUser(user)) {
+    if (await isAdminUser(user.id)) {
       return 'admin';
     }
 
