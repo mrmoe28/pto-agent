@@ -42,6 +42,20 @@ export const verificationTokens = pgTable('verification_tokens', {
   compoundKey: primaryKey({ columns: [table.identifier, table.token] }),
 }));
 
+// Password reset tokens table
+export const passwordResetTokens = pgTable('password_reset_tokens', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  token: text('token').notNull().unique(),
+  expires: timestamp('expires', { mode: 'date' }).notNull(),
+  used: boolean('used').default(false),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
+}, (table) => ({
+  userIdIdx: index('password_reset_tokens_user_id_idx').on(table.userId),
+  tokenIdx: index('password_reset_tokens_token_idx').on(table.token),
+  expiresIdx: index('password_reset_tokens_expires_idx').on(table.expires),
+}));
+
 // User profile and application-specific tables (using Auth.js user IDs)
 export const userProfiles = pgTable('user_profiles', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -325,6 +339,8 @@ export type UserSubscription = typeof userSubscriptions.$inferSelect;
 export type NewUserSubscription = typeof userSubscriptions.$inferInsert;
 export type PermitOffice = typeof permitOffices.$inferSelect;
 export type NewPermitOffice = typeof permitOffices.$inferInsert;
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+export type NewPasswordResetToken = typeof passwordResetTokens.$inferInsert;
 
 // Team collaboration types
 export type Team = typeof teams.$inferSelect;
