@@ -1149,8 +1149,7 @@ export class EnhancedWebScraper {
       
       // Extract data from the most relevant PDFs
       const pdfData: Partial<DetailedOfficeInfo> = {
-        feeStructure: {},
-        instructions: {}
+        feeStructure: {}
       };
       
       // Process up to 3 PDFs to avoid timeout
@@ -1165,12 +1164,6 @@ export class EnhancedWebScraper {
             console.log(`✓ Extracted fees from PDF: ${Object.keys(fees).join(', ')}`);
           }
           
-          // Extract instructions from PDF
-          const instructions = await this.pdfExtractor.extractInstructionsFromPDF(pdfUrl);
-          if (Object.keys(instructions).length > 0) {
-            Object.assign(pdfData.instructions!, instructions);
-            console.log(`✓ Extracted instructions from PDF: ${Object.keys(instructions).join(', ')}`);
-          }
           
         } catch (error) {
           console.warn(`⚠️ Error processing PDF ${pdfUrl}:`, error);
