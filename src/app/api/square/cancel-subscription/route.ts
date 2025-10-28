@@ -47,10 +47,10 @@ export async function POST() {
     return NextResponse.json({
       success: true,
       message: 'Subscription canceled successfully',
-      subscription: {
+      subscription: canceledSubscription ? {
         id: canceledSubscription.id,
         status: canceledSubscription.status,
-      },
+      } : null,
     });
   } catch (error) {
     console.error('[API] Error canceling subscription:', error);

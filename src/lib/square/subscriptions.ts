@@ -24,7 +24,7 @@ export async function createSquareSubscription(data: {
   try {
     const startDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
 
-    const { result } = await squareClient.subscriptionsApi.createSubscription({
+    const response = await squareClient.subscriptions.create({
       locationId,
       planVariationId: data.planId,
       customerId: data.customerId,
@@ -33,7 +33,7 @@ export async function createSquareSubscription(data: {
       timezone: 'America/New_York',
     });
 
-    const subscription = result.subscription!;
+    const subscription = response.subscription!;
     const planLimits = PLAN_LIMITS[data.plan];
 
     // Update user subscription in database
@@ -64,7 +64,7 @@ export async function createSquareSubscription(data: {
  */
 export async function cancelSquareSubscription(subscriptionId: string, userId: string) {
   try {
-    const { result } = await squareClient.subscriptionsApi.cancelSubscription(subscriptionId);
+    const response = await squareClient.subscriptions.cancel({ subscriptionId });
 
     // Update user subscription in database
     await db
@@ -77,7 +77,7 @@ export async function cancelSquareSubscription(subscriptionId: string, userId: s
       })
       .where(eq(userSubscriptions.userId, userId));
 
-    return result.subscription;
+    return response.subscription;
   } catch (error) {
     console.error('[Square] Error canceling subscription:', error);
     throw error;
@@ -89,7 +89,7 @@ export async function cancelSquareSubscription(subscriptionId: string, userId: s
  */
 export async function resumeSquareSubscription(subscriptionId: string, userId: string) {
   try {
-    const { result } = await squareClient.subscriptionsApi.resumeSubscription(subscriptionId);
+    const response = await squareClient.subscriptions.resume({ subscriptionId });
 
     // Update user subscription in database
     await db
@@ -102,7 +102,7 @@ export async function resumeSquareSubscription(subscriptionId: string, userId: s
       })
       .where(eq(userSubscriptions.userId, userId));
 
-    return result.subscription;
+    return response.subscription;
   } catch (error) {
     console.error('[Square] Error resuming subscription:', error);
     throw error;
@@ -118,7 +118,8 @@ export async function updateSubscriptionCard(
   newCardId: string
 ) {
   try {
-    const { result } = await squareClient.subscriptionsApi.updateSubscription(subscriptionId, {
+    const response = await squareClient.subscriptions.update({
+      subscriptionId,
       subscription: {
         cardId: newCardId,
       },
@@ -133,7 +134,7 @@ export async function updateSubscriptionCard(
       })
       .where(eq(userSubscriptions.userId, userId));
 
-    return result.subscription;
+    return response.subscription;
   } catch (error) {
     console.error('[Square] Error updating subscription card:', error);
     throw error;
@@ -145,8 +146,8 @@ export async function updateSubscriptionCard(
  */
 export async function getSquareSubscription(subscriptionId: string) {
   try {
-    const { result } = await squareClient.subscriptionsApi.retrieveSubscription(subscriptionId);
-    return result.subscription;
+    const response = await squareClient.subscriptions.get({ subscriptionId });
+    return response.subscription;
   } catch (error) {
     console.error('[Square] Error retrieving subscription:', error);
     throw error;
@@ -189,7 +190,7 @@ export async function changeSubscriptionPlan(
  */
 export async function saveSquareCard(sourceId: string, customerId: string, userId: string) {
   try {
-    const { result } = await squareClient.cardsApi.createCard({
+    const response = await squareClient.cards.create({
       idempotencyKey: randomUUID(),
       sourceId,
       card: {
@@ -197,7 +198,7 @@ export async function saveSquareCard(sourceId: string, customerId: string, userI
       },
     });
 
-    const card = result.card!;
+    const card = response.card!;
 
     // Update user subscription with card ID
     await db
@@ -220,8 +221,8 @@ export async function saveSquareCard(sourceId: string, customerId: string, userI
  */
 export async function getCustomerCards(customerId: string) {
   try {
-    const { result } = await squareClient.cardsApi.listCards(undefined, customerId);
-    return result.cards || [];
+    const page = await squareClient.cards.list({ customerId });
+    return page.data || [];
   } catch (error) {
     console.error('[Square] Error listing cards:', error);
     throw error;

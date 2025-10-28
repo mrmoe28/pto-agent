@@ -14,7 +14,7 @@ export async function createSquareCustomer(data: {
   phoneNumber?: string;
 }) {
   try {
-    const { result } = await squareClient.customersApi.createCustomer({
+    const response = await squareClient.customers.create({
       emailAddress: data.email,
       givenName: data.givenName,
       familyName: data.familyName,
@@ -22,16 +22,20 @@ export async function createSquareCustomer(data: {
       referenceId: data.userId, // Link to our internal user ID
     });
 
+    if (response.errors) {
+      throw new Error(response.errors.map(e => e.detail).join(', '));
+    }
+
     // Update user subscription with Square customer ID
     await db
       .update(userSubscriptions)
       .set({
-        squareCustomerId: result.customer!.id,
+        squareCustomerId: response.customer!.id,
         updatedAt: new Date(),
       })
       .where(eq(userSubscriptions.userId, data.userId));
 
-    return result.customer;
+    return response.customer;
   } catch (error) {
     console.error('[Square] Error creating customer:', error);
     throw error;
@@ -43,8 +47,11 @@ export async function createSquareCustomer(data: {
  */
 export async function getSquareCustomer(customerId: string) {
   try {
-    const { result } = await squareClient.customersApi.retrieveCustomer(customerId);
-    return result.customer;
+    const response = await squareClient.customers.get({ customerId });
+    if (response.errors) {
+      throw new Error(response.errors.map(e => e.detail).join(', '));
+    }
+    return response.customer;
   } catch (error) {
     console.error('[Square] Error retrieving customer:', error);
     throw error;
@@ -64,11 +71,14 @@ export async function updateSquareCustomer(
   }>
 ) {
   try {
-    const { result } = await squareClient.customersApi.updateCustomer(
+    const response = await squareClient.customers.update({
       customerId,
-      data
-    );
-    return result.customer;
+      ...data
+    });
+    if (response.errors) {
+      throw new Error(response.errors.map(e => e.detail).join(', '));
+    }
+    return response.customer;
   } catch (error) {
     console.error('[Square] Error updating customer:', error);
     throw error;
