@@ -6,10 +6,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2 } from 'lucide-react';
 
-declare global {
-  interface Window {
-    Square?: any;
-  }
+interface SquareWindow extends Window {
+  Square?: {
+    payments: (applicationId: string, locationId: string) => {
+      card: () => Promise<{
+        attach: (selector: string) => Promise<void>;
+        tokenize: () => Promise<{
+          status: string;
+          token?: string;
+          errors?: Array<{ message: string }>;
+        }>;
+      }>;
+    };
+  };
 }
 
 interface SquarePaymentFormProps {
@@ -19,8 +28,17 @@ interface SquarePaymentFormProps {
   onError?: (error: string) => void;
 }
 
+interface SquareCard {
+  attach: (selector: string) => Promise<void>;
+  tokenize: () => Promise<{
+    status: string;
+    token?: string;
+    errors?: Array<{ message: string }>;
+  }>;
+}
+
 export function SquarePaymentForm({ amount, plan, onSuccess, onError }: SquarePaymentFormProps) {
-  const [card, setCard] = useState<any>(null);
+  const [card, setCard] = useState<SquareCard | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [squareLoaded, setSquareLoaded] = useState(false);
@@ -28,14 +46,15 @@ export function SquarePaymentForm({ amount, plan, onSuccess, onError }: SquarePa
   useEffect(() => {
     async function initializeSquare() {
       try {
+        const win = window as SquareWindow;
         // Wait for Square.js to load
-        if (!window.Square) {
+        if (!win.Square) {
           console.error('Square.js failed to load');
           setError('Payment system failed to load. Please refresh the page.');
           return;
         }
 
-        const payments = window.Square.payments(
+        const payments = win.Square.payments(
           process.env.NEXT_PUBLIC_SQUARE_APPLICATION_ID!,
           process.env.NEXT_PUBLIC_SQUARE_LOCATION_ID || ''
         );
@@ -44,19 +63,21 @@ export function SquarePaymentForm({ amount, plan, onSuccess, onError }: SquarePa
         await cardElement.attach('#card-container');
         setCard(cardElement);
         setSquareLoaded(true);
-      } catch (e: any) {
+      } catch (e) {
         console.error('Failed to initialize Square:', e);
         setError('Failed to initialize payment form. Please try again.');
       }
     }
 
     // Check if Square.js is already loaded
-    if (window.Square) {
+    const win = window as SquareWindow;
+    if (win.Square) {
       initializeSquare();
     } else {
       // Wait for Square.js to load
       const checkSquare = setInterval(() => {
-        if (window.Square) {
+        const w = window as SquareWindow;
+        if (w.Square) {
           clearInterval(checkSquare);
           initializeSquare();
         }
@@ -65,7 +86,8 @@ export function SquarePaymentForm({ amount, plan, onSuccess, onError }: SquarePa
       // Timeout after 10 seconds
       setTimeout(() => {
         clearInterval(checkSquare);
-        if (!window.Square) {
+        const w = window as SquareWindow;
+        if (!w.Square) {
           setError('Payment system failed to load. Please refresh the page.');
         }
       }, 10000);
@@ -107,15 +129,15 @@ export function SquarePaymentForm({ amount, plan, onSuccess, onError }: SquarePa
         }
       } else {
         let errorMessage = 'Card tokenization failed. ';
-        result.errors?.forEach((error: any) => {
-          errorMessage += error.message + ' ';
+        result.errors?.forEach((err) => {
+          errorMessage += err.message + ' ';
         });
         setError(errorMessage.trim());
         onError?.(errorMessage);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Payment error:', error);
-      const errorMessage = error.message || 'Payment processing failed. Please try again.';
+      const errorMessage = error instanceof Error ? error.message : 'Payment processing failed. Please try again.';
       setError(errorMessage);
       onError?.(errorMessage);
     } finally {
@@ -167,7 +189,7 @@ export function SquarePaymentForm({ amount, plan, onSuccess, onError }: SquarePa
         </Button>
 
         <p className="text-xs text-center text-muted-foreground">
-          Your subscription will begin immediately and you'll be charged ${(amount / 100).toFixed(2)} per month.
+          Your subscription will begin immediately and you&apos;ll be charged ${(amount / 100).toFixed(2)} per month.
           Cancel anytime from your account dashboard.
         </p>
       </CardContent>

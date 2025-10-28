@@ -2,7 +2,7 @@ import { squareClient, locationId } from './client';
 import { db } from '../db';
 import { userSubscriptions } from '../db/schema';
 import { eq } from 'drizzle-orm';
-import { PLAN_LIMITS, type PlanType } from '../subscription-types';
+import { PLAN_LIMITS } from '../subscription-types';
 import { randomUUID } from 'crypto';
 
 // Square Subscription Plan IDs (set these in your Square Dashboard)

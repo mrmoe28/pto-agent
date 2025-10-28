@@ -25,10 +25,11 @@ function isValidSignature(body: string, signature: string, url: string): boolean
 /**
  * Handle subscription created or updated
  */
-async function handleSubscriptionUpdate(subscription: any) {
+async function handleSubscriptionUpdate(subscription: unknown) {
+  const sub = subscription as Record<string, unknown>;
   try {
-    const customerId = subscription.customer_id;
-    const squareSubscriptionId = subscription.id;
+    const customerId = sub.customer_id as string;
+    const squareSubscriptionId = sub.id as string;
 
     // Find user subscription by Square customer ID
     const userSub = await db.query.userSubscriptions.findFirst({
@@ -40,16 +41,18 @@ async function handleSubscriptionUpdate(subscription: any) {
       return;
     }
 
+    const status = sub.status as string | undefined;
+    const startDate = sub.start_date as string | undefined;
+    const chargedThroughDate = sub.charged_through_date as string | undefined;
+
     // Update subscription in database
     await db
       .update(userSubscriptions)
       .set({
-        status: subscription.status?.toLowerCase() || 'active',
+        status: status?.toLowerCase() || 'active',
         squareSubscriptionId,
-        currentPeriodStart: subscription.start_date ? new Date(subscription.start_date) : undefined,
-        currentPeriodEnd: subscription.charged_through_date
-          ? new Date(subscription.charged_through_date)
-          : undefined,
+        currentPeriodStart: startDate ? new Date(startDate) : undefined,
+        currentPeriodEnd: chargedThroughDate ? new Date(chargedThroughDate) : undefined,
         updatedAt: new Date(),
       })
       .where(eq(userSubscriptions.squareCustomerId, customerId));
@@ -63,9 +66,10 @@ async function handleSubscriptionUpdate(subscription: any) {
 /**
  * Handle subscription canceled
  */
-async function handleSubscriptionCanceled(subscription: any) {
+async function handleSubscriptionCanceled(subscription: unknown) {
+  const sub = subscription as Record<string, unknown>;
   try {
-    const squareSubscriptionId = subscription.id;
+    const squareSubscriptionId = sub.id as string;
 
     await db
       .update(userSubscriptions)
@@ -85,9 +89,10 @@ async function handleSubscriptionCanceled(subscription: any) {
 /**
  * Handle invoice payment succeeded
  */
-async function handleInvoicePaymentSucceeded(invoice: any) {
+async function handleInvoicePaymentSucceeded(invoice: unknown) {
+  const inv = invoice as Record<string, unknown>;
   try {
-    const subscriptionId = invoice.subscription_id;
+    const subscriptionId = inv.subscription_id as string;
 
     // Find user subscription
     const userSub = await db.query.userSubscriptions.findFirst({
@@ -99,12 +104,16 @@ async function handleInvoicePaymentSucceeded(invoice: any) {
       return;
     }
 
+    const amountMoney = inv.amount_money as Record<string, unknown> | undefined;
+    const amount = amountMoney?.amount as string | undefined;
+    const currency = amountMoney?.currency as string | undefined;
+
     // Record payment
     await db.insert(payments).values({
       userId: userSub.userId,
-      squarePaymentId: invoice.payment_id || invoice.id,
-      amount: parseInt(invoice.amount_money?.amount || '0'),
-      currency: invoice.amount_money?.currency || 'USD',
+      squarePaymentId: (inv.payment_id as string) || (inv.id as string),
+      amount: parseInt(amount || '0'),
+      currency: currency || 'USD',
       status: 'COMPLETED',
       createdAt: new Date(),
     });
@@ -121,9 +130,10 @@ async function handleInvoicePaymentSucceeded(invoice: any) {
 /**
  * Handle invoice payment failed
  */
-async function handleInvoicePaymentFailed(invoice: any) {
+async function handleInvoicePaymentFailed(invoice: unknown) {
+  const inv = invoice as Record<string, unknown>;
   try {
-    const subscriptionId = invoice.subscription_id;
+    const subscriptionId = inv.subscription_id as string;
 
     // Find user subscription
     const userSub = await db.query.userSubscriptions.findFirst({

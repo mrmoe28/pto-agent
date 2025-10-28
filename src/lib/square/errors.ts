@@ -1,8 +1,16 @@
+interface SquareError {
+  errors?: Array<{
+    code?: string;
+    detail?: string;
+  }>;
+}
+
 /**
  * Handle Square API errors and return user-friendly messages
  */
-export function handleSquareError(error: any): string {
-  const errors = error.errors || [];
+export function handleSquareError(error: unknown): string {
+  const squareError = error as SquareError;
+  const errors = squareError.errors || [];
 
   for (const err of errors) {
     switch (err.code) {
@@ -50,18 +58,27 @@ export function handleSquareError(error: any): string {
 /**
  * Check if error is a Square API error
  */
-export function isSquareError(error: any): boolean {
-  return error && Array.isArray(error.errors) && error.errors.length > 0;
+export function isSquareError(error: unknown): boolean {
+  const squareError = error as SquareError;
+  return !!squareError && Array.isArray(squareError.errors) && squareError.errors.length > 0;
+}
+
+interface LoggableError {
+  errors?: Array<unknown>;
+  statusCode?: number;
+  message?: string;
+  stack?: string;
 }
 
 /**
  * Log Square error details for debugging
  */
-export function logSquareError(error: any, context: string): void {
+export function logSquareError(error: unknown, context: string): void {
+  const loggableError = error as LoggableError;
   console.error(`[Square Error - ${context}]`, {
-    errors: error.errors || [],
-    statusCode: error.statusCode,
-    message: error.message,
-    stack: error.stack,
+    errors: loggableError.errors || [],
+    statusCode: loggableError.statusCode,
+    message: loggableError.message,
+    stack: loggableError.stack,
   });
 }

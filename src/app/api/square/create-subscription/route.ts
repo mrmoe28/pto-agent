@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
       cardId: card.id,
       status: subscription.status,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('[API] Error creating subscription:', error);
 
     const errorMessage = handleSquareError(error);
