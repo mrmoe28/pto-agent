@@ -75,8 +75,9 @@ async function runSquareMigration() {
     `;
 
     console.log('✅ Square columns in user_subscriptions:');
-    subscriptionColumns.forEach((col: { column_name: string; data_type: string }) => {
-      console.log(`  - ${col.column_name} (${col.data_type})`);
+    subscriptionColumns.forEach((col) => {
+      const colData = col as Record<string, unknown>;
+      console.log(`  - ${colData.column_name} (${colData.data_type})`);
     });
 
     // Check new tables
@@ -89,8 +90,9 @@ async function runSquareMigration() {
     `;
 
     console.log('✅ Square payment tables created:');
-    tables.forEach((table: { table_name: string }) => {
-      console.log(`  - ${table.table_name}`);
+    tables.forEach((table) => {
+      const tableData = table as Record<string, unknown>;
+      console.log(`  - ${tableData.table_name}`);
     });
 
   } catch (error) {
