@@ -32,7 +32,8 @@ export async function createStripeCustomer(data: {
     return customer;
   } catch (error) {
     console.error('[Stripe] Error creating customer:', error);
-    throw error;
+    // Throw user-friendly error instead of exposing internal details
+    throw new Error('Unable to create payment account. Please try again or contact support.');
   }
 }
 
@@ -44,7 +45,8 @@ export async function getStripeCustomer(customerId: string) {
     return await stripe.customers.retrieve(customerId);
   } catch (error) {
     console.error('[Stripe] Error retrieving customer:', error);
-    throw error;
+    // Throw user-friendly error instead of exposing internal details
+    throw new Error('Unable to retrieve payment information. Please try again or contact support.');
   }
 }
 
@@ -79,6 +81,7 @@ export async function getOrCreateStripeCustomer(userId: string) {
     });
   } catch (error) {
     console.error('[Stripe] Error getting or creating customer:', error);
-    throw error;
+    // Throw user-friendly error instead of exposing database details
+    throw new Error('Unable to process payment information. Please try again or contact support.');
   }
 }
