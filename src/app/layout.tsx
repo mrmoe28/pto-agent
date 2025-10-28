@@ -19,8 +19,20 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const squareEnvironment = process.env.SQUARE_ENVIRONMENT || 'sandbox';
+  const squareScriptUrl = squareEnvironment === 'production'
+    ? 'https://web.squarecdn.com/v1/square.js'
+    : 'https://sandbox.web.squarecdn.com/v1/square.js';
+
   return (
     <html lang="en">
+      <head>
+        <script
+          type="text/javascript"
+          src={squareScriptUrl}
+          async
+        />
+      </head>
       <body
         className={`${inter.variable} antialiased`}
       >

@@ -120,9 +120,58 @@ export const userSubscriptions = pgTable('user_subscriptions', {
   currentPeriodEnd: timestamp('current_period_end', { mode: 'date' }),
   searchesUsed: integer('searches_used').default(0),
   searchesLimit: integer('searches_limit').default(1), // 1 for free, 40 for pro, null for enterprise
+  // Square payment fields
+  squareCustomerId: text('square_customer_id'),
+  squareSubscriptionId: text('square_subscription_id'),
+  squareCardId: text('square_card_id'),
+  cancelAtPeriodEnd: boolean('cancel_at_period_end').default(false),
+  canceledAt: timestamp('canceled_at', { mode: 'date' }),
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow(),
 });
+
+// Square payments table
+export const payments = pgTable('payments', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  squarePaymentId: text('square_payment_id').unique(),
+  amount: integer('amount').notNull(), // Amount in cents
+  currency: text('currency').notNull().default('USD'),
+  status: text('status').notNull(), // COMPLETED, PENDING, FAILED, CANCELED
+  receiptUrl: text('receipt_url'),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
+}, (table) => ({
+  userIdIdx: index('payments_user_id_idx').on(table.userId),
+  statusIdx: index('payments_status_idx').on(table.status),
+}));
+
+// Square payment methods table
+export const paymentMethods = pgTable('payment_methods', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  squareCardId: text('square_card_id').unique(),
+  last4: text('last4').notNull(),
+  brand: text('brand').notNull(), // VISA, MASTERCARD, etc.
+  expMonth: integer('exp_month').notNull(),
+  expYear: integer('exp_year').notNull(),
+  isDefault: boolean('is_default').notNull().default(false),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
+}, (table) => ({
+  userIdIdx: index('payment_methods_user_id_idx').on(table.userId),
+}));
+
+// Square refunds table
+export const refunds = pgTable('refunds', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  paymentId: uuid('payment_id').references(() => payments.id, { onDelete: 'cascade' }),
+  squareRefundId: text('square_refund_id').unique(),
+  amount: integer('amount').notNull(),
+  reason: text('reason'),
+  status: text('status').notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
+}, (table) => ({
+  paymentIdIdx: index('refunds_payment_id_idx').on(table.paymentId),
+}));
 
 // Existing permit offices table (from your current schema)
 export const permitOffices = pgTable('permit_offices', {
@@ -340,6 +389,14 @@ export type PermitOffice = typeof permitOffices.$inferSelect;
 export type NewPermitOffice = typeof permitOffices.$inferInsert;
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
 export type NewPasswordResetToken = typeof passwordResetTokens.$inferInsert;
+
+// Square payment types
+export type Payment = typeof payments.$inferSelect;
+export type NewPayment = typeof payments.$inferInsert;
+export type PaymentMethod = typeof paymentMethods.$inferSelect;
+export type NewPaymentMethod = typeof paymentMethods.$inferInsert;
+export type Refund = typeof refunds.$inferSelect;
+export type NewRefund = typeof refunds.$inferInsert;
 
 // Team collaboration types
 export type Team = typeof teams.$inferSelect;
