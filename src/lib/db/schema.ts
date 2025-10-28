@@ -124,6 +124,9 @@ export const userSubscriptions = pgTable('user_subscriptions', {
   squareCustomerId: text('square_customer_id'),
   squareSubscriptionId: text('square_subscription_id'),
   squareCardId: text('square_card_id'),
+  // Stripe payment fields
+  stripeCustomerId: text('stripe_customer_id'),
+  stripeSubscriptionId: text('stripe_subscription_id'),
   cancelAtPeriodEnd: boolean('cancel_at_period_end').default(false),
   canceledAt: timestamp('canceled_at', { mode: 'date' }),
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow(),
