@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db } from '@/lib/db';
 import { userSubscriptions } from '@/lib/db/schema';
@@ -6,7 +6,7 @@ import { eq } from 'drizzle-orm';
 import { cancelSquareSubscription } from '@/lib/square/subscriptions';
 import { handleSquareError } from '@/lib/square/errors';
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     // Check authentication
     const session = await auth();
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
         status: canceledSubscription.status,
       },
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('[API] Error canceling subscription:', error);
 
     const errorMessage = handleSquareError(error);
