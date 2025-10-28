@@ -20,14 +20,34 @@ export async function createStripeCustomer(data: {
       },
     });
 
-    // Update user subscription with Stripe customer ID
-    await db
-      .update(userSubscriptions)
-      .set({
-        stripeCustomerId: customer.id,
-        updatedAt: new Date(),
-      })
-      .where(eq(userSubscriptions.userId, data.userId));
+    // Check if user subscription record exists
+    const existingSubscription = await db.query.userSubscriptions.findFirst({
+      where: eq(userSubscriptions.userId, data.userId),
+    });
+
+    if (existingSubscription) {
+      // Update existing subscription with Stripe customer ID
+      await db
+        .update(userSubscriptions)
+        .set({
+          stripeCustomerId: customer.id,
+          updatedAt: new Date(),
+        })
+        .where(eq(userSubscriptions.userId, data.userId));
+    } else {
+      // Create new subscription record with Stripe customer ID
+      await db
+        .insert(userSubscriptions)
+        .values({
+          userId: data.userId,
+          plan: 'free',
+          status: 'active',
+          stripeCustomerId: customer.id,
+          searchesUsed: 0,
+          searchesLimit: 1,
+          currentPeriodStart: new Date(),
+        });
+    }
 
     return customer;
   } catch (error) {
