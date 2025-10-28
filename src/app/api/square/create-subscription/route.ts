@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get plan ID from environment
-    const planId = SQUARE_PLAN_IDS[plan];
+    const planId = SQUARE_PLAN_IDS[plan as keyof typeof SQUARE_PLAN_IDS];
 
     if (!planId) {
       return NextResponse.json(
