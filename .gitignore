@@ -160,3 +160,4 @@ scraper_cache.sqlite*
 requests_cache.sqlite*.env.production
 .env.production
 pto-agent-fixed/
+.env*.local
