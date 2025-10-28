@@ -13,6 +13,7 @@ export const authConfig = {
         '/sign-in',
         '/sign-up',
         '/forgot-password',
+        '/reset-password',
         '/pricing',
         '/search',
       ];
@@ -23,15 +24,20 @@ export const authConfig = {
         '/api/permit-offices',
         '/api/geocode',
         '/api/webhooks/stripe',
+        '/api/webhooks/square',
         '/api/auth',
       ].some(path => nextUrl.pathname.startsWith(path));
 
+      // Allow public paths and public API routes
       if (isPublicPath || (isApiRoute && isPublicApi)) {
         return true;
       }
 
+      // Redirect to sign-in if not logged in
       if (!isLoggedIn) {
-        return false;
+        const signInUrl = new URL('/sign-in', nextUrl.origin);
+        signInUrl.searchParams.set('callbackUrl', nextUrl.pathname);
+        return Response.redirect(signInUrl);
       }
 
       return true;
