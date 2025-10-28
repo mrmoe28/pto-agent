@@ -53,6 +53,7 @@
     "@radix-ui/react-separator": "^1.1.7",
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-tabs": "^1.1.13",
+    "@stripe/stripe-js": "^8.2.0",
     "@upstash/ratelimit": "^2.0.6",
     "@upstash/redis": "^1.35.3",
     "axios": "^1.12.2",
@@ -75,6 +76,7 @@
     "react-dom": "^18.3.1",
     "robots-parser": "^3.0.1",
     "square": "^43.2.0",
+    "stripe": "^19.1.0",
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
