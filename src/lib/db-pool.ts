@@ -1,15 +1,5 @@
-/**
- * Database connection pooling for optimal performance
- * Uses Neon's connection pooling with optimized settings
- */
+import { Pool } from 'pg'
 
-import { Pool, neonConfig } from '@neondatabase/serverless'
-
-// Configure Neon for optimal performance
-neonConfig.fetchConnectionCache = true
-neonConfig.pipelineConnect = false
-
-// Connection pool configuration
 const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_PRISMA_URL
 
 if (!databaseUrl) {

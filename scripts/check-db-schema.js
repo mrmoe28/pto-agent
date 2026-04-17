@@ -2,11 +2,11 @@
 
 const { config } = require('dotenv');
 const { resolve } = require('path');
-const { neon } = require('@neondatabase/serverless');
+const { createSql } = require('./_pg-sql');
 
 config({ path: resolve(__dirname, '../.env.local') });
 
-const sql = neon(process.env.DATABASE_URL);
+const { sql, pool } = createSql(process.env.DATABASE_URL);
 
 async function checkSchema() {
   console.log('\n📋 Checking database schema...\n');
@@ -38,4 +38,4 @@ async function checkSchema() {
   });
 }
 
-checkSchema().catch(console.error);
+checkSchema().catch(console.error).finally(() => pool.end());

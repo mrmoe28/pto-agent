@@ -2,11 +2,11 @@
 
 const { config } = require('dotenv');
 const { resolve } = require('path');
-const { neon } = require('@neondatabase/serverless');
+const { createSql } = require('./_pg-sql');
 
 config({ path: resolve(__dirname, '../.env.local') });
 
-const sql = neon(process.env.DATABASE_URL);
+const { sql, pool } = createSql(process.env.DATABASE_URL);
 
 async function testMigration() {
   console.log('\n🧪 Testing direct SQL execution...\n');
@@ -60,4 +60,4 @@ async function testMigration() {
   }
 }
 
-testMigration().catch(console.error);
+testMigration().catch(console.error).finally(() => pool.end());

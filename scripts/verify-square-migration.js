@@ -2,11 +2,11 @@
 
 const { config } = require('dotenv');
 const { resolve } = require('path');
-const { neon } = require('@neondatabase/serverless');
+const { createSql } = require('./_pg-sql');
 
 config({ path: resolve(__dirname, '../.env.local') });
 
-const sql = neon(process.env.DATABASE_URL);
+const { sql, pool } = createSql(process.env.DATABASE_URL);
 
 async function verify() {
   console.log('\n🔍 Verifying Square payment integration...\n');
@@ -56,4 +56,4 @@ async function verify() {
   console.log('\n🎉 Square payment integration verified successfully!\n');
 }
 
-verify().catch(console.error);
+verify().catch(console.error).finally(() => pool.end());

@@ -1,54 +1,53 @@
-import { neon } from '@neondatabase/serverless';
+import { Client } from 'pg';
 import * as dotenv from 'dotenv';
 
-// Load environment variables
 dotenv.config({ path: '.env.local' });
 
-const sql = neon(process.env.DATABASE_URL!);
-
 async function checkTables() {
+  const client = new Client({ connectionString: process.env.DATABASE_URL });
+  await client.connect();
+
   try {
     console.log('Checking tables in database...\n');
 
-    // Get all tables
-    const tables = await sql`
+    const { rows: tables } = await client.query<{ table_name: string }>(`
       SELECT table_name
       FROM information_schema.tables
       WHERE table_schema = 'public'
       ORDER BY table_name;
-    `;
+    `);
 
     console.log('Tables found:');
-    tables.forEach((table: any) => {
-      console.log(`  - ${table.table_name}`);
-    });
+    tables.forEach(t => console.log(`  - ${t.table_name}`));
 
-    // Check if user_subscriptions exists
-    const hasUserSubscriptions = tables.some((t: any) => t.table_name === 'user_subscriptions');
+    const hasUserSubscriptions = tables.some(t => t.table_name === 'user_subscriptions');
 
     if (hasUserSubscriptions) {
       console.log('\n✅ user_subscriptions table EXISTS');
 
-      // Check columns in user_subscriptions
-      const columns = await sql`
+      const { rows: columns } = await client.query<{
+        column_name: string;
+        data_type: string;
+        is_nullable: string;
+      }>(`
         SELECT column_name, data_type, is_nullable
         FROM information_schema.columns
         WHERE table_schema = 'public' AND table_name = 'user_subscriptions'
         ORDER BY ordinal_position;
-      `;
+      `);
 
       console.log('\nColumns in user_subscriptions:');
-      columns.forEach((col: any) => {
-        console.log(`  - ${col.column_name} (${col.data_type}) ${col.is_nullable === 'YES' ? 'NULL' : 'NOT NULL'}`);
+      columns.forEach(c => {
+        console.log(`  - ${c.column_name} (${c.data_type}) ${c.is_nullable === 'YES' ? 'NULL' : 'NOT NULL'}`);
       });
 
-      // Check if stripe fields exist
-      const hasStripeFields = columns.some((c: any) => c.column_name === 'stripe_customer_id');
+      const hasStripeFields = columns.some(c => c.column_name === 'stripe_customer_id');
       console.log(`\n${hasStripeFields ? '✅' : '❌'} Stripe fields ${hasStripeFields ? 'exist' : 'missing'}`);
 
-      // Count rows
-      const count = await sql`SELECT COUNT(*) as count FROM user_subscriptions;`;
-      console.log(`\nRows in user_subscriptions: ${count[0].count}`);
+      const { rows: countRows } = await client.query<{ count: string }>(
+        'SELECT COUNT(*)::text as count FROM user_subscriptions;'
+      );
+      console.log(`\nRows in user_subscriptions: ${countRows[0].count}`);
 
     } else {
       console.log('\n❌ user_subscriptions table DOES NOT EXIST');
@@ -56,6 +55,8 @@ async function checkTables() {
 
   } catch (error) {
     console.error('Error checking tables:', error);
+  } finally {
+    await client.end();
   }
 }
 
