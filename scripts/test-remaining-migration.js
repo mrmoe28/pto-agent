@@ -2,11 +2,11 @@
 
 const { config } = require('dotenv');
 const { resolve } = require('path');
-const { neon } = require('@neondatabase/serverless');
+const { createSql } = require('./_pg-sql');
 
 config({ path: resolve(__dirname, '../.env.local') });
 
-const sql = neon(process.env.DATABASE_URL);
+const { sql, pool } = createSql(process.env.DATABASE_URL);
 
 async function testRemaining() {
   console.log('\n🧪 Testing remaining migrations...\n');
@@ -96,4 +96,4 @@ async function testRemaining() {
   }
 }
 
-testRemaining().catch(console.error);
+testRemaining().catch(console.error).finally(() => pool.end());

@@ -1,15 +1,40 @@
-import { neon } from '@neondatabase/serverless'
+import { Pool } from 'pg'
 
-// Get the database URL from environment variables
 const databaseUrl = process.env.DATABASE_URL || ''
 
-// Validate database URL
 if (!databaseUrl) {
   console.warn('DATABASE_URL environment variable is not set. Database operations will fail.')
 }
 
-// Create a Neon client
-export const sql = neon(databaseUrl)
+const pool = new Pool({ connectionString: databaseUrl })
+
+// Matches the permissive return type of @neondatabase/serverless's neon() tagged template.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Row = Record<string, any>
+
+interface SqlFn {
+  <T = Row>(strings: TemplateStringsArray, ...values: unknown[]): Promise<T[]>
+  unsafe: <T = Row>(raw: string, params?: unknown[]) => Promise<T[]>
+}
+
+const sqlFn = async <T = Row>(
+  strings: TemplateStringsArray,
+  ...values: unknown[]
+): Promise<T[]> => {
+  let text = strings[0]
+  for (let i = 0; i < values.length; i++) {
+    text += `$${i + 1}${strings[i + 1]}`
+  }
+  const result = await pool.query(text, values as unknown[])
+  return result.rows as T[]
+}
+
+sqlFn.unsafe = async <T = Row>(raw: string, params: unknown[] = []): Promise<T[]> => {
+  const result = await pool.query(raw, params)
+  return result.rows as T[]
+}
+
+export const sql = sqlFn as SqlFn
 
 // Database types for Georgia permit offices
 export interface PermitOffice {
@@ -74,10 +99,7 @@ export async function query<T = unknown>(
   queryText: string
 ): Promise<T[]> {
   try {
-    // For dynamic queries, we need to use a different approach
-    // This is a simplified version - in production, consider using a query builder
-    const result = await sql.unsafe(queryText) as unknown as T[]
-    return result
+    return await sql.unsafe<T>(queryText)
   } catch (error) {
     console.error('Database query error:', error)
     throw error
