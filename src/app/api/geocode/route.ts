@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server'
 
 // Geocoding service with LocationIQ primary, Google Maps fallback

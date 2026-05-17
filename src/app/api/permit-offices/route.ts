@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server'
 import { sql } from '@/lib/neon'
 import { enqueueScrapeJob } from '@/lib/db/jobs'

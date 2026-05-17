@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 /**
  * Optimized permit offices API using Next.js 15 caching features
  * This route provides better performance through explicit caching control

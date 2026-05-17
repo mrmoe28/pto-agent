@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server'
 import { getPendingScrapeJobs, markScrapeJobProcessing, markScrapeJobCompleted, markScrapeJobFailed } from '@/lib/db/jobs'
 import { scrapeSolarPermitData } from '@/lib/enhanced-permit-scraper'

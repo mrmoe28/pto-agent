@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 /**
  * High-performance permit offices API v2
  * Uses connection pooling, advanced caching, and optimized queries
