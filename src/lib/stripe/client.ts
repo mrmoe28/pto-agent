@@ -1,12 +1,24 @@
 import Stripe from 'stripe';
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY is not set');
+let _stripe: Stripe | undefined;
+
+function getStripe(): Stripe {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not set');
+  }
+  if (!_stripe) {
+    _stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2025-10-29.clover',
+      typescript: true,
+    });
+  }
+  return _stripe;
 }
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2025-10-29.clover',
-  typescript: true,
+export const stripe = new Proxy({} as Stripe, {
+  get(_target, prop) {
+    return Reflect.get(getStripe(), prop);
+  },
 });
 
 // Stripe Price IDs for subscription plans
